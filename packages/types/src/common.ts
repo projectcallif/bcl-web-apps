@@ -1,11 +1,17 @@
+/** Shape returned by every BCL backend endpoint. */
 export interface ApiResponse<T> {
-  data: T
-  message?: string
   success: boolean
+  statusCode: number
+  message: string
+  data: T
 }
 
+/**
+ * Used as the `data` field of `ApiResponse` on list endpoints.
+ * e.g. `ApiResponse<PaginatedResponse<User>>`
+ */
 export interface PaginatedResponse<T> {
-  data: T[]
+  items: T[]
   total: number
   page: number
   pageSize: number
