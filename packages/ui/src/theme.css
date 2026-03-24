@@ -1,0 +1,54 @@
+/*
+ * BCL Brand Theme
+ * Consumed by all apps via:  @import "@bcl/ui/theme.css";
+ *
+ * Tailwind v4 reads @theme blocks and generates utility classes from them:
+ *   --color-primary  →  bg-primary · text-primary · border-primary · etc.
+ *   --color-primary-700  →  bg-primary-700 · text-primary-700 · etc.
+ */
+
+@theme {
+
+  /* ── Primary · Dark Blue (#0b0783) ────────────────────────────── */
+  --color-primary-50:  #edeeff;
+  --color-primary-100: #d8d9ff;
+  --color-primary-200: #b1b4ff;
+  --color-primary-300: #898eff;
+  --color-primary-400: #6168f0;
+  --color-primary-500: #3a42cc;
+  --color-primary-600: #2222a8;
+  --color-primary-700: #0b0783;   /* ← brand */
+  --color-primary-800: #080563;
+  --color-primary-900: #050340;
+  --color-primary-950: #020121;
+  --color-primary:     #0b0783;
+
+  /* ── Secondary · Orange (#e47d20) ─────────────────────────────── */
+  --color-secondary-50:  #fef6ed;
+  --color-secondary-100: #fde9d3;
+  --color-secondary-200: #fbd1a5;
+  --color-secondary-300: #f9b977;
+  --color-secondary-400: #f7a14a;
+  --color-secondary-500: #e47d20;  /* ← brand */
+  --color-secondary-600: #c46b1b;
+  --color-secondary-700: #9d5415;
+  --color-secondary-800: #773e0f;
+  --color-secondary-900: #4d2809;
+  --color-secondary-950: #271405;
+  --color-secondary:     #e47d20;
+
+  /* ── Tertiary · Light Blue (#458dd7) ──────────────────────────── */
+  --color-tertiary-50:  #eef5fc;
+  --color-tertiary-100: #dceaf9;
+  --color-tertiary-200: #b9d5f3;
+  --color-tertiary-300: #96c0ed;
+  --color-tertiary-400: #73abe7;
+  --color-tertiary-500: #458dd7;   /* ← brand */
+  --color-tertiary-600: #3a79bb;
+  --color-tertiary-700: #2e5e93;
+  --color-tertiary-800: #21456b;
+  --color-tertiary-900: #152c44;
+  --color-tertiary-950: #0a1622;
+  --color-tertiary:     #458dd7;
+
+}

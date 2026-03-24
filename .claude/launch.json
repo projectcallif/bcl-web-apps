@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Customer App",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@bcl/customer", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "Admin App",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@bcl/admin", "dev"],
+      "port": 5174
+    }
+  ]
+}

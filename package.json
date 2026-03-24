@@ -1,0 +1,29 @@
+{
+  "name": "bcl-web-apps",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev:customer": "pnpm --filter @bcl/customer dev",
+    "dev:admin": "pnpm --filter @bcl/admin dev",
+    "build:customer": "pnpm --filter @bcl/customer build",
+    "build:admin": "pnpm --filter @bcl/admin build",
+    "build": "pnpm -r --filter './packages/**' build && pnpm -r --filter './apps/**' build",
+    "test:unit": "vitest",
+    "test:unit:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test": "pnpm test:unit run && pnpm test:e2e",
+    "type-check": "pnpm -r type-check",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/tsconfig": "^0.7.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.2",
+    "vitest": "^3.0.9"
+  }
+}
