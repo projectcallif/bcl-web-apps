@@ -1,3 +1,43 @@
+### Project Setup
+
+How should we setup implementing the features of this app
+should we have a feature folder for each feature
+The how should we handle the store and api client calls
+use the Login flow as an example of how to implement the features
+The request body POST `{ identifier: string, password: string }` and response `{ accessToken: string, user: User }`
+The response body is of the format below
+
+```
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Login successful",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNzY2MThjNi1mOTM5LTRjNDYtOTM0Ni1lZGM0MzFlZDBkMzAiLCJlbWFpbCI6InVzZXI0MEBiY2wuY29tIiwicGhvbmUiOiI4MDEyMzQ1NjQwIiwiaWF0IjoxNzc0MzgyNTc0LCJleHAiOjE3NzQ5ODczNzR9.JkG0ZUsyxx7ODHf4LiijMyl_M19oOuD8bt_-k4aDs7Y",
+    "user": {
+      "id": "276618c6-f939-4c46-9346-edc431ed0d30",
+      "email": "user40@bcl.com",
+      "phone": "8012345640",
+      "isEmailVerified": false,
+      "isPhoneVerified": true,
+      "registrationStep": "UTILITY_BILL_COMPLETE",
+      "status": "ACTIVE",
+      "profile": {
+        "firstName": "REAdaobi",
+        "lastName": "Okonkwo",
+        "middleName": "Chidera",
+        "dateOfBirth": "1992-06-15",
+        "gender": "FEMALE",
+        "maritalStatus": "SINGLE",
+        "city": "Lagos",
+        "state": "Lagos",
+        "country": "Nigeria"
+      }
+    }
+  }
+}
+```
+
 ### Api Client Setup
 
 Implement a fully functional ApiClient in the project.

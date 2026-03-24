@@ -7,6 +7,7 @@ export const api = createApiClient({
 // ── Request: inject stored Bearer token ──────────────────────────────────────
 api.addRequestInterceptor((config) => {
   const token = localStorage.getItem('bcl_customer_token')
+  console.log("-----> --->", token)
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`
   }
@@ -15,9 +16,10 @@ api.addRequestInterceptor((config) => {
 
 // ── Error: clear session and redirect to login on 401 ────────────────────────
 api.addErrorInterceptor((error: ApiClientError) => {
+  console.log("-----> --->", error)
   if (error.isUnauthorized) {
     localStorage.removeItem('bcl_customer_token')
-    window.location.href = '/login'
+    // window.location.href = '/login'
   }
   return error
 })

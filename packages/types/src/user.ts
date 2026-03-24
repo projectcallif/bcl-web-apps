@@ -1,28 +1,54 @@
-export type UserRole = 'customer' | 'admin' | 'super_admin'
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING'
 
-export type UserStatus = 'active' | 'inactive' | 'suspended'
+export type UserGender = 'MALE' | 'FEMALE' | 'OTHER'
+
+export type MaritalStatus = 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED'
+
+export type RegistrationStep =
+  | 'PENDING'
+  | 'EMAIL_VERIFIED'
+  | 'PHONE_VERIFIED'
+  | 'BVN_VERIFIED'
+  | 'IDENTITY_VERIFIED'
+  | 'UTILITY_BILL_COMPLETE'
+  | 'COMPLETE'
+
+export interface UserProfile {
+  firstName: string
+  lastName: string
+  middleName?: string
+  dateOfBirth: string
+  gender: UserGender
+  maritalStatus: MaritalStatus
+  city: string
+  state: string
+  country: string
+}
 
 export interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
-  role: UserRole
+  phone: string
+  isEmailVerified: boolean
+  isPhoneVerified: boolean
+  registrationStep: RegistrationStep
   status: UserStatus
-  createdAt: string
-  updatedAt: string
+  profile: UserProfile
 }
+
+// ── Admin / management payloads ──────────────────────────────────────────────
+
+export type UserRole = 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN'
 
 export interface CreateUserPayload {
   email: string
-  firstName: string
-  lastName: string
+  phone: string
   role: UserRole
+  profile: Pick<UserProfile, 'firstName' | 'lastName'>
 }
 
 export interface UpdateUserPayload {
-  firstName?: string
-  lastName?: string
-  role?: UserRole
   status?: UserStatus
+  role?: UserRole
+  profile?: Partial<UserProfile>
 }
