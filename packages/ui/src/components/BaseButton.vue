@@ -30,7 +30,7 @@ defineEmits<{
     :class="[
       // ── Base ───────────────────────────────────────────────────────
       'inline-flex items-center justify-center gap-2',
-      'font-medium rounded-md border cursor-pointer',
+      'font-semibold rounded-[17px] border cursor-pointer',
       'transition-all duration-150 whitespace-nowrap select-none',
       'focus-visible:outline-2 focus-visible:outline-offset-2',
       'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',

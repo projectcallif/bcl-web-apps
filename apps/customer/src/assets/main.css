@@ -4,6 +4,9 @@
 /* BCL brand colours — defines --color-primary/secondary/tertiary + full shade scales */
 @import "@bcl/ui/theme.css";
 
+/* Scan shared UI package so Tailwind generates classes used in @bcl/ui components */
+@source "../../../../packages/ui/src";
+
 /* ── Global base styles ─────────────────────────────────────────── */
 @layer base {
   *,

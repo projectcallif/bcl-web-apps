@@ -51,4 +51,10 @@
   --color-tertiary-950: #0a1622;
   --color-tertiary:     #458dd7;
 
+  /* Input Colors */
+  --color-input-fill: #e2e2f0;
+  --color-input-border: #cbd5e1;
+  --color-input-focus: #3b82f6;
+  --color-input-error: #ef4444;
+
 }
