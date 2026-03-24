@@ -8,3 +8,5 @@ export { default as AppTextArea } from './components/AppTextArea.vue'
 export type { TextAreaSize, TextAreaResize } from './components/AppTextArea.vue'
 
 export { default as AppPasswordInput } from './components/AppPasswordInput.vue'
+
+export { default as AppPagination } from './components/AppPagination.vue'

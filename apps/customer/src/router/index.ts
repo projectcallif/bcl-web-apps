@@ -20,16 +20,29 @@ const router = createRouter({
           name: 'dashboard',
           component: () => import('../features/dashboard/DashboardView.vue'),
         },
+        // ── Loans ──────────────────────────────────────────────────────────
         {
           path: 'loans',
           name: 'loans',
-          component: () => import('../views/ComingSoonView.vue'),
+          component: () => import('../features/loans/MyLoansView.vue'),
+        },
+        {
+          // must be before :id to avoid conflict
+          path: 'loans/apply',
+          name: 'loan-apply',
+          component: () => import('../features/loans/apply/LoanApplicationView.vue'),
+        },
+        {
+          path: 'loans/:id',
+          name: 'loan-detail',
+          component: () => import('../features/loans/LoanDetailView.vue'),
         },
         {
           path: 'loan-history',
           name: 'loan-history',
           component: () => import('../views/ComingSoonView.vue'),
         },
+        // ── Other sections ─────────────────────────────────────────────────
         {
           path: 'profile',
           name: 'profile',

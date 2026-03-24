@@ -18,9 +18,9 @@ withDefaults(defineProps<Props>(), {
   type: 'button',
 })
 
-defineEmits<{
-  click: [event: MouseEvent]
-}>()
+// defineEmits<{
+//   click: [event: MouseEvent]
+// }>()
 </script>
 
 <template>

@@ -1,3 +1,41 @@
+### My Loans Listing Flow
+
+Implement the feature where a user can see the list of all loand they have collected
+this list card can contain the following details:
+
+- Purpose of the loan, Loan amount, Loan status, Amount paid, Outstanding balance, Tenor, Next repayment date
+- Create a pagination component to handle the list of loans
+- This screen should have a filter option to filter loans by status
+- This screen should container a button or entry card to apply for a new loan
+- The top of this list can display a summary of the user's loans or statistics of the loans the user have been collecting
+
+### Loan Details Flow
+
+- Create Loan Details screen
+- The details screen should contain the ensential details of the loan
+- The details screen should have a way to view your loan repayment schedules
+- Then schedule list should have a button to download the repayment schedule as a csv
+- The details screen should have a way to view your loan agreement
+- Add a button to make a payment on the loan (For now do nothing with the button)
+
+### Loan Application Flow
+
+When a user click on apply for a loan on the dashboard or on the My Loans screen the following proceess will take place:
+
+1. Display a scren that shows the BCL terms and conditions to be acceted by the user
+2. Customer links bank account (demo screen for now, using Mono)
+3. Display a screen that shows the loan eligibility check results
+4. Screen for customer to select loan amount & tenor (this screen will show the interest rate per Tenor selected)
+5. Repayment schedule list screen is displayed for the selected Tenor
+6. Screen for customer to accept and sign loan terms and conditions
+7. Screen showing bank details for loan disbursement
+8. Beautiful Screen informing customer that Loan is processing and will be disbursed
+
+Note: The loan amount input screen will have a maximum amount, we should also provide a slider that will allow a customer slide between min and max amount
+
+Note: Load agreements and terms screen can display/render html for better formating and readability
+Note: you can simualate API calls and return dummy data from the data source for now.
+
 ### Customer Dashboard
 
 We need to implement a dashboard and navigation menu for the customer user.
