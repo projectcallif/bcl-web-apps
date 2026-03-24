@@ -1,3 +1,40 @@
+### Customer Dashboard
+
+We need to implement a dashboard and navigation menu for the customer user.
+This will be the home page for the customer after login
+The dashboard should have the left menu sutiable for a loan fintech web app
+The menu should contain the following options:
+
+1. Dashboard
+2. My Loans
+3. Loan History
+4. Profile
+5. Support
+6. Settings
+7. Logout
+
+The top bar of the dashboard should have the following:
+
+1. Logo
+2. User profile image and Firstname
+3. Notification icon
+4. Support icon
+
+Focusing on the dashboard, this screen should have the Loan Performance Summary
+Customer dashboard must show the current loan card:
+• Total loan amount
+• Total amount paid
+• Outstanding balance
+• Next repayment date
+• Loan status: (Active, Overdue, Completed, Closed)
+The dashboard should have a recent payments list
+The dashboard should have a entry card for applying for a new loan
+The dashboard can have a card of information for the next due amount and the date for payment
+
+### Icon Library
+
+Install the lucide icons library then
+
 ### Project Setup
 
 How should we setup implementing the features of this app

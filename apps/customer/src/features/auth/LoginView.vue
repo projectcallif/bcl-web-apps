@@ -17,9 +17,8 @@ async function handleSubmit(): Promise<void> {
   formError.value = ''
   isLoading.value = true
   try {
-    console.log({ identifier: identifier.value, password: password.value })
     await authStore.login({ identifier: identifier.value, password: password.value })
-    // await router.push({ name: 'home' })
+    await router.push({ name: 'dashboard' })
   } catch (err) {
     formError.value = err instanceof ApiClientError
       ? err.message
@@ -28,6 +27,12 @@ async function handleSubmit(): Promise<void> {
     isLoading.value = false
   }
 }
+
+function _debugPrefill() {
+  identifier.value = 'user40@bcl.com';
+  password.value = 'Password@1'
+}
+
 </script>
 
 <template>
@@ -42,7 +47,7 @@ async function handleSubmit(): Promise<void> {
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-1 14H9V8h2v8Zm4 0h-2V8h2v8Z"/>
           </svg>
         </div>
-        <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Welcome back</h1>
+        <h1 class="text-2xl font-bold text-slate-800 tracking-tight" @dblclick="_debugPrefill">Welcome back</h1>
         <p class="mt-1 text-sm text-slate-500">Sign in to your BCL account</p>
       </div>
 
