@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import {
   ChevronRight,
   TrendingUp,
@@ -9,11 +9,15 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-vue-next'
 import type { Loan, LoanPayment, LoanStatus, LoanType, PaymentStatus } from '@bcl/types'
 import { useAuthStore } from '../auth/store'
 
 const authStore = useAuthStore()
+
+const balanceVisible = ref(false)
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -139,8 +143,21 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
 
       <!-- Outstanding balance -->
       <div class="relative mb-5">
-        <p class="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">Outstanding Balance</p>
-        <p class="text-4xl font-bold tracking-tight">{{ formatCurrency(activeLoan.outstandingBalance) }}</p>
+        <div class="flex items-center gap-2 mb-1">
+          <p class="text-xs font-medium text-white/50 uppercase tracking-wider">Outstanding Balance</p>
+          <button
+            class="text-white/40 hover:text-white/80 transition-colors"
+            :aria-label="balanceVisible ? 'Hide balance' : 'Show balance'"
+            @click="balanceVisible = !balanceVisible"
+          >
+            <EyeOff v-if="balanceVisible" class="w-3.5 h-3.5" />
+            <Eye v-else class="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <p class="text-4xl font-bold tracking-tight">
+          <span v-if="balanceVisible">{{ formatCurrency(activeLoan.outstandingBalance) }}</span>
+          <span v-else class="tracking-widest">••••••</span>
+        </p>
       </div>
 
       <!-- Progress bar -->

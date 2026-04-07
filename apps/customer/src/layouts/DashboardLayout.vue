@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   CreditCard,
   History,
+  ArrowLeftRight,
   User,
   LifeBuoy,
   Settings,
@@ -21,7 +22,7 @@ const authStore = useAuthStore()
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, routeName: 'dashboard' },
   { label: 'My Loans', icon: CreditCard, routeName: 'loans' },
-  { label: 'Loan History', icon: History, routeName: 'loan-history' },
+  { label: 'Transactions', icon: ArrowLeftRight, routeName: 'transactions' },
   { label: 'Profile', icon: User, routeName: 'profile' },
   { label: 'Support', icon: LifeBuoy, routeName: 'support' },
   { label: 'Settings', icon: Settings, routeName: 'settings' },

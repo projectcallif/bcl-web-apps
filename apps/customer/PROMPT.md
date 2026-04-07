@@ -1,3 +1,10 @@
+### Customer App Payments and Transactions Screen
+
+Implement the payments and transations screen and add it to the dashboard nav @apps/customer/src/layouts/DashboardLayout.vue. This screen should have the history information of any transaction for both Disbursement and Repayment and for which loan product the trasaction is for.
+
+- Add a date picker to filter transactions by date
+- Add a pagination component to handle the list of transactions by pages
+
 ### My Loans Listing Flow
 
 Implement the feature where a user can see the list of all loand they have collected
@@ -68,6 +75,8 @@ Customer dashboard must show the current loan card:
 The dashboard should have a recent payments list
 The dashboard should have a entry card for applying for a new loan
 The dashboard can have a card of information for the next due amount and the date for payment
+
+On the outstanding balance view on the Dashboard view implement an hide and show for the balance display. Make it hidden by default
 
 ### Icon Library
 

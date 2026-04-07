@@ -42,11 +42,16 @@ const router = createRouter({
           name: 'loan-history',
           component: () => import('../views/ComingSoonView.vue'),
         },
+        {
+          path: 'transactions',
+          name: 'transactions',
+          component: () => import('../features/transactions/TransactionsView.vue'),
+        },
         // ── Other sections ─────────────────────────────────────────────────
         {
           path: 'profile',
           name: 'profile',
-          component: () => import('../views/ComingSoonView.vue'),
+          component: () => import('../features/profile/ProfileView.vue'),
         },
         {
           path: 'support',

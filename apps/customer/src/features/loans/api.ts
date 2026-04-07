@@ -6,6 +6,8 @@ import type {
   RepaymentScheduleItem,
   LoanEligibility,
   LoanStats,
+  Transaction,
+  TransactionType,
 } from '@bcl/types'
 
 // ── Mock helper ───────────────────────────────────────────────────────────────
@@ -148,6 +150,35 @@ const LOAN_TERMS_HTML = `
 <p>BCL Finance reserves the right to amend these Terms & Conditions at any time. You will be notified of material changes via email or in-app notification at least 14 days before changes take effect.</p>
 `
 
+// ── Mock transactions ─────────────────────────────────────────────────────────
+
+const MOCK_TRANSACTIONS: Transaction[] = [
+  // Loan 1 — BCL-2026-0042 PERSONAL (active, 4 repayments made)
+  { id: 't1-dis', loanId: '1', loanNumber: 'BCL-2026-0042', loanType: 'PERSONAL', purpose: 'Home Renovation', type: 'DISBURSEMENT', amount: 500_000, date: '2025-12-15', reference: 'DIS-2025-0042', status: 'SUCCESS', description: 'Loan disbursement' },
+  { id: 't1-r1', loanId: '1', loanNumber: 'BCL-2026-0042', loanType: 'PERSONAL', purpose: 'Home Renovation', type: 'REPAYMENT', amount: 46_667, date: '2026-01-15', reference: 'REP-2026-0042-01', status: 'SUCCESS', description: 'Installment 1 of 12' },
+  { id: 't1-r2', loanId: '1', loanNumber: 'BCL-2026-0042', loanType: 'PERSONAL', purpose: 'Home Renovation', type: 'REPAYMENT', amount: 46_667, date: '2026-02-15', reference: 'REP-2026-0042-02', status: 'SUCCESS', description: 'Installment 2 of 12' },
+  { id: 't1-r3', loanId: '1', loanNumber: 'BCL-2026-0042', loanType: 'PERSONAL', purpose: 'Home Renovation', type: 'REPAYMENT', amount: 46_667, date: '2026-03-15', reference: 'REP-2026-0042-03', status: 'SUCCESS', description: 'Installment 3 of 12' },
+  { id: 't1-r4', loanId: '1', loanNumber: 'BCL-2026-0042', loanType: 'PERSONAL', purpose: 'Home Renovation', type: 'REPAYMENT', amount: 46_667, date: '2026-03-27', reference: 'REP-2026-0042-04', status: 'PENDING', description: 'Installment 4 of 12' },
+  // Loan 2 — BCL-2025-0028 BUSINESS (completed, 6 repayments)
+  { id: 't2-dis', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'DISBURSEMENT', amount: 300_000, date: '2025-04-15', reference: 'DIS-2025-0028', status: 'SUCCESS', description: 'Loan disbursement' },
+  { id: 't2-r1', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'REPAYMENT', amount: 53_000, date: '2025-05-15', reference: 'REP-2025-0028-01', status: 'SUCCESS', description: 'Installment 1 of 6' },
+  { id: 't2-r2', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'REPAYMENT', amount: 53_000, date: '2025-06-15', reference: 'REP-2025-0028-02', status: 'SUCCESS', description: 'Installment 2 of 6' },
+  { id: 't2-r3', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'REPAYMENT', amount: 53_000, date: '2025-07-15', reference: 'REP-2025-0028-03', status: 'SUCCESS', description: 'Installment 3 of 6' },
+  { id: 't2-r4', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'REPAYMENT', amount: 53_000, date: '2025-08-15', reference: 'REP-2025-0028-04', status: 'SUCCESS', description: 'Installment 4 of 6' },
+  { id: 't2-r5', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'REPAYMENT', amount: 53_000, date: '2025-09-15', reference: 'REP-2025-0028-05', status: 'SUCCESS', description: 'Installment 5 of 6' },
+  { id: 't2-r6', loanId: '2', loanNumber: 'BCL-2025-0028', loanType: 'BUSINESS', purpose: 'Working Capital', type: 'REPAYMENT', amount: 53_000, date: '2025-10-15', reference: 'REP-2025-0028-06', status: 'SUCCESS', description: 'Installment 6 of 6' },
+  // Loan 3 — BCL-2024-0015 EMERGENCY (closed, 3 repayments)
+  { id: 't3-dis', loanId: '3', loanNumber: 'BCL-2024-0015', loanType: 'EMERGENCY', purpose: 'Medical Bills', type: 'DISBURSEMENT', amount: 150_000, date: '2024-09-01', reference: 'DIS-2024-0015', status: 'SUCCESS', description: 'Loan disbursement' },
+  { id: 't3-r1', loanId: '3', loanNumber: 'BCL-2024-0015', loanType: 'EMERGENCY', purpose: 'Medical Bills', type: 'REPAYMENT', amount: 51_500, date: '2024-10-01', reference: 'REP-2024-0015-01', status: 'SUCCESS', description: 'Installment 1 of 3' },
+  { id: 't3-r2', loanId: '3', loanNumber: 'BCL-2024-0015', loanType: 'EMERGENCY', purpose: 'Medical Bills', type: 'REPAYMENT', amount: 51_500, date: '2024-11-01', reference: 'REP-2024-0015-02', status: 'SUCCESS', description: 'Installment 2 of 3' },
+  { id: 't3-r3', loanId: '3', loanNumber: 'BCL-2024-0015', loanType: 'EMERGENCY', purpose: 'Medical Bills', type: 'REPAYMENT', amount: 51_500, date: '2024-12-01', reference: 'REP-2024-0015-03', status: 'SUCCESS', description: 'Installment 3 of 3' },
+  // Loan 4 — BCL-2023-0007 PERSONAL overdue (2 repayments then failed)
+  { id: 't4-dis', loanId: '4', loanNumber: 'BCL-2023-0007', loanType: 'PERSONAL', purpose: 'Tuition Fees', type: 'DISBURSEMENT', amount: 200_000, date: '2023-01-15', reference: 'DIS-2023-0007', status: 'SUCCESS', description: 'Loan disbursement' },
+  { id: 't4-r1', loanId: '4', loanNumber: 'BCL-2023-0007', loanType: 'PERSONAL', purpose: 'Tuition Fees', type: 'REPAYMENT', amount: 18_667, date: '2023-02-15', reference: 'REP-2023-0007-01', status: 'SUCCESS', description: 'Installment 1 of 12' },
+  { id: 't4-r2', loanId: '4', loanNumber: 'BCL-2023-0007', loanType: 'PERSONAL', purpose: 'Tuition Fees', type: 'REPAYMENT', amount: 18_667, date: '2023-03-15', reference: 'REP-2023-0007-02', status: 'SUCCESS', description: 'Installment 2 of 12' },
+  { id: 't4-r3', loanId: '4', loanNumber: 'BCL-2023-0007', loanType: 'PERSONAL', purpose: 'Tuition Fees', type: 'REPAYMENT', amount: 18_667, date: '2023-04-15', reference: 'REP-2023-0007-03', status: 'FAILED', description: 'Installment 3 of 12' },
+].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
 // ── API functions ─────────────────────────────────────────────────────────────
 
 export function getLoanStats(): Promise<ApiResponse<LoanStats>> {
@@ -194,6 +225,27 @@ export function getLoanAgreement(_loanId: string): Promise<ApiResponse<{ html: s
 
 export function getLoanTerms(): Promise<ApiResponse<{ html: string }>> {
   return mockOk({ html: LOAN_TERMS_HTML })
+}
+
+export function getTransactions(params: {
+  page: number
+  pageSize: number
+  type?: TransactionType | null
+  dateFrom?: string | null
+  dateTo?: string | null
+}): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
+  let items = [...MOCK_TRANSACTIONS]
+  if (params.type) items = items.filter(t => t.type === params.type)
+  if (params.dateFrom) items = items.filter(t => t.date >= params.dateFrom!)
+  if (params.dateTo) items = items.filter(t => t.date <= params.dateTo!)
+  const start = (params.page - 1) * params.pageSize
+  return mockOk({
+    items: items.slice(start, start + params.pageSize),
+    total: items.length,
+    page: params.page,
+    pageSize: params.pageSize,
+    totalPages: Math.ceil(items.length / params.pageSize),
+  })
 }
 
 export function checkEligibility(): Promise<ApiResponse<LoanEligibility>> {

@@ -63,3 +63,19 @@ export interface LoanStats {
   totalBorrowed: number
   totalOutstanding: number
 }
+
+export type TransactionType = 'DISBURSEMENT' | 'REPAYMENT'
+
+export interface Transaction {
+  id: string
+  loanId: string
+  loanNumber: string
+  loanType: LoanType
+  purpose?: string
+  type: TransactionType
+  amount: number
+  date: string
+  reference: string
+  status: PaymentStatus
+  description: string
+}
