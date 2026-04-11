@@ -72,7 +72,20 @@ const newAdmin = ref({
 const adminRoleOptions = [
   { label: "Admin", value: "ADMIN" },
   { label: "Super Admin", value: "SUPER_ADMIN" },
+  { label: "Underwriter", value: "UNDERWRITER" },
+  { label: "Finance Officer", value: "FINANCE_OFFICER" },
+  { label: "Collections Officer", value: "COLLECTIONS_OFFICER" },
+  { label: "Support Agent", value: "SUPPORT_AGENT" },
 ];
+
+function formatRole(role: UserRole) {
+  if (role === "SUPER_ADMIN") return "Super Admin";
+  if (role === "UNDERWRITER") return "Underwriter";
+  if (role === "FINANCE_OFFICER") return "Finance Officer";
+  if (role === "COLLECTIONS_OFFICER") return "Collections Officer";
+  if (role === "SUPPORT_AGENT") return "Support Agent";
+  return "Admin";
+}
 
 function submitNewAdmin() {
   mockAdmins.value.unshift({
@@ -260,7 +273,7 @@ function cancelDeleteUser() {
                 </div>
               </td>
               <td class="px-6 py-4 font-medium text-slate-700">
-                {{ user.role === "SUPER_ADMIN" ? "Super Admin" : "Admin" }}
+                {{ formatRole(user.role) }}
               </td>
               <td class="px-6 py-4">
                 <span
@@ -382,7 +395,7 @@ function cancelDeleteUser() {
           <div class="flex items-center gap-2">
             <span
               class="text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded"
-              >{{ user.role === "SUPER_ADMIN" ? "Super Admin" : "Admin" }}</span
+              >{{ formatRole(user.role) }}</span
             >
             <span
               :class="[

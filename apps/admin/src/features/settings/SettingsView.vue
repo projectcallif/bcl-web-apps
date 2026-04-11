@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { AppTextInput, BaseButton, AppPasswordInput } from "@bcl/ui";
 import {
   User,
   Bell,
@@ -10,7 +9,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Camera,
+  FileKey,
 } from "lucide-vue-next";
+import type { LoanRuleConfig } from "@bcl/types";
+import ProfileTab from "./components/ProfileTab.vue";
+import SecurityTab from "./components/SecurityTab.vue";
+import LoanRulesTab from "./components/LoanRulesTab.vue";
+import NotificationsTab from "./components/NotificationsTab.vue";
 
 const activeTab = ref("profile");
 
@@ -27,8 +32,21 @@ const profileForm = ref({
 const tabs = [
   { id: "profile", label: "Profile Information", icon: User },
   { id: "security", label: "Security & Auth", icon: Shield },
+  { id: "loan-rules", label: "Loan Underwriting Rules", icon: FileKey },
   { id: "notifications", label: "Notifications", icon: Bell },
 ];
+
+const loanRules = ref<LoanRuleConfig>({
+  minAge: 18,
+  maxAge: 65,
+  requireBvn: true,
+  requireLocation: true,
+  requireVerifiedPhone: true,
+  requireGender: true,
+  requireDob: true,
+  requireUtilityBill: true,
+  requireEmploymentProof: true,
+});
 </script>
 
 <template>
@@ -122,110 +140,13 @@ const tabs = [
 
     <!-- Right content panel -->
     <div class="min-w-0">
-      <!-- Profile Tab -->
-      <div
-        v-if="activeTab === 'profile'"
-        class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-6 md:p-8"
-      >
-        <h2 class="text-lg font-bold text-slate-800 mb-6 tracking-tight">
-          Profile Information
-        </h2>
-
-        <form class="flex flex-col gap-6 max-w-2xl" @submit.prevent>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <AppTextInput
-              id="firstName"
-              v-model="profileForm.firstName"
-              label="First Name"
-            />
-            <AppTextInput
-              id="lastName"
-              v-model="profileForm.lastName"
-              label="Last Name"
-            />
-          </div>
-
-          <AppTextInput
-            id="email"
-            v-model="profileForm.email"
-            label="Email Address"
-            type="email"
-          />
-
-          <AppTextInput
-            id="phone"
-            v-model="profileForm.phone"
-            label="Phone Number"
-            type="tel"
-          />
-
-          <div class="pt-6 flex justify-end mt-2 border-t border-slate-100">
-            <BaseButton variant="primary">Save Changes</BaseButton>
-          </div>
-        </form>
-      </div>
-
-      <!-- Security Tab -->
-      <div
-        v-else-if="activeTab === 'security'"
-        class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-6 md:p-8"
-      >
-        <h2 class="text-lg font-bold text-slate-800 mb-2 tracking-tight">
-          Security & Authentication
-        </h2>
-        <p class="text-sm text-slate-500 mb-8 pb-6 border-b border-slate-100">
-          Ensure your account is using a long, random password to stay secure.
-        </p>
-
-        <form class="flex flex-col gap-5 max-w-lg" @submit.prevent>
-          <AppPasswordInput
-            id="currentPassword"
-            v-model="profileForm.currentPassword"
-            label="Current Password"
-            placeholder="Enter current password"
-          />
-          <AppPasswordInput
-            id="newPassword"
-            v-model="profileForm.newPassword"
-            label="New Password"
-            placeholder="Ensure it's at least 8 characters"
-          />
-          <AppPasswordInput
-            id="confirmPassword"
-            v-model="profileForm.confirmPassword"
-            label="Confirm New Password"
-            placeholder="Match your new password"
-          />
-
-          <div class="pt-6 flex justify-end mt-2">
-            <BaseButton variant="primary">Update Password</BaseButton>
-          </div>
-        </form>
-      </div>
-
-      <!-- Notifications Tab -->
-      <div
-        v-else-if="activeTab === 'notifications'"
-        class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-6 md:p-8"
-      >
-        <h2 class="text-lg font-bold text-slate-800 mb-2 tracking-tight">
-          Notification Preferences
-        </h2>
-        <p class="text-sm text-slate-500 mb-6">
-          Manage how you receive admin alerts and platform updates.
-        </p>
-
-        <div
-          class="flex items-center justify-center h-48 bg-slate-50 rounded-xl border border-slate-100 border-dashed"
-        >
-          <div class="text-center">
-            <Bell class="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p class="text-slate-500 text-sm">
-              Notification settings coming soon.
-            </p>
-          </div>
-        </div>
-      </div>
+      <ProfileTab v-if="activeTab === 'profile'" v-model="profileForm" />
+      <SecurityTab v-else-if="activeTab === 'security'" v-model="profileForm" />
+      <LoanRulesTab
+        v-else-if="activeTab === 'loan-rules'"
+        v-model="loanRules"
+      />
+      <NotificationsTab v-else-if="activeTab === 'notifications'" />
     </div>
   </div>
 </template>

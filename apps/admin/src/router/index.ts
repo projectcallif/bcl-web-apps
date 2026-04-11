@@ -17,6 +17,41 @@ const router = createRouter({
       component: DashboardView,
     },
     {
+      path: "/loans",
+      name: "loans",
+      component: () => import("../features/loans/LoansView.vue"),
+    },
+    {
+      path: "/loans/:id",
+      name: "admin-loan-detail",
+      component: () => import("../features/loans/AdminLoanDetailView.vue"),
+    },
+    {
+      path: "/collections",
+      name: "collections",
+      component: () => import("../features/collections/CollectionsView.vue"),
+    },
+    {
+      path: "/reports",
+      name: "reports",
+      component: () => import("../features/reports/ReportsView.vue"),
+    },
+    {
+      path: "/audit-logs",
+      name: "audit-logs",
+      component: () => import("../features/audit/AuditLogsView.vue"),
+    },
+    {
+      path: "/kyc",
+      name: "kyc",
+      component: () => import("../features/kyc/KycView.vue"),
+    },
+    {
+      path: "/kyc/:id",
+      name: "kyc-detail",
+      component: () => import("../features/kyc/KycDetailView.vue"),
+    },
+    {
       path: "/users",
       name: "users",
       component: () => import("../features/users/UsersView.vue"),

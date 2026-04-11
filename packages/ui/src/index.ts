@@ -24,3 +24,10 @@ export { default as AppDialog } from "./components/AppDialog.vue";
 export { default as AppConfirmDialog } from "./components/AppConfirmDialog.vue";
 
 export { default as AppPopover } from "./components/AppPopover.vue";
+
+export { default as AppProgressBar } from "./components/AppProgressBar.vue";
+
+export { default as AppSwitch } from "./components/AppSwitch.vue";
+
+export { default as AppDateRangePicker } from "./components/AppDateRangePicker.vue";
+export type { DateRange } from "./components/AppDateRangePicker.vue";

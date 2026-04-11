@@ -2,7 +2,8 @@
 import { ref, computed } from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/features/auth/store";
-import { BrandLogo } from "@bcl/ui";
+import { BrandLogo, AppDialog, BaseButton, AppPopover } from "@bcl/ui";
+import HeaderNotifications from "@/features/notifications/components/HeaderNotifications.vue";
 import {
   LayoutDashboard,
   Users,
@@ -10,8 +11,12 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   Shield,
+  Banknote,
+  ShieldCheck,
+  PhoneCall,
+  PieChart,
+  History,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -23,22 +28,34 @@ const isSidebarOpen = ref(false);
 
 const navItems = [
   { label: "Dashboard", routeName: "dashboard", icon: LayoutDashboard },
+  { label: "Loan Operations", routeName: "loans", icon: Banknote },
+  { label: "Collections", routeName: "collections", icon: PhoneCall },
+  { label: "KYC Operations", routeName: "kyc", icon: ShieldCheck },
   { label: "Users", routeName: "users", icon: Users },
   { label: "Administrators", routeName: "admins", icon: Shield },
+  { label: "Reports & Analytics", routeName: "reports", icon: PieChart },
+  { label: "Audit Logs", routeName: "audit-logs", icon: History },
   { label: "Settings", routeName: "settings", icon: SettingsIcon },
 ];
 
 function isActive(routeName: string) {
-  return route.name === routeName;
+  return route.name === routeName || String(route.path).includes(routeName);
 }
 
 function closeSidebar() {
   isSidebarOpen.value = false;
 }
 
-function handleLogout() {
+const isSignOutOpen = ref(false);
+
+function confirmSignOut() {
+  isSignOutOpen.value = true;
+}
+
+function executeSignOut() {
   authStore.logout();
   router.push({ name: "login" });
+  isSignOutOpen.value = false;
 }
 </script>
 
@@ -107,8 +124,8 @@ function handleLogout() {
         <!-- User Footer block -->
         <div class="p-4 border-t border-slate-800">
           <button
-            @click="handleLogout"
-            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors"
+            @click="confirmSignOut"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors cursor-pointer"
           >
             <LogOut class="w-5 h-5 shrink-0" />
             Sign Out
@@ -138,25 +155,45 @@ function handleLogout() {
 
           <!-- Header Actions -->
           <div class="flex items-center gap-4">
-            <button
-              class="relative text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-50"
-            >
-              <Bell class="w-5 h-5" />
-              <span
-                class="absolute top-1.25 right-1.25 w-2 h-2 bg-secondary-500 rounded-full border-2 border-white"
-              ></span>
-            </button>
+            <HeaderNotifications />
             <div class="h-6 w-px bg-slate-200"></div>
-            <div class="flex items-center gap-2.5">
-              <div
-                class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs ring-2 ring-primary-50"
-              >
-                SA
-              </div>
-              <span class="text-sm font-medium text-slate-700 hidden lg:block"
-                >Super Admin</span
-              >
-            </div>
+            <AppPopover>
+              <template #trigger>
+                <button
+                  class="flex items-center gap-2.5 hover:opacity-80 transition-opacity cursor-pointer text-left"
+                >
+                  <div
+                    class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs ring-2 ring-primary-50"
+                  >
+                    SA
+                  </div>
+                  <span
+                    class="text-sm font-medium text-slate-700 hidden lg:block"
+                    >Super Admin</span
+                  >
+                </button>
+              </template>
+              <template #content>
+                <div class="min-w-50 flex flex-col gap-1">
+                  <div class="px-3 py-2 border-b border-slate-100 mb-1">
+                    <p class="text-sm font-bold text-slate-800">Super Admin</p>
+                    <p class="text-xs text-slate-500">superadmin@bcl.com</p>
+                  </div>
+                  <button
+                    @click="router.push({ name: 'settings' })"
+                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <SettingsIcon class="w-4 h-4" /> Settings
+                  </button>
+                  <button
+                    @click="confirmSignOut"
+                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <LogOut class="w-4 h-4" /> Sign Out
+                  </button>
+                </div>
+              </template>
+            </AppPopover>
           </div>
         </header>
 
@@ -169,4 +206,22 @@ function handleLogout() {
       </div>
     </div>
   </template>
+
+  <AppDialog v-model="isSignOutOpen" title="Sign Out">
+    <div class="flex flex-col gap-4 mt-2 text-sm text-slate-600">
+      <p>Are you sure you want to sign out of your administrative session?</p>
+      <div class="flex justify-end gap-3 mt-4">
+        <BaseButton variant="ghost" @click="isSignOutOpen = false"
+          >Cancel</BaseButton
+        >
+        <BaseButton
+          variant="primary"
+          class="bg-red-600 hover:bg-red-700 border-none text-white"
+          @click="executeSignOut"
+        >
+          Confirm Sign Out
+        </BaseButton>
+      </div>
+    </div>
+  </AppDialog>
 </template>

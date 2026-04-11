@@ -1,28 +1,36 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from "vue";
 
-const isOpen = ref(false)
-const popoverRef = ref<HTMLElement | null>(null)
+const props = defineProps<{
+  contentClass?: string | string[] | Record<string, any>;
+}>();
+
+const isOpen = ref(false);
+const popoverRef = ref<HTMLElement | null>(null);
 
 function toggle() {
-  isOpen.value = !isOpen.value
+  isOpen.value = !isOpen.value;
 }
 
 function close() {
-  isOpen.value = false
+  isOpen.value = false;
 }
 
 // Global click outside handler
 onMounted(() => {
   const handleClick = (e: MouseEvent) => {
-    if (isOpen.value && popoverRef.value && !popoverRef.value.contains(e.target as Node)) {
-      close()
+    if (
+      isOpen.value &&
+      popoverRef.value &&
+      !popoverRef.value.contains(e.target as Node)
+    ) {
+      close();
     }
-  }
+  };
   // Use capturing phase so we can catch the click before elements unmount
-  document.addEventListener('click', handleClick, true)
-  onUnmounted(() => document.removeEventListener('click', handleClick, true))
-})
+  document.addEventListener("click", handleClick, true);
+  onUnmounted(() => document.removeEventListener("click", handleClick, true));
+});
 </script>
 
 <template>
@@ -30,7 +38,7 @@ onMounted(() => {
     <div @click="toggle" class="cursor-pointer inline-flex items-center">
       <slot name="trigger" :is-open="isOpen"></slot>
     </div>
-    
+
     <Transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="opacity-0 scale-95 -translate-y-2"
@@ -41,7 +49,10 @@ onMounted(() => {
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 min-w-[200px] z-50 bg-white rounded-xl shadow-xl shadow-slate-200/50 border border-slate-100 p-1.5 flex flex-col focus:outline-none origin-top-right"
+        :class="[
+          'absolute right-0 mt-2 min-w-[200px] z-50 bg-white shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col focus:outline-none origin-top-right p-1.5 rounded-xl',
+          props.contentClass
+        ]"
         @click.stop
       >
         <slot name="content" :close="close"></slot>

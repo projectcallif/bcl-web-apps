@@ -1,4 +1,4 @@
-export type LoanStatus = 'ACTIVE' | 'OVERDUE' | 'COMPLETED' | 'CLOSED'
+export type LoanStatus = 'PENDING' | 'REJECTED' | 'HALTED' | 'ACTIVE' | 'OVERDUE' | 'COMPLETED' | 'CLOSED'
 
 export type LoanType = 'PERSONAL' | 'BUSINESS' | 'EMERGENCY' | 'SALARY_ADVANCE'
 
@@ -64,6 +64,29 @@ export interface LoanStats {
   totalOutstanding: number
 }
 
+export interface LoanRuleConfig {
+  minAge: number
+  maxAge: number
+  requireBvn: boolean
+  requireLocation: boolean
+  requireVerifiedPhone: boolean
+  requireGender: boolean
+  requireDob: boolean
+  requireUtilityBill: boolean
+  requireEmploymentProof: boolean
+}
+
+export interface LoanApplication {
+  id: string
+  userId: string
+  amountRequested: number
+  tenorMonths: number
+  purpose: string
+  status: LoanStatus
+  appliedAt: string
+  rejectionReason?: string
+}
+
 export type TransactionType = 'DISBURSEMENT' | 'REPAYMENT'
 
 export interface Transaction {
@@ -78,4 +101,13 @@ export interface Transaction {
   reference: string
   status: PaymentStatus
   description: string
+}
+
+export interface CollectionLog {
+  id: string
+  loanId: string
+  officerId: string
+  date: string
+  note: string
+  method: "CALL" | "EMAIL" | "SMS" | "OTHER"
 }
