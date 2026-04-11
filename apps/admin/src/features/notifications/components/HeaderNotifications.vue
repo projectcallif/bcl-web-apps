@@ -88,7 +88,7 @@ function getIconCol(type: NotificationType) {
 <template>
   <AppPopover
     placement="bottom-end"
-    content-class="!w-80 flex flex-col bg-white rounded-xl shadow-lg border border-slate-100 max-h-[85vh] overflow-y-auto !p-0"
+    content-class="!w-70 sm:!w-80 md:!w-120 flex flex-col bg-white rounded-xl shadow-lg border border-slate-100 max-h-[85vh] overflow-y-auto !p-0"
   >
     <template #trigger>
       <button

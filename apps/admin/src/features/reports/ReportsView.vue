@@ -3,12 +3,17 @@ import { ref } from "vue";
 import {
   TrendingUp,
   Wallet,
-  ArrowUpRight,
-  ShieldCheck,
-  Users,
   Banknote,
   AlertTriangle,
+  Download,
+  Calendar,
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  CreditCard,
 } from "lucide-vue-next";
+import { AppTextInput, BaseButton, AppSelect } from "@bcl/ui";
 import DashboardStatCard from "@/features/dashboard/components/DashboardStatCard.vue";
 
 // Mock data spanning various analytics categories
@@ -31,7 +36,17 @@ const stats = ref({
     rejected: 89,
     growth: 4.2,
   },
+  collections: {
+    dueToday: 12400000,
+    overdue: 4500000,
+    failedDebits: 890000,
+    successRate: 92.4,
+  },
 });
+
+const filterDate = ref("");
+const searchQuery = ref("");
+const filterStatus = ref("");
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -44,6 +59,11 @@ function formatCurrency(n: number) {
 
 function calculatePercentage(part: number, total: number) {
   return Math.round((part / total) * 100);
+}
+
+function handleExport(format: "CSV" | "PDF" | "EXCEL") {
+  console.log(`Exporting report in ${format} format...`);
+  // Trigger download logic
 }
 </script>
 
@@ -58,19 +78,71 @@ function calculatePercentage(part: number, total: number) {
           Reports & Analytics
         </h1>
         <p class="text-sm text-slate-500 mt-1">
-          Platform-level financial metrics and pipeline health statistics.
+          Platform-level financial metrics and portfolio health statistics.
         </p>
       </div>
-      <div
-        class="inline-flex items-center gap-2 bg-white border border-slate-200 shadow-sm rounded-lg px-4 py-2 text-sm font-medium text-slate-600"
-      >
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        Live Data Synced
+
+      <div class="flex items-center gap-3">
+        <div
+          class="hidden md:flex items-center gap-2 bg-white border border-slate-200 shadow-sm rounded-lg px-3 py-1.5"
+        >
+          <Calendar class="w-4 h-4 text-slate-400" />
+          <input
+            type="date"
+            v-model="filterDate"
+            class="font-medium text-slate-600 focus:outline-none bg-transparent"
+          />
+        </div>
+
+        <div class="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
+
+        <div class="flex items-center gap-2">
+          <BaseButton
+            variant="ghost"
+            class="bg-white border border-slate-200 gap-1"
+            @click="handleExport('CSV')"
+          >
+            <Download class="w-3.5 h-3.5" /> <span>Export</span>
+          </BaseButton>
+        </div>
       </div>
     </div>
 
+    <!-- Quick Search & Filter Panel -->
+    <div
+      class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center"
+    >
+      <div class="relative flex-1 w-full">
+        <Search
+          class="absolute left-6 z-10 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+        />
+        <AppTextInput
+          id="reportSearch"
+          v-model="searchQuery"
+          placeholder="Search by customer, amount, or loan status..."
+          class="pl-10 w-full -ml-4"
+        />
+      </div>
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <AppSelect
+          id="statusFilter"
+          class="w-full md:w-48"
+          v-model="filterStatus"
+          :options="[
+            { label: 'All Statuses', value: '' },
+            { label: 'Active', value: 'ACTIVE' },
+            { label: 'Overdue', value: 'OVERDUE' },
+            { label: 'Completed', value: 'COMPLETED' },
+          ]"
+        />
+        <BaseButton variant="ghost" class="bg-slate-50 border border-slate-200">
+          <Filter class="w-4 h-4" />
+        </BaseButton>
+      </div>
+    </div>
+
+    <!-- Financial Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Stat Card 1 -->
       <DashboardStatCard
         title="Total Network Disbursed"
         :value="formatCurrency(stats.financial.totalDisbursed)"
@@ -83,7 +155,6 @@ function calculatePercentage(part: number, total: number) {
         </template>
       </DashboardStatCard>
 
-      <!-- Stat Card 2 -->
       <DashboardStatCard
         title="Total Principal Collected"
         :value="formatCurrency(stats.financial.totalCollected)"
@@ -94,7 +165,6 @@ function calculatePercentage(part: number, total: number) {
         </template>
       </DashboardStatCard>
 
-      <!-- Stat Card 3 -->
       <DashboardStatCard
         title="Total Outstanding Debt"
         :value="formatCurrency(stats.financial.totalOutstanding)"
@@ -104,6 +174,70 @@ function calculatePercentage(part: number, total: number) {
           <Banknote />
         </template>
       </DashboardStatCard>
+    </div>
+
+    <!-- Collections Overview (US-069) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div
+        class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1"
+      >
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          Due Today
+        </p>
+        <p class="text-2xl font-bold text-slate-800">
+          {{ formatCurrency(stats.collections.dueToday) }}
+        </p>
+        <div
+          class="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 w-fit px-2 py-0.5 rounded-full"
+        >
+          <CheckCircle2 class="w-3 h-3" /> Projected
+        </div>
+      </div>
+      <div
+        class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1"
+      >
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          Overdue
+        </p>
+        <p class="text-2xl font-bold text-rose-600">
+          {{ formatCurrency(stats.collections.overdue) }}
+        </p>
+        <div
+          class="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-rose-600 bg-rose-50 w-fit px-2 py-0.5 rounded-full"
+        >
+          <AlertTriangle class="w-3 h-3" /> Urgent Follow-up
+        </div>
+      </div>
+      <div
+        class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-1"
+      >
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          Failed Debits
+        </p>
+        <p class="text-2xl font-bold text-amber-600">
+          {{ formatCurrency(stats.collections.failedDebits) }}
+        </p>
+        <div
+          class="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-amber-600 bg-amber-50 w-fit px-2 py-0.5 rounded-full"
+        >
+          <XCircle class="w-3 h-3" /> System Retrying
+        </div>
+      </div>
+      <div
+        class="bg-slate-900 p-5 rounded-2xl shadow-lg flex flex-col gap-1 text-white"
+      >
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          Success Rate
+        </p>
+        <p class="text-3xl font-black text-emerald-400">
+          {{ stats.collections.successRate }}%
+        </p>
+        <div
+          class="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-emerald-400/80 bg-emerald-900/50 w-fit px-2 py-0.5 rounded-full"
+        >
+          <TrendingUp class="w-3 h-3" /> Above Target
+        </div>
+      </div>
     </div>
 
     <!-- Middle Grid: Composition Tracking -->
@@ -196,61 +330,44 @@ function calculatePercentage(part: number, total: number) {
         </div>
       </div>
 
-      <!-- KYC Pipeline Trends -->
+      <!-- Repayment & Recovery Trends (US-069) -->
       <div
-        class="bg-slate-800 md:p-8 p-6 rounded-2xl shadow-lg relative overflow-hidden"
+        class="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm flex flex-col"
       >
-        <div class="absolute opacity-5 -top-12 -right-12">
-          <ShieldCheck class="w-64 h-64 text-white" />
-        </div>
+        <h3
+          class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2"
+        >
+          <CreditCard class="w-5 h-5 text-indigo-500" />
+          Repayment Recovery Trends
+        </h3>
 
-        <div class="relative z-10 flex flex-col h-full justify-between">
-          <div>
-            <h3
-              class="text-lg font-bold text-white mb-2 flex items-center gap-2"
-            >
-              <Users class="w-5 h-5 text-primary-400" />
-              KYC Processing Volume
-            </h3>
-            <p class="text-sm text-slate-400 max-w-sm">
-              Tracking onboarding throughput and security clearance rates over
-              the current quarter.
-            </p>
-          </div>
-
-          <div class="grid grid-cols-2 mt-8 gap-x-8 gap-y-6">
-            <div class="border-l-2 border-primary-500 pl-4">
-              <p class="text-slate-400 text-sm font-medium mb-1">
-                Verified Users
-              </p>
-              <div class="flex items-end gap-3">
-                <p class="text-3xl font-bold text-white">
-                  {{ stats.kyc.approved.toLocaleString() }}
-                </p>
-                <span
-                  class="flex items-center text-xs font-bold text-emerald-400 pb-1.5 gap-0.5"
-                >
-                  <ArrowUpRight class="w-3 h-3" /> {{ stats.kyc.growth }}%
-                </span>
-              </div>
+        <div class="flex-1 flex flex-col justify-center gap-5">
+          <div
+            v-for="channel in [
+              { name: 'Auto-Debit (Mono)', success: 88, vol: 'N42M' },
+              { name: 'Manual Transfer', success: 64, vol: 'N18M' },
+              { name: 'Settlement Plan', success: 32, vol: 'N5.2M' },
+            ]"
+            :key="channel.name"
+            class="space-y-2"
+          >
+            <div class="flex items-center justify-between text-sm">
+              <span class="font-bold text-slate-700">{{ channel.name }}</span>
+              <span class="text-slate-500 font-medium"
+                >Vol:
+                <span class="text-slate-800">{{ channel.vol }}</span></span
+              >
             </div>
-
-            <div class="border-l-2 border-amber-500 pl-4">
-              <p class="text-slate-400 text-sm font-medium mb-1">
-                Action Required
-              </p>
-              <p class="text-3xl font-bold text-white">
-                {{ stats.kyc.pending }}
-              </p>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-indigo-500 rounded-full transition-all duration-700"
+                :style="{ width: channel.success + '%' }"
+              ></div>
             </div>
-
-            <div class="border-l-2 border-rose-500 pl-4 col-span-2">
-              <p class="text-slate-400 text-sm font-medium mb-1">
-                Suspended Profiles
-              </p>
-              <p class="text-3xl font-bold text-white">
-                {{ stats.kyc.rejected }}
-              </p>
+            <div class="flex justify-end">
+              <span class="text-[10px] font-black text-indigo-600 uppercase"
+                >{{ channel.success }}% Recovery</span
+              >
             </div>
           </div>
         </div>

@@ -27,6 +27,16 @@ const router = createRouter({
       component: () => import("../features/loans/AdminLoanDetailView.vue"),
     },
     {
+      path: "/loan-underwriting/:id",
+      name: "loan-underwriting",
+      component: () => import("../features/loans/UnderwritingReviewView.vue"),
+    },
+    {
+      path: "/failed-applications",
+      name: "failed-applications",
+      component: () => import("../features/loans/FailedApplicationsView.vue"),
+    },
+    {
       path: "/collections",
       name: "collections",
       component: () => import("../features/collections/CollectionsView.vue"),

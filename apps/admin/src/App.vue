@@ -17,6 +17,7 @@ import {
   PhoneCall,
   PieChart,
   History,
+  XCircle,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -29,6 +30,11 @@ const isSidebarOpen = ref(false);
 const navItems = [
   { label: "Dashboard", routeName: "dashboard", icon: LayoutDashboard },
   { label: "Loan Operations", routeName: "loans", icon: Banknote },
+  {
+    label: "Failed Applications",
+    routeName: "failed-applications",
+    icon: XCircle,
+  },
   { label: "Collections", routeName: "collections", icon: PhoneCall },
   { label: "KYC Operations", routeName: "kyc", icon: ShieldCheck },
   { label: "Users", routeName: "users", icon: Users },
