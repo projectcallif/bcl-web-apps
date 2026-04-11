@@ -187,16 +187,13 @@ function saveRules() {
           </div>
 
           <!-- Dynamic Custom Fields -->
-          <div>
+          <div v-if="modelValue.customFields?.length">
             <h3
               class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 mt-4"
             >
               Custom Data Fields
             </h3>
-            <div
-              v-if="modelValue.customFields?.length"
-              class="mt-4 flex flex-col gap-3"
-            >
+            <div class="mt-4 flex flex-col gap-3">
               <div
                 v-for="field in modelValue.customFields"
                 :key="field.id"

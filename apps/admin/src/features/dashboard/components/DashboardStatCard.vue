@@ -63,7 +63,7 @@ function getBadgeClasses(variant: string) {
         getVariantClasses(variant).circle,
       ]"
     ></div>
-    <div class="relative z-10 flex items-start justify-between mb-4">
+    <div class="relative flex items-start justify-between mb-4">
       <div
         :class="[
           'w-12 h-12 rounded-xl flex items-center justify-center [&>svg]:w-6 [&>svg]:h-6',
@@ -82,7 +82,7 @@ function getBadgeClasses(variant: string) {
         {{ badgeText }}
       </span>
     </div>
-    <div class="relative z-10">
+    <div class="relative">
       <h3 class="text-sm font-medium text-slate-500 mb-1">{{ title }}</h3>
       <p class="text-3xl font-bold text-slate-800">{{ value }}</p>
     </div>
