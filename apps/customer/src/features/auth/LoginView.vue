@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AppTextInput, AppPasswordInput, BaseButton } from '@bcl/ui'
+import { AppTextInput, AppPasswordInput, BaseButton, BrandLogo } from '@bcl/ui'
 import { ApiClientError } from '@bcl/types'
 import { useAuthStore } from './store'
 
@@ -20,42 +20,38 @@ async function handleSubmit(): Promise<void> {
     await authStore.login({ identifier: identifier.value, password: password.value })
     await router.push({ name: 'dashboard' })
   } catch (err) {
-    formError.value = err instanceof ApiClientError
-      ? err.message
-      : 'Something went wrong. Please try again.'
+    formError.value =
+      err instanceof ApiClientError ? err.message : 'Something went wrong. Please try again.'
   } finally {
     isLoading.value = false
   }
 }
 
 function _debugPrefill() {
-  identifier.value = 'user40@bcl.com';
+  identifier.value = 'user40@bcl.com'
   password.value = 'Password@1'
 }
-
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-primary-50 to-slate-100 px-4 py-12">
-
+  <div
+    class="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-primary-50 to-slate-100 px-4 py-12"
+  >
     <div class="w-full max-w-md">
-
       <!-- Brand mark -->
       <div class="mb-8 text-center">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary shadow-lg shadow-primary/30 mb-4">
-          <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-1 14H9V8h2v8Zm4 0h-2V8h2v8Z"/>
-          </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-800 tracking-tight" @dblclick="_debugPrefill">Welcome back</h1>
+        <BrandLogo class="mb-4" size="lg" />
+        <h1 class="text-2xl font-bold text-slate-800 tracking-tight" @dblclick="_debugPrefill">
+          Welcome back
+        </h1>
         <p class="mt-1 text-sm text-slate-500">Sign in to your BCL account</p>
       </div>
 
       <!-- Card -->
-      <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 px-8 py-8">
-
+      <div
+        class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 px-8 py-8"
+      >
         <form class="flex flex-col gap-5" @submit.prevent="handleSubmit">
-
           <!-- Email / Phone -->
           <AppTextInput
             id="identifier"
@@ -110,7 +106,6 @@ function _debugPrefill() {
           >
             Sign in
           </BaseButton>
-
         </form>
 
         <!-- Divider -->
@@ -135,14 +130,12 @@ function _debugPrefill() {
             Create one
           </RouterLink>
         </p>
-
       </div>
 
       <!-- Footer note -->
       <p class="mt-6 text-center text-xs text-slate-400">
         Protected by BCL's secure authentication
       </p>
-
     </div>
   </div>
 </template>
