@@ -52,21 +52,21 @@ function goBack() { store.prevStep() }
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="bg-primary-50 rounded-xl p-4 text-center">
             <Banknote class="w-6 h-6 text-primary mx-auto mb-2" />
             <p class="text-xs text-slate-500 mb-1">Max Loan Amount</p>
-            <p class="text-lg font-bold text-primary">{{ formatCurrency(store.eligibility.maxAmount) }}</p>
+            <p class="text-base sm:text-lg font-bold text-primary">{{ formatCurrency(store.eligibility.maxAmount) }}</p>
           </div>
           <div class="bg-slate-50 rounded-xl p-4 text-center">
             <TrendingUp class="w-6 h-6 text-green-600 mx-auto mb-2" />
             <p class="text-xs text-slate-500 mb-1">Credit Score</p>
-            <p class="text-lg font-bold text-green-700">724 <span class="text-xs font-normal text-green-600">Good</span></p>
+            <p class="text-base sm:text-lg font-bold text-green-700">724 <span class="text-xs font-normal text-green-600">Good</span></p>
           </div>
           <div class="bg-slate-50 rounded-xl p-4 text-center">
             <ShieldCheck class="w-6 h-6 text-tertiary mx-auto mb-2" />
             <p class="text-xs text-slate-500 mb-1">Available Tenors</p>
-            <p class="text-lg font-bold text-slate-700">{{ store.eligibility.availableTenors.length }}</p>
+            <p class="text-base sm:text-lg font-bold text-slate-700">{{ store.eligibility.availableTenors.length }}</p>
           </div>
         </div>
 

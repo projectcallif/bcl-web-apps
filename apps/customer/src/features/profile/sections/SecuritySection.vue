@@ -77,8 +77,8 @@ const showCloseConfirm = ref(false)
       />
     </div>
 
-    <div class="mt-6 flex justify-end">
-      <BaseButton variant="primary" size="lg" :disabled="!canSave || saving" @click="savePassword">
+    <div class="mt-6 flex justify-stretch sm:justify-end">
+      <BaseButton class="w-full sm:w-auto" variant="primary" size="lg" :disabled="!canSave || saving" @click="savePassword">
         {{ saving ? 'Saving…' : 'Update Password' }}
       </BaseButton>
     </div>
@@ -86,7 +86,7 @@ const showCloseConfirm = ref(false)
     <!-- Password tips -->
     <div class="mt-6 pt-5 border-t border-slate-100">
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Password Tips</p>
-      <ul class="space-y-1.5 text-xs text-slate-400">
+      <ul class="space-y-1.5 text-xs text-slate-400 text-left">
         <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-slate-300 shrink-0" />At least 8 characters long</li>
         <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-slate-300 shrink-0" />Mix of uppercase, lowercase, numbers and symbols</li>
         <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-slate-300 shrink-0" />Avoid using your name or date of birth</li>
@@ -108,8 +108,8 @@ const showCloseConfirm = ref(false)
     </div>
 
     <div class="bg-red-50 border border-red-200 rounded-xl p-5 mb-6">
-      <p class="text-sm font-semibold text-red-700 mb-3">Before you proceed, please note:</p>
-      <ul class="space-y-2 text-sm text-red-600">
+      <p class="text-sm font-semibold text-red-700 mb-3 text-left">Before you proceed, please note:</p>
+      <ul class="space-y-2 text-sm text-red-600 text-left">
         <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />All outstanding loan balances must be fully repaid before closure.</li>
         <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />Your account data will be retained for 7 years as required by Nigerian law.</li>
         <li class="flex items-start gap-2"><span class="mt-1 w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />You will lose access to your loan history, statements, and documents.</li>
@@ -127,22 +127,22 @@ const showCloseConfirm = ref(false)
     </div>
 
     <div v-else class="space-y-4">
-      <p class="text-sm text-slate-600">Type <strong class="font-mono text-red-600">CLOSE MY ACCOUNT</strong> to confirm:</p>
+      <p class="text-sm text-slate-600 text-left">Type <strong class="font-mono text-red-600">CLOSE MY ACCOUNT</strong> to confirm:</p>
       <input
         v-model="closeConfirm"
         type="text"
         placeholder="CLOSE MY ACCOUNT"
         class="w-full rounded-xl border border-input-border px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400 transition-colors font-mono"
       />
-      <div class="flex gap-3">
+      <div class="flex flex-col sm:flex-row gap-3">
         <button
-          class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          class="order-2 sm:order-1 flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
           @click="showCloseConfirm = false; closeConfirm = ''"
         >
           Cancel
         </button>
         <button
-          class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
+          class="order-1 sm:order-2 flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
           :class="closeConfirm === 'CLOSE MY ACCOUNT' ? 'bg-red-500 hover:bg-red-600 cursor-pointer' : 'bg-red-200 cursor-not-allowed'"
           :disabled="closeConfirm !== 'CLOSE MY ACCOUNT'"
         >

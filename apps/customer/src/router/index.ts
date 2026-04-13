@@ -11,6 +11,26 @@ const router = createRouter({
       component: () => import('../features/auth/LoginView.vue'),
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('../features/auth/RegisterView.vue'),
+    },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../features/auth/ForgotPasswordView.vue'),
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('../features/auth/ResetPasswordView.vue'),
+    },
+    {
+      path: '/verify-email',
+      name: 'verify-email',
+      component: () => import('../features/auth/VerifyEmailView.vue'),
+    },
+    {
       path: '/',
       component: DashboardLayout,
       meta: { requiresAuth: true },

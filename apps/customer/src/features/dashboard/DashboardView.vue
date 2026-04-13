@@ -48,20 +48,48 @@ const activeLoan: Loan = {
 }
 
 const recentPayments: LoanPayment[] = [
-  { id: '1', loanId: '1', amount: 46_667, paidAt: '2026-03-15', reference: 'PAY-20260315-001', status: 'SUCCESS' },
-  { id: '2', loanId: '1', amount: 46_667, paidAt: '2026-02-15', reference: 'PAY-20260215-001', status: 'SUCCESS' },
-  { id: '3', loanId: '1', amount: 46_667, paidAt: '2026-01-15', reference: 'PAY-20260115-001', status: 'SUCCESS' },
-  { id: '4', loanId: '1', amount: 46_667, paidAt: '2025-12-15', reference: 'PAY-20251215-001', status: 'SUCCESS' },
+  {
+    id: '1',
+    loanId: '1',
+    amount: 46_667,
+    paidAt: '2026-03-15',
+    reference: 'PAY-20260315-001',
+    status: 'SUCCESS',
+  },
+  {
+    id: '2',
+    loanId: '1',
+    amount: 46_667,
+    paidAt: '2026-02-15',
+    reference: 'PAY-20260215-001',
+    status: 'SUCCESS',
+  },
+  {
+    id: '3',
+    loanId: '1',
+    amount: 46_667,
+    paidAt: '2026-01-15',
+    reference: 'PAY-20260115-001',
+    status: 'SUCCESS',
+  },
+  {
+    id: '4',
+    loanId: '1',
+    amount: 46_667,
+    paidAt: '2025-12-15',
+    reference: 'PAY-20251215-001',
+    status: 'SUCCESS',
+  },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const repaymentProgress = computed(() =>
-  Math.round((activeLoan.amountPaid / activeLoan.totalAmount) * 100)
+  Math.round((activeLoan.amountPaid / activeLoan.totalAmount) * 100),
 )
 
 const paymentsMade = computed(() =>
-  Math.round(activeLoan.amountPaid / activeLoan.nextRepaymentAmount)
+  Math.round(activeLoan.amountPaid / activeLoan.nextRepaymentAmount),
 )
 
 function formatCurrency(amount: number): string {
@@ -93,6 +121,9 @@ const loanTypeLabel: Record<LoanType, string> = {
 }
 
 const statusDotColor: Record<LoanStatus, string> = {
+  PENDING: 'bg-amber-400',
+  REJECTED: 'bg-rose-600',
+  HALTED: 'bg-rose-500',
   ACTIVE: 'bg-green-400',
   OVERDUE: 'bg-red-400',
   COMPLETED: 'bg-blue-400',
@@ -100,13 +131,19 @@ const statusDotColor: Record<LoanStatus, string> = {
 }
 
 const statusLabel: Record<LoanStatus, string> = {
+  PENDING: 'Reviewing',
+  REJECTED: 'Rejected',
+  HALTED: 'Suspended',
   ACTIVE: 'Active',
   OVERDUE: 'Overdue',
   COMPLETED: 'Completed',
   CLOSED: 'Closed',
 }
 
-const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: string; icon: typeof CheckCircle2 }> = {
+const paymentStatusConfig: Record<
+  PaymentStatus,
+  { label: string; classes: string; icon: typeof CheckCircle2 }
+> = {
   SUCCESS: { label: 'Successful', classes: 'bg-green-100 text-green-700', icon: CheckCircle2 },
   PENDING: { label: 'Pending', classes: 'bg-amber-100 text-amber-700', icon: Clock },
   FAILED: { label: 'Failed', classes: 'bg-red-100 text-red-700', icon: XCircle },
@@ -114,8 +151,7 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-6">
-
+  <div class="space-y-6">
     <!-- Page header -->
     <div>
       <h1 class="text-2xl font-bold text-slate-800">{{ greeting }}, {{ firstName }}</h1>
@@ -125,8 +161,12 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
     <!-- Active Loan Card -->
     <div class="relative bg-primary rounded-2xl p-6 overflow-hidden text-white">
       <!-- Decorative circles -->
-      <div class="absolute -right-12 -top-12 w-52 h-52 rounded-full bg-white/5 pointer-events-none" />
-      <div class="absolute right-6 -bottom-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
+      <div
+        class="absolute -right-12 -top-12 w-52 h-52 rounded-full bg-white/5 pointer-events-none"
+      />
+      <div
+        class="absolute right-6 -bottom-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none"
+      />
 
       <!-- Header row -->
       <div class="relative flex items-center justify-between mb-6">
@@ -144,7 +184,9 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
       <!-- Outstanding balance -->
       <div class="relative mb-5">
         <div class="flex items-center gap-2 mb-1">
-          <p class="text-xs font-medium text-white/50 uppercase tracking-wider">Outstanding Balance</p>
+          <p class="text-xs font-medium text-white/50 uppercase tracking-wider">
+            Outstanding Balance
+          </p>
           <button
             class="text-white/40 hover:text-white/80 transition-colors"
             :aria-label="balanceVisible ? 'Hide balance' : 'Show balance'"
@@ -175,7 +217,9 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
       </div>
 
       <!-- Metrics -->
-      <div class="relative grid grid-cols-3 gap-4 pt-5 border-t border-white/15">
+      <div
+        class="relative grid grid-cols-1 sm:grid-cols-3 gap-y-4 sm:gap-4 pt-5 border-t border-white/15"
+      >
         <div>
           <p class="text-xs text-white/50 mb-1">Total Loan</p>
           <p class="text-sm font-semibold">{{ formatCurrency(activeLoan.totalAmount) }}</p>
@@ -192,8 +236,7 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
     </div>
 
     <!-- Quick cards -->
-    <div class="grid grid-cols-3 gap-4">
-
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Next Due Payment -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-5">
         <div class="flex items-center justify-between mb-4">
@@ -215,7 +258,9 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
       </div>
 
       <!-- Apply for New Loan -->
-      <div class="bg-gradient-to-br from-primary-50 to-tertiary-50 rounded-2xl border border-primary-100 p-5 flex flex-col">
+      <div
+        class="bg-linear-to-br from-primary-50 to-tertiary-50 rounded-2xl border border-primary-100 p-5 flex flex-col"
+      >
         <div class="flex items-center justify-between mb-4">
           <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">New Loan</p>
           <div class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -241,7 +286,9 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
           </div>
         </div>
         <p class="text-2xl font-bold text-slate-800 mb-1">{{ repaymentProgress }}%</p>
-        <p class="text-sm text-slate-500">{{ paymentsMade }} of {{ activeLoan.tenorMonths }} payments made</p>
+        <p class="text-sm text-slate-500">
+          {{ paymentsMade }} of {{ activeLoan.tenorMonths }} payments made
+        </p>
         <div class="mt-4 h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <div
             class="h-full bg-primary rounded-full transition-all duration-700"
@@ -256,7 +303,9 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50">
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
         <h2 class="text-sm font-semibold text-slate-700">Recent Payments</h2>
-        <button class="flex items-center gap-0.5 text-xs font-medium text-primary hover:text-primary-800 transition-colors">
+        <button
+          class="flex items-center gap-0.5 text-xs font-medium text-primary hover:text-primary-800 transition-colors"
+        >
           View all <ChevronRight class="w-3.5 h-3.5" />
         </button>
       </div>
@@ -294,6 +343,5 @@ const paymentStatusConfig: Record<PaymentStatus, { label: string; classes: strin
         </div>
       </div>
     </div>
-
   </div>
 </template>

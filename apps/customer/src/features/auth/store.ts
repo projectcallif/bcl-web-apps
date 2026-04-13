@@ -1,7 +1,11 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { User, LoginPayload } from '@bcl/types'
-import { login as loginApi } from './api'
+import type { User, LoginPayload, RegisterPayload, VerifyEmailPayload } from '@bcl/types'
+import {
+  login as loginApi,
+  register as registerApi,
+  verifyEmail as verifyEmailApi,
+} from './api'
 
 const TOKEN_KEY = 'bcl_customer_token'
 
@@ -22,6 +26,24 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(TOKEN_KEY, response.data.accessToken)
   }
 
+  /**
+   * Create a new account.
+   */
+  async function register(payload: RegisterPayload): Promise<void> {
+    // Just call the API to create the account. Verification happens next.
+    await registerApi(payload)
+  }
+
+  /**
+   * Verify email with OTP code.
+   */
+  async function verifyEmail(payload: VerifyEmailPayload): Promise<void> {
+    const response = await verifyEmailApi(payload)
+    token.value = response.data.accessToken
+    user.value = response.data.user
+    localStorage.setItem(TOKEN_KEY, response.data.accessToken)
+  }
+
   function logout(): void {
     token.value = null
     user.value = null
@@ -33,6 +55,8 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     login,
+    register,
+    verifyEmail,
     logout,
   }
 })

@@ -25,10 +25,13 @@ const loanTypeLabel: Record<LoanType, string> = {
 }
 
 const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: string }> = {
-  ACTIVE:    { label: 'Active',    dot: 'bg-green-500',  badge: 'bg-green-100 text-green-700' },
-  OVERDUE:   { label: 'Overdue',   dot: 'bg-red-500',    badge: 'bg-red-100 text-red-700' },
-  COMPLETED: { label: 'Completed', dot: 'bg-blue-500',   badge: 'bg-blue-100 text-blue-700' },
-  CLOSED:    { label: 'Closed',    dot: 'bg-slate-400',  badge: 'bg-slate-100 text-slate-600' },
+  PENDING: { label: 'Reviewing', dot: 'bg-amber-400', badge: 'bg-amber-100 text-amber-700' },
+  REJECTED: { label: 'Rejected', dot: 'bg-rose-500', badge: 'bg-rose-100 text-rose-700' },
+  HALTED: { label: 'Suspended', dot: 'bg-slate-500', badge: 'bg-slate-100 text-slate-700' },
+  ACTIVE: { label: 'Active', dot: 'bg-green-500', badge: 'bg-green-100 text-green-700' },
+  OVERDUE: { label: 'Overdue', dot: 'bg-red-500', badge: 'bg-red-100 text-red-700' },
+  COMPLETED: { label: 'Completed', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
+  CLOSED: { label: 'Closed', dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600' },
 }
 </script>
 

@@ -101,22 +101,22 @@ function goBack() { store.prevStep() }
     </div>
 
     <!-- Confirmation -->
-    <div v-if="canProceed" class="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-5 text-sm">
+    <div v-if="canProceed" class="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-5 text-sm overflow-hidden">
       <p class="font-semibold text-slate-600 mb-2 text-xs uppercase tracking-wider">Confirm Disbursement Details</p>
       <div class="space-y-1.5 text-sm">
-        <div class="flex justify-between">
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
           <span class="text-slate-500">Bank</span>
           <span class="font-medium text-slate-800">{{ bankName }}</span>
         </div>
-        <div class="flex justify-between">
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
           <span class="text-slate-500">Account Number</span>
           <span class="font-medium text-slate-800 font-mono">{{ accountNumber }}</span>
         </div>
-        <div class="flex justify-between">
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
           <span class="text-slate-500">Account Name</span>
           <span class="font-medium text-slate-800">{{ accountName }}</span>
         </div>
-        <div class="flex justify-between pt-1.5 border-t border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:justify-between gap-1 pt-1.5 border-t border-slate-200">
           <span class="text-slate-500">Loan Amount</span>
           <span class="font-bold text-primary">
             {{ new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(store.selectedAmount) }}

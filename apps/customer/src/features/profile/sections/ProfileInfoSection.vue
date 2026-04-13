@@ -68,7 +68,7 @@ const TITLES: Record<typeof props.activeSub, string> = {
           { label: 'Date of Birth',   value: formatDate(p?.dateOfBirth) },
           { label: 'Gender',          value: label(p?.gender) },
           { label: 'Marital Status',  value: label(p?.maritalStatus) },
-        ]" :key="row.label" class="flex items-center justify-between py-3.5">
+        ]" :key="row.label" class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3.5 gap-1 sm:gap-4">
           <span class="text-sm text-slate-500">{{ row.label }}</span>
           <span class="text-sm font-medium text-slate-800">{{ row.value ?? '—' }}</span>
         </div>
@@ -85,7 +85,7 @@ const TITLES: Record<typeof props.activeSub, string> = {
           { label: 'Sector',           value: mockEmployment.sector },
           { label: 'Monthly Income',   value: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(mockEmployment.monthlyIncome) },
           { label: 'Work City',        value: mockEmployment.workCity },
-        ]" :key="row.label" class="flex items-center justify-between py-3.5">
+        ]" :key="row.label" class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3.5 gap-1 sm:gap-4">
           <span class="text-sm text-slate-500">{{ row.label }}</span>
           <span class="text-sm font-medium text-slate-800">{{ row.value }}</span>
         </div>
@@ -104,7 +104,7 @@ const TITLES: Record<typeof props.activeSub, string> = {
           { label: 'City',            value: p?.city },
           { label: 'State',           value: p?.state },
           { label: 'Country',         value: p?.country },
-        ]" :key="row.label" class="flex items-center justify-between py-3.5">
+        ]" :key="row.label" class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3.5 gap-1 sm:gap-4">
           <span class="text-sm text-slate-500">{{ row.label }}</span>
           <span class="text-sm font-medium text-slate-800">{{ row.value ?? '—' }}</span>
         </div>
@@ -121,7 +121,7 @@ const TITLES: Record<typeof props.activeSub, string> = {
             { label: 'Account Number',  value: mockBank.accountNumber },
             { label: 'Account Name',    value: mockBank.accountName.value },
             { label: 'Account Type',    value: mockBank.accountType },
-          ]" :key="row.label" class="flex items-center justify-between py-3">
+          ]" :key="row.label" class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 gap-1 sm:gap-4">
             <span class="text-sm text-slate-500">{{ row.label }}</span>
             <span class="text-sm font-semibold text-slate-800 font-mono">{{ row.value }}</span>
           </div>

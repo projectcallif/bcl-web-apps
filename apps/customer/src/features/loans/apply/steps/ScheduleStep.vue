@@ -12,7 +12,7 @@ const schedule = computed((): RepaymentScheduleItem[] => {
   if (!selectedAmount || !selectedTenorMonths) return []
 
   const monthlyInterest = Math.round(selectedAmount * (selectedInterestRatePerMonth / 100))
-  const monthlyPrincipal = Math.round(selectedAmount / selectedTenorMonths)
+  const monthlyPrincipal = Math.floor(selectedAmount / selectedTenorMonths)
 
   return Array.from({ length: selectedTenorMonths }, (_, i) => {
     const n = i + 1
@@ -20,12 +20,12 @@ const schedule = computed((): RepaymentScheduleItem[] => {
     due.setMonth(due.getMonth() + n)
     return {
       installmentNumber: n,
-      dueDate: due.toISOString().split('T')[0],
+      dueDate: due.toISOString().split('T')[0] || '',
       principal: monthlyPrincipal,
       interest: monthlyInterest,
       totalAmount: monthlyPayment,
       balance: Math.max(0, selectedAmount + monthlyInterest * selectedTenorMonths - monthlyPayment * n),
-      status: 'UPCOMING' as const,
+      status: 'UPCOMING',
     }
   })
 })
