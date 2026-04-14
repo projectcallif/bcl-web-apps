@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { BaseButton, AppTextArea } from "@bcl/ui";
+import { BaseButton, AppRichTextEditor } from "@bcl/ui";
 import { FileText, Save, History } from "lucide-vue-next";
 
 const disclosureText = ref(
@@ -56,11 +56,10 @@ function saveDisclosure() {
           This text appears when users first register or apply for their first
           loan.
         </p>
-        <AppTextArea
+        <AppRichTextEditor
           id="disclosureText"
           v-model="disclosureText"
           placeholder="Enter disclosure text..."
-          :rows="6"
         />
       </div>
 
@@ -74,11 +73,10 @@ function saveDisclosure() {
           Detailed legal agreement available for download or viewing before
           disbursal.
         </p>
-        <AppTextArea
+        <AppRichTextEditor
           id="termsAndConditions"
           v-model="termsAndConditions"
           placeholder="Enter terms and conditions..."
-          :rows="12"
         />
       </div>
 
