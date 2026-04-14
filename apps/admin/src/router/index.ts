@@ -39,17 +39,20 @@ const router = createRouter({
         {
           path: "loan-underwriting/:id",
           name: "loan-underwriting",
-          component: () => import("../features/loans/UnderwritingReviewView.vue"),
+          component: () =>
+            import("../features/loans/UnderwritingReviewView.vue"),
         },
         {
           path: "failed-applications",
           name: "failed-applications",
-          component: () => import("../features/loans/FailedApplicationsView.vue"),
+          component: () =>
+            import("../features/loans/FailedApplicationsView.vue"),
         },
         {
           path: "collections",
           name: "collections",
-          component: () => import("../features/collections/CollectionsView.vue"),
+          component: () =>
+            import("../features/collections/CollectionsView.vue"),
         },
         {
           path: "reports",
@@ -72,9 +75,15 @@ const router = createRouter({
           component: () => import("../features/kyc/KycDetailView.vue"),
         },
         {
-          path: "users",
-          name: "users",
-          component: () => import("../features/users/UsersView.vue"),
+          path: "customers",
+          name: "customers",
+          component: () => import("../features/customers/CustomersView.vue"),
+        },
+        {
+          path: "customers/:id",
+          name: "customer-detail",
+          component: () =>
+            import("../features/customers/CustomerDetailView.vue"),
         },
         {
           path: "admins",

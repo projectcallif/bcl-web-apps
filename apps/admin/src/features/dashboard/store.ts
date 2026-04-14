@@ -2,14 +2,14 @@ import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 
 export const useDashboardStore = defineStore("dashboard", () => {
-  const totalUsers = ref(0);
-  const activeUsers = ref(0);
-  const inactiveUsers = computed(() => totalUsers.value - activeUsers.value);
+  const totalCustomers = ref(0);
+  const activeCustomers = ref(0);
+  const inactiveCustomers = computed(() => totalCustomers.value - activeCustomers.value);
 
   function setStats(total: number, active: number) {
-    totalUsers.value = total;
-    activeUsers.value = active;
+    totalCustomers.value = total;
+    activeCustomers.value = active;
   }
 
-  return { totalUsers, activeUsers, inactiveUsers, setStats };
+  return { totalCustomers, activeCustomers, inactiveCustomers, setStats };
 });

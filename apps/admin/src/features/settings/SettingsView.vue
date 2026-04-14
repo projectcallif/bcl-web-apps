@@ -11,6 +11,7 @@ import {
   FileKey,
   FileText,
   Bell,
+  Terminal,
 } from "lucide-vue-next";
 import type { LoanRuleConfig } from "@bcl/types";
 import ProfileTab from "./components/ProfileTab.vue";
@@ -18,6 +19,7 @@ import SecurityTab from "./components/SecurityTab.vue";
 import LoanRulesTab from "./components/LoanRulesTab.vue";
 import DisclosureTab from "./components/DisclosureTab.vue";
 import NotificationsTab from "./components/NotificationsTab.vue";
+import DevToolsTab from "./components/DevToolsTab.vue";
 
 const activeTab = ref("profile");
 
@@ -37,6 +39,7 @@ const tabs = [
   { id: "loan-rules", label: "Loan Underwriting Rules", icon: FileKey },
   { id: "disclosure", label: "Disclosure Configuration", icon: FileText },
   { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "dev-tools", label: "Developer Tools", icon: Terminal },
 ];
 
 const loanRules = ref<LoanRuleConfig>({
@@ -151,6 +154,7 @@ const loanRules = ref<LoanRuleConfig>({
       />
       <DisclosureTab v-else-if="activeTab === 'disclosure'" />
       <NotificationsTab v-else-if="activeTab === 'notifications'" />
+      <DevToolsTab v-else-if="activeTab === 'dev-tools'" />
     </div>
   </div>
 </template>

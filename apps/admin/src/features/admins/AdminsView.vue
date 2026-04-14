@@ -9,7 +9,7 @@ import {
   AppPopover,
   AppDialog,
 } from "@bcl/ui";
-import { Filter, MoreVertical, ShieldAlert, Trash2 } from "lucide-vue-next";
+import { Filter, MoreVertical, ShieldAlert, Trash2, ArrowRightLeft } from "lucide-vue-next";
 import type { UserStatus, UserRole } from "@bcl/types";
 
 const searchQuery = ref("");
@@ -164,6 +164,56 @@ function cancelStatusChange() {
   pendingStatusChange.value = null;
 }
 
+// ROLE CHANGE
+const targetUserForRole = ref<MockAdmin | null>(null);
+const targetRoleSelection = ref<UserRole | "">("");
+const isRoleModalOpen = ref(false);
+
+function openRoleDialog(user: MockAdmin) {
+  targetUserForRole.value = user;
+  targetRoleSelection.value = user.role;
+  isRoleModalOpen.value = true;
+}
+
+const pendingRoleChange = ref<{
+  user: MockAdmin;
+  newRole: UserRole;
+} | null>(null);
+const isRoleConfirmOpen = ref(false);
+
+function continueToRoleConfirm() {
+  if (targetUserForRole.value && targetRoleSelection.value) {
+    if (targetUserForRole.value.role === targetRoleSelection.value) {
+      isRoleModalOpen.value = false;
+      return;
+    }
+    pendingRoleChange.value = {
+      user: targetUserForRole.value,
+      newRole: targetRoleSelection.value as UserRole,
+    };
+    isRoleModalOpen.value = false;
+    isRoleConfirmOpen.value = true;
+  }
+}
+
+function confirmRoleChange() {
+  if (pendingRoleChange.value) {
+    const target = mockAdmins.value.find(
+      (u) => u.id === pendingRoleChange.value!.user.id,
+    );
+    if (target) {
+      target.role = pendingRoleChange.value.newRole;
+    }
+  }
+  isRoleConfirmOpen.value = false;
+  pendingRoleChange.value = null;
+}
+
+function cancelRoleChange() {
+  isRoleConfirmOpen.value = false;
+  pendingRoleChange.value = null;
+}
+
 // DELETE
 const pendingDeleteUser = ref<MockAdmin | null>(null);
 const isDeleteConfirmOpen = ref(false);
@@ -311,6 +361,16 @@ function cancelDeleteUser() {
                       >
                         <ShieldAlert class="w-4 h-4 text-slate-400" />
                         Update Status
+                      </button>
+                      <button
+                        @click="
+                          openRoleDialog(user);
+                          close();
+                        "
+                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                      >
+                        <ArrowRightLeft class="w-4 h-4 text-slate-400" />
+                        Change Role
                       </button>
                       <button
                         @click="
@@ -505,6 +565,46 @@ function cancelDeleteUser() {
         </BaseButton>
       </template>
     </AppDialog>
+
+    <!-- Role Modal -->
+    <AppDialog v-model="isRoleModalOpen" title="Update Admin Role" max-width="sm">
+      <div v-if="targetUserForRole" class="space-y-4">
+        <p class="text-sm text-slate-600">
+          Select a new role for
+          <span class="font-medium text-slate-800"
+            >{{ targetUserForRole.firstName }}
+            {{ targetUserForRole.lastName }}</span
+          >.
+        </p>
+        <AppSelect
+          v-model="targetRoleSelection"
+          :options="adminRoleOptions"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <BaseButton
+          variant="ghost"
+          class="bg-white border border-slate-200"
+          @click="isRoleModalOpen = false"
+        >
+          Cancel
+        </BaseButton>
+        <BaseButton variant="primary" @click="continueToRoleConfirm">
+          Continue
+        </BaseButton>
+      </template>
+    </AppDialog>
+
+    <AppConfirmDialog
+      v-model="isRoleConfirmOpen"
+      title="Confirm Role Change"
+      :message="`Are you sure you want to change the role of ${pendingRoleChange?.user.firstName} ${pendingRoleChange?.user.lastName} to ${formatRole(pendingRoleChange?.newRole as any)}?`"
+      confirm-text="Change Role"
+      confirm-variant="primary"
+      @confirm="confirmRoleChange"
+      @cancel="cancelRoleChange"
+    />
 
     <AppConfirmDialog
       v-model="isConfirmOpen"

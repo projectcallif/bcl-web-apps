@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { AppTextInput, AppPagination, BaseButton, AppPopover } from "@bcl/ui";
-import { Filter, MoreVertical, Eye, AlertCircle } from "lucide-vue-next";
+import { AppTextInput, AppPagination, BaseButton } from "@bcl/ui";
+import { Filter, Eye, AlertCircle } from "lucide-vue-next";
 import type { LoanApplication, LoanStatus } from "@bcl/types";
 
 const router = useRouter();
@@ -177,7 +177,7 @@ function formatCurrency(n: number) {
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >
             <tr>
-              <th scope="col" class="px-6 py-4 font-medium">Applicant</th>
+              <th scope="col" class="px-6 py-4 font-medium">Customer</th>
               <th scope="col" class="px-6 py-4 font-medium">Amount & Tenor</th>
               <th scope="col" class="px-6 py-4 font-medium">
                 Status & Details
@@ -249,35 +249,20 @@ function formatCurrency(n: number) {
               <!-- Actions -->
               <td class="px-6 py-4">
                 <div class="flex justify-end">
-                  <AppPopover>
-                    <template #trigger="{ isOpen }">
-                      <button
-                        :class="[
-                          'text-slate-400 p-1.5 rounded-lg transition-colors',
-                          isOpen
-                            ? 'bg-primary-50 text-primary-600'
-                            : 'hover:bg-slate-100 hover:text-slate-600',
-                        ]"
-                      >
-                        <MoreVertical class="w-5 h-5" />
-                      </button>
-                    </template>
-                    <template #content="{ close }">
-                      <button
-                        @click="
-                          router.push({
-                            name: 'admin-loan-detail',
-                            params: { id: loan.id },
-                          });
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                      >
-                        <Eye class="w-4 h-4 text-slate-400" /> View Application
-                        Details
-                      </button>
-                    </template>
-                  </AppPopover>
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    class="text-slate-500 hover:text-primary-600 font-medium"
+                    @click="
+                      router.push({
+                        name: 'admin-loan-detail',
+                        params: { id: loan.id },
+                      })
+                    "
+                  >
+                    <Eye class="w-4 h-4" />
+                    <span>View Details</span>
+                  </BaseButton>
                 </div>
               </td>
             </tr>
@@ -313,34 +298,20 @@ function formatCurrency(n: number) {
             </div>
             
             <div class="flex justify-end">
-              <AppPopover>
-                <template #trigger="{ isOpen }">
-                  <button
-                    :class="[
-                      'text-slate-400 p-1.5 rounded-lg transition-colors',
-                      isOpen
-                        ? 'bg-primary-50 text-primary-600'
-                        : 'hover:bg-slate-100 hover:text-slate-600',
-                    ]"
-                  >
-                    <MoreVertical class="w-5 h-5" />
-                  </button>
-                </template>
-                <template #content="{ close }">
-                  <button
-                    @click="
-                      router.push({
-                        name: 'admin-loan-detail',
-                        params: { id: loan.id },
-                      });
-                      close();
-                    "
-                    class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                  >
-                    <Eye class="w-4 h-4 text-slate-400" /> View Application Details
-                  </button>
-                </template>
-              </AppPopover>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                class="text-slate-500 hover:text-primary-600 font-medium"
+                @click="
+                  router.push({
+                    name: 'admin-loan-detail',
+                    params: { id: loan.id },
+                  })
+                "
+              >
+                <Eye class="w-4 h-4" />
+                <span>View Details</span>
+              </BaseButton>
             </div>
           </div>
           

@@ -9,9 +9,17 @@ import {
   AppPopover,
   AppDialog,
 } from "@bcl/ui";
-import { Filter, MoreVertical, ShieldAlert, Trash2 } from "lucide-vue-next";
+import {
+  Filter,
+  MoreVertical,
+  ShieldAlert,
+  Trash2,
+  User,
+} from "lucide-vue-next";
 import type { UserStatus } from "@bcl/types";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const searchQuery = ref("");
 const currentPage = ref(1);
 
@@ -160,7 +168,7 @@ function cancelDeleteUser() {
     >
       <div>
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
-          Users Management
+          Customers Management
         </h1>
         <p class="text-sm text-slate-500 mt-1">
           View, search, and manage platform customers.
@@ -180,7 +188,7 @@ function cancelDeleteUser() {
           <AppTextInput
             id="search"
             v-model="searchQuery"
-            placeholder="Search users by name or email..."
+            placeholder="Search customers by name or email..."
             type="text"
           />
         </div>
@@ -200,7 +208,7 @@ function cancelDeleteUser() {
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >
             <tr>
-              <th scope="col" class="px-6 py-4 font-medium">User</th>
+              <th scope="col" class="px-6 py-4 font-medium">Customer</th>
               <th scope="col" class="px-6 py-4 font-medium">Status</th>
               <th scope="col" class="px-6 py-4 font-medium">Joined</th>
               <th scope="col" class="px-6 py-4 font-medium text-right">
@@ -258,6 +266,19 @@ function cancelDeleteUser() {
                     <template #content="{ close }">
                       <button
                         @click="
+                          router.push({
+                            name: 'customer-detail',
+                            params: { id: user.id },
+                          });
+                          close();
+                        "
+                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                      >
+                        <User class="w-4 h-4 text-slate-400" /> View Customer
+                        Details
+                      </button>
+                      <button
+                        @click="
                           openStatusDialog(user);
                           close();
                         "
@@ -274,7 +295,7 @@ function cancelDeleteUser() {
                         class="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-medium flex items-center gap-2 mt-1"
                       >
                         <Trash2 class="w-4 h-4 text-rose-500" />
-                        Delete User
+                        Delete Customer
                       </button>
                     </template>
                   </AppPopover>
@@ -336,6 +357,18 @@ function cancelDeleteUser() {
                 <template #content="{ close }">
                   <button
                     @click="
+                      router.push({
+                        name: 'customer-detail',
+                        params: { id: user.id },
+                      });
+                      close();
+                    "
+                    class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                  >
+                    <User class="w-4 h-4 text-slate-400" /> View Details
+                  </button>
+                  <button
+                    @click="
                       openStatusDialog(user);
                       close();
                     "
@@ -352,7 +385,7 @@ function cancelDeleteUser() {
                     class="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-medium flex items-center gap-2 mt-1"
                   >
                     <Trash2 class="w-4 h-4 text-rose-500" />
-                    Delete User
+                    Delete Customer
                   </button>
                 </template>
               </AppPopover>
@@ -420,8 +453,8 @@ function cancelDeleteUser() {
 
     <AppConfirmDialog
       v-model="isDeleteConfirmOpen"
-      title="Delete User"
-      :message="`Are you sure you want to permanently delete user ${pendingDeleteUser?.firstName} ${pendingDeleteUser?.lastName}? This action cannot be undone.`"
+      title="Delete Customer"
+      :message="`Are you sure you want to permanently delete customer ${pendingDeleteUser?.firstName} ${pendingDeleteUser?.lastName}? This action cannot be undone.`"
       confirm-text="Yes, Delete"
       confirm-variant="danger"
       @confirm="confirmDeleteUser"

@@ -6,14 +6,13 @@ import {
   Banknote,
   AlertTriangle,
   Download,
-  Calendar,
   Search,
   Filter,
   CheckCircle2,
   XCircle,
   CreditCard,
 } from "lucide-vue-next";
-import { AppTextInput, BaseButton, AppSelect } from "@bcl/ui";
+import { AppTextInput, BaseButton, AppSelect, AppDatePicker } from "@bcl/ui";
 import DashboardStatCard from "@/features/dashboard/components/DashboardStatCard.vue";
 
 // Mock data spanning various analytics categories
@@ -44,7 +43,7 @@ const stats = ref({
   },
 });
 
-const filterDate = ref("");
+const filterDate = ref<Date[] | null>(null);
 const searchQuery = ref("");
 const filterStatus = ref("");
 
@@ -73,7 +72,7 @@ function handleExport(format: "CSV" | "PDF" | "EXCEL") {
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
     >
-      <div>
+      <div class="w-full">
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
           Reports & Analytics
         </h1>
@@ -82,17 +81,13 @@ function handleExport(format: "CSV" | "PDF" | "EXCEL") {
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
-        <div
-          class="hidden md:flex items-center gap-2 bg-white border border-slate-200 shadow-sm rounded-lg px-3 py-1.5"
-        >
-          <Calendar class="w-4 h-4 text-slate-400" />
-          <input
-            type="date"
-            v-model="filterDate"
-            class="font-medium text-slate-600 focus:outline-none bg-transparent"
-          />
-        </div>
+      <div class="flex items-center gap-3 w-full md:justify-end">
+        <AppDatePicker
+          v-model="filterDate"
+          range
+          placeholder="Select range"
+          class="w-full max-w-84"
+        />
 
         <div class="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
 

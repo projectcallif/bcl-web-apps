@@ -6,9 +6,8 @@ import {
   AppPagination,
   BaseButton,
   AppDialog,
-  AppDateRangePicker,
+  AppDatePicker,
 } from "@bcl/ui";
-import type { DateRange } from "@bcl/ui";
 import type { AuditLog } from "@bcl/types";
 
 // Mock Audit Logs
@@ -75,7 +74,7 @@ const mockLogs = ref<AuditLog[]>([
 ]);
 
 const searchQuery = ref("");
-const dateRange = ref<DateRange>({ start: "", end: "" });
+const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
 
 const filteredLogs = computed(() => {
@@ -91,13 +90,13 @@ const filteredLogs = computed(() => {
     );
   }
 
-  if (dateRange.value.start) {
-    const startTs = new Date(dateRange.value.start).getTime();
+  if (dateRange.value && dateRange.value[0]) {
+    const startTs = new Date(dateRange.value[0]).getTime();
     res = res.filter((l) => new Date(l.timestamp).getTime() >= startTs);
   }
 
-  if (dateRange.value.end) {
-    const endTs = new Date(dateRange.value.end).getTime() + 86400000; // end of target day
+  if (dateRange.value && dateRange.value[1]) {
+    const endTs = new Date(dateRange.value[1]).getTime() + 86400000; // end of target day
     res = res.filter((l) => new Date(l.timestamp).getTime() < endTs);
   }
 
@@ -174,7 +173,12 @@ function getActionStyle(action: string) {
             class="pl-10 w-full -ml-4"
           />
         </div>
-        <AppDateRangePicker v-model="dateRange" />
+        <AppDatePicker
+          v-model="dateRange"
+          range
+          placeholder="Filter by date range"
+          class="w-full sm:w-80"
+        />
       </div>
 
       <!-- Desktop Table -->

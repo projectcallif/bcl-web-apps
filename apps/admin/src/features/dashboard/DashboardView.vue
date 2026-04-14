@@ -3,16 +3,15 @@ import { ref, onMounted } from "vue";
 import { useDashboardStore } from "./store";
 import { Users, UserCheck, UserX, Activity } from "lucide-vue-next";
 import DashboardStatCard from "./components/DashboardStatCard.vue";
-import { AppSelect } from "@bcl/ui";
+import { AppDatePicker } from "@bcl/ui";
 
 const dashboard = useDashboardStore();
 
-const dateFilter = ref("last_7_days");
-const dateOptions = [
-  { label: "Last 7 Days", value: "last_7_days" },
-  { label: "Last 30 Days", value: "last_30_days" },
-  { label: "This Year", value: "this_year" },
+const last7Days = [
+  new Date(new Date().setDate(new Date().getDate() - 7)),
+  new Date(),
 ];
+const dateFilter = ref<Date | Date[] | null>(last7Days);
 
 onMounted(() => {
   // Simulate loading more realistic stats
@@ -34,21 +33,22 @@ onMounted(() => {
           Check your key metrics and recent activities.
         </p>
       </div>
-      <div class="flex items-center gap-2 w-48">
-        <!-- Date filter mock -->
-        <AppSelect 
+      <div class="flex items-center gap-2 w-full max-w-84">
+        <!-- Date filter -->
+        <AppDatePicker
           v-model="dateFilter"
-          :options="dateOptions"
+          placeholder="Filter by date..."
+          range
         />
       </div>
     </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-      <!-- Total Users -->
+      <!-- Total Customers -->
       <DashboardStatCard
-        title="Total Users"
-        :value="dashboard.totalUsers.toLocaleString()"
+        title="Total Customers"
+        :value="dashboard.totalCustomers.toLocaleString()"
         variant="primary"
         badgeText="+12.5%"
         badgeVariant="emerald"
@@ -58,10 +58,10 @@ onMounted(() => {
         </template>
       </DashboardStatCard>
 
-      <!-- Active Users -->
+      <!-- Active Customers -->
       <DashboardStatCard
-        title="Active Users"
-        :value="dashboard.activeUsers.toLocaleString()"
+        title="Active Customers"
+        :value="dashboard.activeCustomers.toLocaleString()"
         variant="emerald"
       >
         <template #icon>
@@ -69,10 +69,10 @@ onMounted(() => {
         </template>
       </DashboardStatCard>
 
-      <!-- Inactive Users -->
+      <!-- Inactive Customers -->
       <DashboardStatCard
-        title="Inactive Users"
-        :value="dashboard.inactiveUsers.toLocaleString()"
+        title="Inactive Customers"
+        :value="dashboard.inactiveCustomers.toLocaleString()"
         variant="rose"
       >
         <template #icon>

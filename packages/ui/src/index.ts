@@ -29,5 +29,4 @@ export { default as AppProgressBar } from "./components/AppProgressBar.vue";
 
 export { default as AppSwitch } from "./components/AppSwitch.vue";
 
-export { default as AppDateRangePicker } from "./components/AppDateRangePicker.vue";
-export type { DateRange } from "./components/AppDateRangePicker.vue";
+export { default as AppDatePicker } from "./components/AppDatePicker.vue";

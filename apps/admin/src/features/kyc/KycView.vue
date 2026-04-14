@@ -112,7 +112,7 @@ function getStatusColor(status: string) {
           KYC Verifications
         </h1>
         <p class="text-sm text-slate-500 mt-1">
-          Review user profiles and verify submitted documentation.
+          Review customer profiles and verify submitted documentation.
         </p>
       </div>
     </div>
@@ -124,7 +124,7 @@ function getStatusColor(status: string) {
           { value: 'PENDING', label: 'Pending Review' },
           { value: 'ACTIVE', label: 'Approved Profiles' },
           { value: 'SUSPENDED', label: 'Rejected / Suspended' },
-          { value: 'ALL', label: 'All Users' },
+          { value: 'ALL', label: 'All Customers' },
         ]"
         :key="tab.value"
         @click="activeTab = tab.value as typeof activeTab"
