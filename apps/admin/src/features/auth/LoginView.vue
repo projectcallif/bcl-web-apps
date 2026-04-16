@@ -2,10 +2,12 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "./store";
+import { useToastStore } from "@/stores/toast";
 import { AppTextInput, AppPasswordInput, BaseButton, BrandLogo } from "@bcl/ui";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const toast = useToastStore();
 
 const email = ref("");
 const password = ref("");
@@ -13,13 +15,14 @@ const loading = ref(false);
 const errorMsg = ref("");
 
 function _debugPrefill() {
-  email.value = "admin@bcl.com";
-  password.value = "AdminPass!23";
+  email.value = "superadmin@bcl.com";
+  password.value = "SuperAdmin@1";
 }
 
 async function handleSubmit() {
   if (!email.value || !password.value) {
     errorMsg.value = "Please enter both email and password";
+    toast.error("Please enter both email and password");
     return;
   }
 
@@ -30,10 +33,12 @@ async function handleSubmit() {
       identifier: email.value,
       password: password.value,
     });
+    toast.success("Welcome back, administrator!");
     router.push({ name: "dashboard" });
   } catch (e: any) {
     errorMsg.value =
       e.message || "Login failed. Please check your credentials.";
+    toast.error(e.message || "Login failed. Please check your credentials.");
   } finally {
     loading.value = false;
   }

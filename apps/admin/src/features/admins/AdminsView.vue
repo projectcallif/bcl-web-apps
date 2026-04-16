@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, computed } from "vue";
+import { useAdminsStore } from "./store";
+import { useToastStore } from "@/stores/toast";
+import dayjs from "dayjs";
 import {
   AppTextInput,
   AppPagination,
@@ -8,49 +11,48 @@ import {
   AppConfirmDialog,
   AppPopover,
   AppDialog,
+  AppPasswordInput,
 } from "@bcl/ui";
-import { Filter, MoreVertical, ShieldAlert, Trash2, ArrowRightLeft } from "lucide-vue-next";
-import type { UserStatus, UserRole } from "@bcl/types";
+import {
+  Filter,
+  MoreVertical,
+  ShieldAlert,
+  Trash2,
+  ArrowRightLeft,
+} from "lucide-vue-next";
+import type {
+  UserStatus,
+  UserRole,
+  Admin,
+  CreateAdminPayload,
+} from "@bcl/types";
 
 const searchQuery = ref("");
 const currentPage = ref(1);
 
-type MockAdmin = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  status: UserStatus;
-  date: string;
-};
+const adminsStore = useAdminsStore();
+const toast = useToastStore();
 
-const mockAdmins = ref<MockAdmin[]>([
-  {
-    id: "adm_1",
-    firstName: "Sarah",
-    lastName: "Connor",
-    email: "sarah@bcl.com",
-    role: "SUPER_ADMIN",
-    status: "ACTIVE",
-    date: "Oct 24, 2026",
-  },
-  {
-    id: "adm_2",
-    firstName: "Alice",
-    lastName: "Wong",
-    email: "alice@bcl.com",
-    role: "ADMIN",
-    status: "ACTIVE",
-    date: "Oct 23, 2026",
-  },
-]);
+onMounted(() => {
+  adminsStore.fetchAdmins();
+});
+
+const filteredAdmins = computed(() => {
+  if (!searchQuery.value) return adminsStore.admins;
+  const q = searchQuery.value.toLowerCase();
+  return adminsStore.admins.filter(
+    (a) =>
+      a.firstName.toLowerCase().includes(q) ||
+      a.lastName.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q),
+  );
+});
 
 function getStatusColor(status: UserStatus) {
   switch (status) {
     case "ACTIVE":
       return "bg-emerald-100 text-emerald-700";
-    case "INACTIVE":
+    case "DEACTIVATED":
       return "bg-slate-100 text-slate-700";
     case "SUSPENDED":
       return "bg-rose-100 text-rose-700";
@@ -63,16 +65,17 @@ function getStatusColor(status: UserStatus) {
 
 // CREATE ADMIN
 const isAddAdminModalOpen = ref(false);
-const newAdmin = ref({
+const newAdmin = ref<CreateAdminPayload>({
   firstName: "",
   lastName: "",
   email: "",
-  role: "ADMIN" as UserRole,
+  password: "",
+  role: "ADMIN",
 });
 const adminRoleOptions = [
   { label: "Admin", value: "ADMIN" },
   { label: "Super Admin", value: "SUPER_ADMIN" },
-  { label: "Underwriter", value: "UNDERWRITER" },
+  { label: "Loan Underwriter", value: "LOAN_UNDERWRITER" },
   { label: "Finance Officer", value: "FINANCE_OFFICER" },
   { label: "Collections Officer", value: "COLLECTIONS_OFFICER" },
   { label: "Support Agent", value: "SUPPORT_AGENT" },
@@ -80,53 +83,66 @@ const adminRoleOptions = [
 
 function formatRole(role: UserRole) {
   if (role === "SUPER_ADMIN") return "Super Admin";
-  if (role === "UNDERWRITER") return "Underwriter";
+  if (role === "LOAN_UNDERWRITER") return "Loan Underwriter";
   if (role === "FINANCE_OFFICER") return "Finance Officer";
   if (role === "COLLECTIONS_OFFICER") return "Collections Officer";
   if (role === "SUPPORT_AGENT") return "Support Agent";
   return "Admin";
 }
 
-function submitNewAdmin() {
-  mockAdmins.value.unshift({
-    id: "adm_" + Math.random().toString(36).substr(2, 6),
-    firstName: newAdmin.value.firstName,
-    lastName: newAdmin.value.lastName,
-    email: newAdmin.value.email,
-    role: newAdmin.value.role,
-    status: "PENDING",
-    date: "Just now",
-  });
-  isAddAdminModalOpen.value = false;
-  // Reset
-  newAdmin.value = {
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: "ADMIN",
-  };
+const isSubmitting = ref(false);
+
+async function submitNewAdmin() {
+  if (
+    !newAdmin.value.email ||
+    !newAdmin.value.firstName ||
+    !newAdmin.value.lastName ||
+    !newAdmin.value.password
+  )
+    return;
+
+  try {
+    isSubmitting.value = true;
+    await adminsStore.createAdmin(newAdmin.value);
+    toast.success("Administrator created successfully!");
+    isAddAdminModalOpen.value = false;
+    // Reset
+    newAdmin.value = {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      role: "ADMIN",
+    };
+  } catch (e: unknown) {
+    toast.error(
+      e instanceof Error ? e.message : "Failed to create administrator",
+    );
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 
 // STATUS
 const statusOptions = [
   { label: "Active", value: "ACTIVE" },
-  { label: "Inactive", value: "INACTIVE" },
+  { label: "Deactivated", value: "DEACTIVATED" },
   { label: "Suspended", value: "SUSPENDED" },
   { label: "Pending", value: "PENDING" },
 ];
 
-const targetUserForStatus = ref<MockAdmin | null>(null);
+const targetUserForStatus = ref<Admin | null>(null);
 const targetStatusSelection = ref<UserStatus | "">("");
 const isStatusModalOpen = ref(false);
 
-function openStatusDialog(user: MockAdmin) {
+function openStatusDialog(user: Admin) {
   targetUserForStatus.value = user;
   targetStatusSelection.value = user.status;
   isStatusModalOpen.value = true;
 }
 
 const pendingStatusChange = ref<{
-  user: MockAdmin;
+  user: Admin;
   newStatus: UserStatus;
 } | null>(null);
 const isConfirmOpen = ref(false);
@@ -146,13 +162,16 @@ function continueToStatusConfirm() {
   }
 }
 
-function confirmStatusChange() {
+async function confirmStatusChange() {
   if (pendingStatusChange.value) {
-    const target = mockAdmins.value.find(
-      (u) => u.id === pendingStatusChange.value!.user.id,
-    );
-    if (target) {
-      target.status = pendingStatusChange.value.newStatus;
+    try {
+      await adminsStore.updateStatus(
+        pendingStatusChange.value.user.id,
+        pendingStatusChange.value.newStatus,
+      );
+      toast.success("Administrator status updated!");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to update status");
     }
   }
   isConfirmOpen.value = false;
@@ -165,18 +184,18 @@ function cancelStatusChange() {
 }
 
 // ROLE CHANGE
-const targetUserForRole = ref<MockAdmin | null>(null);
+const targetUserForRole = ref<Admin | null>(null);
 const targetRoleSelection = ref<UserRole | "">("");
 const isRoleModalOpen = ref(false);
 
-function openRoleDialog(user: MockAdmin) {
+function openRoleDialog(user: Admin) {
   targetUserForRole.value = user;
   targetRoleSelection.value = user.role;
   isRoleModalOpen.value = true;
 }
 
 const pendingRoleChange = ref<{
-  user: MockAdmin;
+  user: Admin;
   newRole: UserRole;
 } | null>(null);
 const isRoleConfirmOpen = ref(false);
@@ -196,9 +215,9 @@ function continueToRoleConfirm() {
   }
 }
 
-function confirmRoleChange() {
+async function confirmRoleChange() {
   if (pendingRoleChange.value) {
-    const target = mockAdmins.value.find(
+    const target = adminsStore.admins.find(
       (u) => u.id === pendingRoleChange.value!.user.id,
     );
     if (target) {
@@ -215,17 +234,17 @@ function cancelRoleChange() {
 }
 
 // DELETE
-const pendingDeleteUser = ref<MockAdmin | null>(null);
+const pendingDeleteUser = ref<Admin | null>(null);
 const isDeleteConfirmOpen = ref(false);
 
-function promptDeleteUser(user: MockAdmin) {
+function promptDeleteUser(user: Admin) {
   pendingDeleteUser.value = user;
   isDeleteConfirmOpen.value = true;
 }
 
 function confirmDeleteUser() {
   if (pendingDeleteUser.value) {
-    mockAdmins.value = mockAdmins.value.filter(
+    adminsStore.admins = adminsStore.admins.filter(
       (u) => u.id !== pendingDeleteUser.value!.id,
     );
   }
@@ -302,8 +321,21 @@ function cancelDeleteUser() {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
+            <tr v-if="adminsStore.loading && !adminsStore.admins.length">
+              <td colspan="5" class="px-6 py-10 text-center">
+                <div class="flex flex-col items-center gap-2">
+                  <div
+                    class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
+                  ></div>
+                  <p class="text-sm text-slate-500">
+                    Loading administrators...
+                  </p>
+                </div>
+              </td>
+            </tr>
             <tr
-              v-for="user in mockAdmins"
+              v-else
+              v-for="user in filteredAdmins"
               :key="user.id"
               class="hover:bg-slate-50/80 transition-colors"
             >
@@ -335,7 +367,9 @@ function cancelDeleteUser() {
                   {{ user.status }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-slate-500">{{ user.date }}</td>
+              <td class="px-6 py-4 text-slate-500">
+                {{ dayjs(user.createdAt).format("MMM DD, YYYY") }}
+              </td>
               <td class="px-6 py-4">
                 <div class="flex justify-end">
                   <AppPopover>
@@ -391,10 +425,9 @@ function cancelDeleteUser() {
         </table>
       </div>
 
-      <!-- Mobile Cards -->
       <div class="md:hidden flex flex-col divide-y divide-slate-100">
         <div
-          v-for="user in mockAdmins"
+          v-for="user in filteredAdmins"
           :key="`mobile-${user.id}`"
           class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
         >
@@ -476,7 +509,7 @@ function cancelDeleteUser() {
         <AppPagination
           v-model:current-page="currentPage"
           :total-pages="1"
-          :total-items="2"
+          :total-items="adminsStore.admins.length"
           :page-size="10"
         />
       </div>
@@ -490,13 +523,16 @@ function cancelDeleteUser() {
     >
       <form @submit.prevent="submitNewAdmin" class="flex flex-col gap-5">
         <AppSelect
+          label="Role"
           id="role"
           v-model="newAdmin.role"
           :options="adminRoleOptions"
+          required
         />
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <AppTextInput
+            label="First Name"
             id="firstName"
             v-model="newAdmin.firstName"
             placeholder="First Name"
@@ -504,6 +540,7 @@ function cancelDeleteUser() {
             required
           />
           <AppTextInput
+            label="Last Name"
             id="lastName"
             v-model="newAdmin.lastName"
             placeholder="Last Name"
@@ -513,10 +550,19 @@ function cancelDeleteUser() {
         </div>
 
         <AppTextInput
+          label="Email Address"
           id="email"
           v-model="newAdmin.email"
           placeholder="Email Address"
           type="email"
+          required
+        />
+
+        <AppPasswordInput
+          id="password"
+          v-model="newAdmin.password"
+          label="Password"
+          placeholder="Set a secure password"
           required
         />
 
@@ -529,7 +575,7 @@ function cancelDeleteUser() {
           >
             Cancel
           </BaseButton>
-          <BaseButton type="submit" variant="primary">
+          <BaseButton type="submit" variant="primary" :loading="isSubmitting">
             Create Admin
           </BaseButton>
         </div>
@@ -567,7 +613,11 @@ function cancelDeleteUser() {
     </AppDialog>
 
     <!-- Role Modal -->
-    <AppDialog v-model="isRoleModalOpen" title="Update Admin Role" max-width="sm">
+    <AppDialog
+      v-model="isRoleModalOpen"
+      title="Update Admin Role"
+      max-width="sm"
+    >
       <div v-if="targetUserForRole" class="space-y-4">
         <p class="text-sm text-slate-600">
           Select a new role for
@@ -613,7 +663,7 @@ function cancelDeleteUser() {
       confirm-text="Change Status"
       :confirm-variant="
         pendingStatusChange?.newStatus === 'SUSPENDED' ||
-        pendingStatusChange?.newStatus === 'INACTIVE'
+        pendingStatusChange?.newStatus === 'DEACTIVATED'
           ? 'danger'
           : 'primary'
       "

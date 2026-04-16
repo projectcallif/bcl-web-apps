@@ -15,9 +15,11 @@ api.addRequestInterceptor((config) => {
 
 // ── Error: clear session and redirect to admin login on 401 ──────────────────
 api.addErrorInterceptor((error: ApiClientError) => {
-  if (error.isUnauthorized) {
+  if (error.isUnauthorized || error.isForbidden) {
     localStorage.removeItem("bcl_admin_token");
-    window.location.href = "/login";
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
   }
   return error;
 });

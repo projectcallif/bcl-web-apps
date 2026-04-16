@@ -54,7 +54,7 @@ const mockUsers = ref<MockUser[]>([
     firstName: "Sarah",
     lastName: "Smith",
     email: "sarah.s@example.com",
-    status: "INACTIVE",
+    status: "DEACTIVATED",
     date: "Oct 20, 2026",
   },
   {
@@ -71,7 +71,7 @@ function getStatusColor(status: UserStatus) {
   switch (status) {
     case "ACTIVE":
       return "bg-emerald-100 text-emerald-700";
-    case "INACTIVE":
+    case "DEACTIVATED":
       return "bg-slate-100 text-slate-700";
     case "SUSPENDED":
       return "bg-rose-100 text-rose-700";
@@ -443,7 +443,7 @@ function cancelDeleteUser() {
       confirm-text="Change Status"
       :confirm-variant="
         pendingStatusChange?.newStatus === 'SUSPENDED' ||
-        pendingStatusChange?.newStatus === 'INACTIVE'
+        pendingStatusChange?.newStatus === 'DEACTIVATED'
           ? 'danger'
           : 'primary'
       "

@@ -647,7 +647,7 @@ function getStatusStyle(status: string) {
       confirm-text="Change Status"
       :confirm-variant="
         pendingStatusChange?.newStatus === 'SUSPENDED' ||
-        pendingStatusChange?.newStatus === 'INACTIVE'
+        pendingStatusChange?.newStatus === 'DEACTIVATED'
           ? 'danger'
           : 'primary'
       "
