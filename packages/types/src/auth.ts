@@ -1,4 +1,4 @@
-import type { User, UserProfile } from './user'
+import type { User, UserProfile, Admin, UserRole, UserStatus } from "./user";
 
 export interface LoginPayload {
   identifier: string
@@ -33,4 +33,26 @@ export interface VerifyEmailPayload {
 
 export interface ResendOtpPayload {
   identifier: string // email or phone
+}
+
+export interface AdminAuthResponse {
+  accessToken: string;
+  admin: Admin;
+}
+
+export interface AdminLoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface CreateAdminPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+}
+
+export interface UpdateAdminStatusPayload {
+  status: UserStatus;
 }

@@ -4,9 +4,11 @@ import { useRouter } from 'vue-router'
 import { AppTextInput, AppPasswordInput, BaseButton, BrandLogo } from '@bcl/ui'
 import { ApiClientError } from '@bcl/types'
 import { useAuthStore } from './store'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const identifier = ref('')
 const password = ref('')
@@ -18,10 +20,14 @@ async function handleSubmit(): Promise<void> {
   isLoading.value = true
   try {
     await authStore.login({ identifier: identifier.value, password: password.value })
+    toast.success('Login successful. Welcome back!')
     await router.push({ name: 'dashboard' })
   } catch (err) {
     formError.value =
       err instanceof ApiClientError ? err.message : 'Something went wrong. Please try again.'
+    toast.error(
+      err instanceof ApiClientError ? err.message : 'Something went wrong. Please try again.',
+    )
   } finally {
     isLoading.value = false
   }

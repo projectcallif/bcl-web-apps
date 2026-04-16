@@ -28,6 +28,7 @@
     "vue-tsc": "^3.2.5"
   },
   "dependencies": {
+    "@bcl/types": "workspace:^",
     "@tiptap/starter-kit": "^2.11.5",
     "@tiptap/vue-3": "^2.11.5",
     "@vuepic/vue-datepicker": "^12.1.0",

@@ -1,4 +1,9 @@
-export type UserStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "PENDING";
+export type UserStatus =
+  | "ACTIVE"
+  | "DEACTIVATED"
+  | "SUSPENDED"
+  // TODO: not yet in backend
+  | "PENDING";
 
 export type UserGender = "MALE" | "FEMALE" | "OTHER";
 
@@ -64,9 +69,10 @@ export interface User {
 
 export type UserRole =
   | "CUSTOMER"
-  | "ADMIN"
   | "SUPER_ADMIN"
-  | "UNDERWRITER"
+  | "ADMIN"
+  | "LOAN_UNDERWRITER"
+  // TODO: not yet in backend
   | "FINANCE_OFFICER"
   | "COLLECTIONS_OFFICER"
   | "SUPPORT_AGENT";
@@ -82,4 +88,14 @@ export interface UpdateUserPayload {
   status?: UserStatus;
   role?: UserRole;
   profile?: Partial<UserProfile>;
+}
+
+export interface Admin {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
 }
