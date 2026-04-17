@@ -39,16 +39,28 @@ export interface BankInfo {
   accountType: string;
 }
 
+export interface KycInfo {
+  bvnStatus: string | null;
+  bvnVerifiedAt: string | null;
+  ninStatus: string | null;
+  ninVerifiedAt: string | null;
+  tier: string | null;
+}
+
 export interface UserProfile {
   firstName: string;
   lastName: string;
-  middleName?: string;
+  middleName?: string | null;
   dateOfBirth: string;
   gender: UserGender;
   maritalStatus: MaritalStatus;
+  residentialAddress?: string | null;
   city: string;
   state: string;
+  lga?: string | null;
   country: string;
+  monoAccountId?: string | null;
+  monoCustomerId?: string | null;
   employment?: EmploymentInfo;
   address?: AddressInfo;
   bank?: BankInfo;
@@ -63,6 +75,12 @@ export interface User {
   registrationStep: RegistrationStep;
   status: UserStatus;
   profile: UserProfile;
+  createdAt: string;
+}
+
+export interface CustomerDetail extends User {
+  kyc: KycInfo;
+  loanApplications: unknown[]; // Stub for now
 }
 
 // ── Admin / management payloads ──────────────────────────────────────────────
@@ -97,5 +115,16 @@ export interface Admin {
   lastName: string;
   role: UserRole;
   status: UserStatus;
+  createdAt: string;
+}
+
+export interface CustomerListItem {
+  id: string;
+  email: string;
+  phone: string | null;
+  status: UserStatus;
+  registrationStep: RegistrationStep;
+  firstName: string;
+  lastName: string;
   createdAt: string;
 }

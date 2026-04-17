@@ -47,10 +47,14 @@ export const useAdminsStore = defineStore("admins", () => {
       const index = admins.value.findIndex((a) => a.id === id);
       if (index !== -1) {
         // Update local state with response data
-        admins.value[index] = { ...admins.value[index], status: response.data.status };
+        admins.value[index] = {
+          ...admins.value[index],
+          status: response.data.status,
+        };
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : "Failed to update admin status";
+      error.value =
+        e instanceof Error ? e.message : "Failed to update admin status";
       throw e;
     } finally {
       loading.value = false;

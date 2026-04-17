@@ -29,6 +29,7 @@ const mockUsers = ref<User[]>([
       state: "Lagos State",
       country: "Nigeria",
     },
+    createdAt: "2026-03-01T10:00:00.000Z",
   },
   {
     id: "usr_9",
@@ -48,6 +49,7 @@ const mockUsers = ref<User[]>([
       state: "FCT",
       country: "Nigeria",
     },
+    createdAt: "2026-02-15T14:30:00.000Z",
   },
   {
     id: "usr_10",
@@ -67,6 +69,7 @@ const mockUsers = ref<User[]>([
       state: "Oyo",
       country: "Nigeria",
     },
+    createdAt: "2026-04-01T09:15:00.000Z",
   },
 ]);
 

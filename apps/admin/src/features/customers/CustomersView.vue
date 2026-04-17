@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, watch } from "vue";
+import { useCustomersStore } from "./store";
+import dayjs from "dayjs";
 import {
   AppTextInput,
   AppPagination,
@@ -16,56 +18,34 @@ import {
   Trash2,
   User,
 } from "lucide-vue-next";
-import type { UserStatus } from "@bcl/types";
+import type { UserStatus, CustomerListItem } from "@bcl/types";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 const searchQuery = ref("");
 const currentPage = ref(1);
+const customersStore = useCustomersStore();
 
-type MockUser = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  status: UserStatus;
-  date: string;
-};
+let searchTimeout: any;
 
-const mockUsers = ref<MockUser[]>([
-  {
-    id: "usr_1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
-    status: "ACTIVE",
-    date: "Oct 24, 2026",
-  },
-  {
-    id: "usr_2",
-    firstName: "Alice",
-    lastName: "Wong",
-    email: "alice@example.com",
-    status: "ACTIVE",
-    date: "Oct 23, 2026",
-  },
-  {
-    id: "usr_3",
-    firstName: "Sarah",
-    lastName: "Smith",
-    email: "sarah.s@example.com",
-    status: "DEACTIVATED",
-    date: "Oct 20, 2026",
-  },
-  {
-    id: "usr_4",
-    firstName: "Mike",
-    lastName: "Johnson",
-    email: "mike.j@example.com",
-    status: "SUSPENDED",
-    date: "Oct 15, 2026",
-  },
-]);
+onMounted(() => {
+  customersStore.fetchCustomers(currentPage.value, 10, searchQuery.value);
+});
+
+watch(currentPage, (newPage) => {
+  customersStore.fetchCustomers(newPage, 10, searchQuery.value);
+});
+
+watch(searchQuery, (newQuery) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    if (currentPage.value === 1) {
+      customersStore.fetchCustomers(1, 10, newQuery);
+    } else {
+      currentPage.value = 1;
+    }
+  }, 500);
+});
 
 function getStatusColor(status: UserStatus) {
   switch (status) {
@@ -84,30 +64,35 @@ function getStatusColor(status: UserStatus) {
 
 const statusOptions = [
   { label: "Active", value: "ACTIVE" },
-  { label: "Inactive", value: "INACTIVE" },
+  { label: "Deactivated", value: "DEACTIVATED" },
   { label: "Suspended", value: "SUSPENDED" },
-  { label: "Pending", value: "PENDING" },
 ];
 
 const pendingStatusChange = ref<{
-  user: MockUser;
+  user: CustomerListItem;
   newStatus: UserStatus;
 } | null>(null);
 const isConfirmOpen = ref(false);
 
-function promptStatusChange(user: MockUser, newStatus: string | number) {
+function promptStatusChange(
+  user: CustomerListItem,
+  newStatus: string | number,
+) {
   if (user.status === newStatus) return; // Ignore if unchanged somehow
   pendingStatusChange.value = { user, newStatus: newStatus as UserStatus };
   isConfirmOpen.value = true;
 }
 
-function confirmStatusChange() {
+async function confirmStatusChange() {
   if (pendingStatusChange.value) {
-    const targetUser = mockUsers.value.find(
+    const targetUser = customersStore.customers.find(
       (u) => u.id === pendingStatusChange.value!.user.id,
     );
     if (targetUser) {
-      targetUser.status = pendingStatusChange.value.newStatus;
+      await customersStore.updateCustomerStatus(
+        pendingStatusChange.value.user.id,
+        pendingStatusChange.value.newStatus,
+      );
     }
   }
   isConfirmOpen.value = false;
@@ -119,11 +104,11 @@ function cancelStatusChange() {
   pendingStatusChange.value = null;
 }
 
-const targetUserForStatus = ref<MockUser | null>(null);
+const targetUserForStatus = ref<CustomerListItem | null>(null);
 const targetStatusSelection = ref<UserStatus | "">("");
 const isStatusModalOpen = ref(false);
 
-function openStatusDialog(user: MockUser) {
+function openStatusDialog(user: CustomerListItem) {
   targetUserForStatus.value = user;
   targetStatusSelection.value = user.status;
   isStatusModalOpen.value = true;
@@ -136,17 +121,17 @@ function continueToStatusConfirm() {
   }
 }
 
-const pendingDeleteUser = ref<MockUser | null>(null);
+const pendingDeleteUser = ref<CustomerListItem | null>(null);
 const isDeleteConfirmOpen = ref(false);
 
-function promptDeleteUser(user: MockUser) {
+function promptDeleteUser(user: CustomerListItem) {
   pendingDeleteUser.value = user;
   isDeleteConfirmOpen.value = true;
 }
 
 function confirmDeleteUser() {
   if (pendingDeleteUser.value) {
-    mockUsers.value = mockUsers.value.filter(
+    customersStore.customers = customersStore.customers.filter(
       (u) => u.id !== pendingDeleteUser.value!.id,
     );
   }
@@ -202,7 +187,20 @@ function cancelDeleteUser() {
       </div>
 
       <!-- Desktop Table (hidden on mobile) -->
-      <div class="hidden md:block w-full overflow-x-auto">
+      <div class="hidden md:block w-full overflow-x-auto relative min-h-100">
+        <!-- Loading Overlay -->
+        <div
+          v-if="customersStore.loading && customersStore.customers.length"
+          class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
+        >
+          <div class="flex flex-col items-center gap-2">
+            <div
+              class="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"
+            ></div>
+            <p class="text-xs font-medium text-slate-500">Updating list...</p>
+          </div>
+        </div>
+
         <table class="w-full text-left text-sm text-slate-600 border-collapse">
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
@@ -210,6 +208,9 @@ function cancelDeleteUser() {
             <tr>
               <th scope="col" class="px-6 py-4 font-medium">Customer</th>
               <th scope="col" class="px-6 py-4 font-medium">Status</th>
+              <th scope="col" class="px-6 py-4 font-medium">
+                Registration Stage
+              </th>
               <th scope="col" class="px-6 py-4 font-medium">Joined</th>
               <th scope="col" class="px-6 py-4 font-medium text-right">
                 Actions
@@ -218,7 +219,20 @@ function cancelDeleteUser() {
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr
-              v-for="user in mockUsers"
+              v-if="customersStore.loading && !customersStore.customers.length"
+            >
+              <td colspan="5" class="px-6 py-10 text-center">
+                <div class="flex flex-col items-center gap-2">
+                  <div
+                    class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
+                  ></div>
+                  <p class="text-sm text-slate-500">Loading customers...</p>
+                </div>
+              </td>
+            </tr>
+            <tr
+              v-else
+              v-for="user in customersStore.customers"
               :key="user.id"
               class="hover:bg-slate-50/80 transition-colors"
             >
@@ -227,7 +241,8 @@ function cancelDeleteUser() {
                   <div
                     class="w-9 h-9 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-xs ring-1 ring-primary-100 shrink-0"
                   >
-                    {{ user.firstName[0] }}{{ user.lastName[0] }}
+                    {{ user.firstName?.[0] || "?"
+                    }}{{ user.lastName?.[0] || "?" }}
                   </div>
                   <div>
                     <div class="font-medium text-slate-800">
@@ -247,7 +262,16 @@ function cancelDeleteUser() {
                   {{ user.status }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-slate-500">{{ user.date }}</td>
+              <td class="px-6 py-4">
+                <span
+                  class="text-[10px] font-mono font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded uppercase"
+                >
+                  {{ user.registrationStep.replace(/_/g, " ") }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-slate-500">
+                {{ dayjs(user.createdAt).format("MMM DD, YYYY") }}
+              </td>
               <td class="px-6 py-4">
                 <div class="flex justify-end">
                   <AppPopover>
@@ -307,9 +331,28 @@ function cancelDeleteUser() {
       </div>
 
       <!-- Mobile Cards (hidden on desktop) -->
-      <div class="md:hidden flex flex-col divide-y divide-slate-100">
+      <div
+        class="md:hidden flex flex-col divide-y divide-slate-100 relative min-h-75"
+      >
+        <!-- Loading Overlay for Mobile -->
         <div
-          v-for="user in mockUsers"
+          v-if="customersStore.loading && customersStore.customers.length"
+          class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
+        >
+          <div
+            class="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"
+          ></div>
+        </div>
+
+        <div
+          v-if="customersStore.loading && !customersStore.customers.length"
+          class="p-8 text-center text-slate-500"
+        >
+          Loading...
+        </div>
+        <div
+          v-else
+          v-for="user in customersStore.customers"
           :key="`mobile-${user.id}`"
           class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
         >
@@ -318,7 +361,7 @@ function cancelDeleteUser() {
               <div
                 class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-sm ring-1 ring-primary-100 shrink-0"
               >
-                {{ user.firstName[0] }}{{ user.lastName[0] }}
+                {{ user.firstName?.[0] || "?" }}{{ user.lastName?.[0] || "?" }}
               </div>
               <div>
                 <div class="font-medium text-slate-800">
@@ -337,6 +380,11 @@ function cancelDeleteUser() {
                 ]"
               >
                 {{ user.status }}
+              </span>
+              <span
+                class="text-[10px] font-mono font-bold text-slate-400 uppercase ml-2"
+              >
+                • {{ user.registrationStep.replace(/_/g, " ") }}
               </span>
             </div>
 
@@ -400,9 +448,9 @@ function cancelDeleteUser() {
       >
         <AppPagination
           v-model:current-page="currentPage"
-          :total-pages="5"
-          :total-items="50"
-          :page-size="10"
+          :total-pages="customersStore.meta.totalPages"
+          :total-items="customersStore.meta.total"
+          :page-size="customersStore.meta.limit"
         />
       </div>
     </div>

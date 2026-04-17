@@ -53,6 +53,7 @@ const mockUser = ref<User>({
       accountType: "Savings",
     },
   },
+  createdAt: "2026-03-01T10:00:00.000Z",
 });
 
 const isRejectDialogOpen = ref(false);

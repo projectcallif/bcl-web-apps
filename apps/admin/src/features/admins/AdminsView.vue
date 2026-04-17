@@ -128,7 +128,6 @@ const statusOptions = [
   { label: "Active", value: "ACTIVE" },
   { label: "Deactivated", value: "DEACTIVATED" },
   { label: "Suspended", value: "SUSPENDED" },
-  { label: "Pending", value: "PENDING" },
 ];
 
 const targetUserForStatus = ref<Admin | null>(null);

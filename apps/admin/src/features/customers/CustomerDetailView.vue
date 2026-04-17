@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import dayjs from "dayjs";
 import {
   BaseButton,
   AppPagination,
@@ -18,11 +19,34 @@ import {
   ShieldAlert,
   ArrowRightLeft,
   Trash2,
+  Calendar,
+  Mail,
+  Phone,
 } from "lucide-vue-next";
 import type { UserStatus } from "@bcl/types";
+import { useCustomersStore } from "./store";
+import { useToastStore } from "@/stores/toast";
 
-// Route handling
+// Store & Route
 const router = useRouter();
+const route = useRoute();
+const customersStore = useCustomersStore();
+const toast = useToastStore();
+
+const customerId = route.params.id as string;
+
+// Computed Customer Data
+const customer = computed(() => customersStore.currentCustomer);
+
+// Lifecycle
+onMounted(async () => {
+  if (customerId) {
+    await customersStore.fetchCustomerById(customerId);
+    if (customersStore.error) {
+      toast.error(customersStore.error);
+    }
+  }
+});
 
 // Tabs State
 const activeTab = ref<"info" | "loans" | "transactions">("info");
@@ -39,17 +63,6 @@ const tabs = [
   { id: "loans", label: "Loans history" },
   { id: "transactions", label: "Transactions" },
 ] as const;
-
-// Mock Data (Representing the currently viewed customer)
-const customer = ref({
-  id: "69db4458d57083d07eb1d324",
-  firstName: "Damilola",
-  lastName: "Okon",
-  email: "user2@bcl.com",
-  phone: "2348012345537",
-  dateAdded: "Apr 12, 2026",
-  status: "ACTIVE" as UserStatus, // Using actual status type
-});
 
 const subs = [
   { id: "personal", label: "Personal", icon: User },
@@ -103,9 +116,8 @@ const transactions = [
 
 const statusOptions = [
   { label: "Active", value: "ACTIVE" },
-  { label: "Inactive", value: "INACTIVE" },
+  { label: "Deactivated", value: "DEACTIVATED" },
   { label: "Suspended", value: "SUSPENDED" },
-  { label: "Pending", value: "PENDING" },
 ];
 
 const pendingStatusChange = ref<{
@@ -114,14 +126,17 @@ const pendingStatusChange = ref<{
 const isConfirmOpen = ref(false);
 
 function promptStatusChange(newStatus: string | number) {
-  if (customer.value.status === newStatus) return;
+  if (!customer.value || customer.value.status === newStatus) return;
   pendingStatusChange.value = { newStatus: newStatus as UserStatus };
   isConfirmOpen.value = true;
 }
 
-function confirmStatusChange() {
-  if (pendingStatusChange.value) {
-    customer.value.status = pendingStatusChange.value.newStatus;
+async function confirmStatusChange() {
+  if (pendingStatusChange.value && customer.value) {
+    await customersStore.updateCustomerStatus(
+      customerId,
+      pendingStatusChange.value.newStatus,
+    );
   }
   isConfirmOpen.value = false;
   pendingStatusChange.value = null;
@@ -136,8 +151,10 @@ const targetStatusSelection = ref<UserStatus | "">("");
 const isStatusModalOpen = ref(false);
 
 function openStatusDialog() {
-  targetStatusSelection.value = customer.value.status;
-  isStatusModalOpen.value = true;
+  if (customer.value) {
+    targetStatusSelection.value = customer.value.status;
+    isStatusModalOpen.value = true;
+  }
 }
 
 function continueToStatusConfirm() {
@@ -156,6 +173,7 @@ function promptDeleteUser() {
 function confirmDeleteUser() {
   // Navigation back to list after delete simulation
   isDeleteConfirmOpen.value = false;
+  toast.success("Customer deleted successfully");
   router.push({ name: "customers" });
 }
 
@@ -172,14 +190,36 @@ function formatCurrency(n: number) {
   }).format(n);
 }
 
+function formatDate(date: string | null | undefined) {
+  if (!date) return "N/A";
+  return dayjs(date).format("MMM D, YYYY");
+}
+
+function formatStep(step: string | null | undefined) {
+  if (!step) return "N/A";
+  return step.replace(/_/g, " ");
+}
+
+async function copyToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Customer ID copied to clipboard");
+  } catch (err) {
+    toast.error("Failed to copy Customer ID");
+  }
+}
+
 function getStatusStyle(status: string) {
   switch (status) {
     case "ACTIVE":
-      return "bg-emerald-100 text-emerald-700";
+    case "COMPLETE":
+    case "VERIFIED":
+      return "bg-emerald-100 text-emerald-700 font-bold";
     case "INACTIVE":
+    case "DEACTIVATED":
       return "bg-slate-100 text-slate-700";
     case "SUSPENDED":
-      return "bg-rose-100 text-rose-700";
+      return "bg-rose-100 text-rose-700 font-bold";
     case "PENDING":
       return "bg-amber-100 text-amber-700";
     case "COMPLETED":
@@ -213,18 +253,28 @@ function getStatusStyle(status: string) {
     >
       <div class="flex items-center gap-4">
         <div
-          class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-900 text-white flex items-center justify-center text-lg md:text-xl font-bold shadow-lg shrink-0"
+          class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-900 text-white flex items-center justify-center text-lg md:text-xl font-bold shadow-lg shrink-0 overflow-hidden"
         >
-          {{ customer.firstName[0] }}
+          <template v-if="customer">
+            {{ customer.profile.firstName[0] }}
+          </template>
+          <User v-else class="w-6 h-6 md:w-8 md:h-8 text-slate-400" />
         </div>
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2 md:gap-3">
             <h1
               class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight truncate max-w-50 sm:max-w-none"
             >
-              {{ customer.firstName }} {{ customer.lastName }}
+              <template v-if="customer">
+                {{ customer.profile.firstName }} {{ customer.profile.lastName }}
+              </template>
+              <div
+                v-else
+                class="w-32 h-6 bg-slate-100 animate-pulse rounded"
+              ></div>
             </h1>
             <span
+              v-if="customer"
               :class="[
                 'px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border',
                 customer.status === 'ACTIVE'
@@ -234,12 +284,21 @@ function getStatusStyle(status: string) {
             >
               {{ customer.status }}
             </span>
+            <span
+              v-if="customer"
+              class="px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase border bg-slate-50 text-slate-500 border-slate-100"
+            >
+              {{ formatStep(customer.registrationStep) }}
+            </span>
           </div>
           <div
             class="flex items-center gap-2 text-xs md:text-sm text-slate-500 mt-1"
           >
-            <span class="font-mono truncate">ID: {{ customer.id }}</span>
-            <button class="hover:text-primary-600 transition-colors shrink-0">
+            <span class="font-mono truncate">ID: {{ customerId }}</span>
+            <button
+              @click="copyToClipboard(customerId)"
+              class="hover:text-primary-600 transition-colors shrink-0"
+            >
               <svg
                 class="w-3.5 h-3.5"
                 viewBox="0 0 24 24"
@@ -301,20 +360,46 @@ function getStatusStyle(status: string) {
           >
             <div
               v-for="item in [
-                { label: 'Email address', value: customer.email },
-                { label: 'Phone', value: customer.phone },
-                { label: 'Date added', value: customer.dateAdded },
+                {
+                  label: 'Email address',
+                  value: customer?.email,
+                  icon: Mail,
+                },
+                {
+                  label: 'Phone number',
+                  value: customer?.phone,
+                  icon: Phone,
+                },
+                {
+                  label: 'Registration Date',
+                  value: formatDate(customer?.createdAt),
+                  icon: Calendar,
+                },
+                {
+                  label: 'Registration Phase',
+                  value: formatStep(customer?.registrationStep),
+                  icon: ShieldAlert,
+                },
               ]"
               :key="item.label"
+              class="flex flex-col gap-1"
             >
               <p
-                class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1"
+                class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"
               >
+                <component :is="item.icon" class="w-2.5 h-2.5" />
                 {{ item.label }}
               </p>
-              <p class="text-sm font-medium text-slate-700 break-all">
+              <p
+                v-if="item.value && item.value !== 'N/A'"
+                class="text-sm font-medium text-slate-700 break-all"
+              >
                 {{ item.value }}
               </p>
+              <div
+                v-else
+                class="w-full h-4 bg-slate-50 animate-pulse rounded"
+              ></div>
             </div>
           </div>
         </div>
@@ -322,8 +407,17 @@ function getStatusStyle(status: string) {
 
       <!-- Tabs and Content -->
       <div
-        class="bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col min-h-125 order-1 lg:order-2"
+        class="bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col min-h-125 order-1 lg:order-2 relative overflow-hidden"
       >
+        <!-- Loading Overlay -->
+        <div
+          v-if="customersStore.loading"
+          class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex items-center justify-center"
+        >
+          <div
+            class="w-8 h-8 border-4 border-slate-900/10 border-t-slate-900 rounded-full animate-spin"
+          ></div>
+        </div>
         <!-- Tabs Nav -->
         <div
           class="px-4 md:px-6 border-b border-slate-100 overflow-x-auto scrollbar-hide"
@@ -380,12 +474,27 @@ function getStatusStyle(status: string) {
               <template v-if="activeInfoSubTab === 'personal'">
                 <div
                   v-for="f in [
-                    { label: 'First Name', value: 'Damilola' },
-                    { label: 'Last Name', value: 'Okon' },
-                    { label: 'Gender', value: 'Male' },
-                    { label: 'Date of Birth', value: 'Jan 12, 1992' },
-                    { label: 'Nationality', value: 'Nigerian' },
-                    { label: 'Status', value: 'Verified' },
+                    { label: 'First Name', value: customer?.profile.firstName },
+                    { label: 'Last Name', value: customer?.profile.lastName },
+                    {
+                      label: 'Middle Name',
+                      value: customer?.profile.middleName || 'N/A',
+                    },
+                    { label: 'Gender', value: customer?.profile.gender },
+                    {
+                      label: 'Date of Birth',
+                      value: formatDate(customer?.profile.dateOfBirth),
+                    },
+                    {
+                      label: 'Marital Status',
+                      value: customer?.profile.maritalStatus,
+                    },
+                    { label: 'BVN Status', value: customer?.kyc.bvnStatus },
+                    {
+                      label: 'NIN Status',
+                      value: customer?.kyc.ninStatus || 'Not provided',
+                    },
+                    { label: 'Tier', value: customer?.kyc.tier },
                   ]"
                   :key="f.label"
                 >
@@ -394,22 +503,40 @@ function getStatusStyle(status: string) {
                   >
                     {{ f.label }}
                   </p>
-                  <p class="text-sm font-semibold text-slate-700">
-                    {{ f.value }}
+                  <p class="text-sm font-semibold text-slate-700 capitalize">
+                    <span v-if="f.value">{{
+                      f.value.toLowerCase().replace("_", " ")
+                    }}</span>
+                    <span v-else class="text-slate-300 italic font-normal"
+                      >Not provided</span
+                    >
                   </p>
                 </div>
               </template>
               <template v-else-if="activeInfoSubTab === 'employment'">
                 <div
                   v-for="f in [
-                    { label: 'Employer', value: 'Google' },
-                    { label: 'Role', value: 'Lead Software Engineer' },
-                    { label: 'Sector', value: 'Technology' },
-                    { label: 'Monthly Income', value: '₦1,200,000' },
-                    { label: 'Employment Type', value: 'Full-time' },
-                    { label: 'Join Date', value: 'Jun 2018' },
+                    // { label: 'Employer', value: customer?.profile.employment?.employerName },
+                    // { label: 'Role', value: customer?.profile.employment?.role },
+                    {
+                      label: 'Sector',
+                      value: customer?.profile.employment?.sector,
+                    },
+                    {
+                      label: 'Monthly Income',
+                      value: customer?.profile.employment?.monthlyIncome
+                        ? formatCurrency(
+                            customer.profile.employment.monthlyIncome,
+                          )
+                        : null,
+                    },
+                    {
+                      label: 'Employment Type',
+                      value: customer?.profile.employment?.type,
+                    },
                   ]"
                   :key="f.label"
+                  class="col-span-1"
                 >
                   <p
                     class="text-[10px] md:text-xs text-slate-400 mb-1 font-bold uppercase tracking-wider"
@@ -417,17 +544,24 @@ function getStatusStyle(status: string) {
                     {{ f.label }}
                   </p>
                   <p class="text-sm font-semibold text-slate-700">
-                    {{ f.value }}
+                    <span v-if="f.value">{{ f.value }}</span>
+                    <span v-else class="text-slate-300 italic font-normal"
+                      >Information not available</span
+                    >
                   </p>
                 </div>
               </template>
               <template v-else-if="activeInfoSubTab === 'address'">
                 <div
                   v-for="f in [
-                    { label: 'Street', value: '14 Adeola Odeku' },
-                    { label: 'City', value: 'Victoria Island' },
-                    { label: 'State', value: 'Lagos' },
-                    { label: 'Postal Code', value: '101241' },
+                    {
+                      label: 'Street',
+                      value: customer?.profile.residentialAddress,
+                    },
+                    { label: 'City', value: customer?.profile.city },
+                    { label: 'LGA', value: customer?.profile.lga },
+                    { label: 'State', value: customer?.profile.state },
+                    { label: 'Country', value: customer?.profile.country },
                   ]"
                   :key="f.label"
                 >
@@ -437,17 +571,32 @@ function getStatusStyle(status: string) {
                     {{ f.label }}
                   </p>
                   <p class="text-sm font-semibold text-slate-700">
-                    {{ f.value }}
+                    <span v-if="f.value">{{ f.value }}</span>
+                    <span v-else class="text-slate-300 italic font-normal"
+                      >Not provided</span
+                    >
                   </p>
                 </div>
               </template>
               <template v-else-if="activeInfoSubTab === 'bank'">
                 <div
                   v-for="f in [
-                    { label: 'Bank Name', value: 'Access Bank' },
-                    { label: 'Account Number', value: '0123456789' },
-                    { label: 'Account Holder', value: 'Damilola Okon' },
-                    { label: 'BVN', value: '222******89' },
+                    {
+                      label: 'Bank Name',
+                      value: customer?.profile.bank?.bankName,
+                    },
+                    {
+                      label: 'Account Number',
+                      value: customer?.profile.bank?.accountNumber,
+                    },
+                    {
+                      label: 'Account Holder',
+                      value: customer?.profile.bank?.accountName,
+                    },
+                    {
+                      label: 'Mono ID',
+                      value: customer?.profile.monoAccountId,
+                    },
                   ]"
                   :key="f.label"
                 >
@@ -457,7 +606,10 @@ function getStatusStyle(status: string) {
                     {{ f.label }}
                   </p>
                   <p class="text-sm font-semibold text-slate-700">
-                    {{ f.value }}
+                    <span v-if="f.value">{{ f.value }}</span>
+                    <span v-else class="text-slate-300 italic font-normal"
+                      >Information not available</span
+                    >
                   </p>
                 </div>
               </template>
@@ -616,9 +768,10 @@ function getStatusStyle(status: string) {
       <div class="space-y-4">
         <p class="text-sm text-slate-600">
           Select a new status for
-          <span class="font-medium text-slate-800"
-            >{{ customer.firstName }} {{ customer.lastName }}</span
-          >.
+          <span class="font-medium text-slate-800" v-if="customer">
+            {{ customer.profile.firstName }} {{ customer.profile.lastName }}
+          </span>
+          <span v-else>this customer</span>.
         </p>
         <AppSelect
           v-model="targetStatusSelection"
@@ -643,7 +796,7 @@ function getStatusStyle(status: string) {
     <AppConfirmDialog
       v-model="isConfirmOpen"
       title="Confirm Status Change"
-      :message="`Are you sure you want to change the status of ${customer.firstName} ${customer.lastName} to ${pendingStatusChange?.newStatus}?`"
+      :message="`Are you sure you want to change the status of ${customer?.profile.firstName} ${customer?.profile.lastName} to ${pendingStatusChange?.newStatus}?`"
       confirm-text="Change Status"
       :confirm-variant="
         pendingStatusChange?.newStatus === 'SUSPENDED' ||
@@ -658,7 +811,7 @@ function getStatusStyle(status: string) {
     <AppConfirmDialog
       v-model="isDeleteConfirmOpen"
       title="Delete Customer"
-      :message="`Are you sure you want to permanently delete customer ${customer.firstName} ${customer.lastName}? This action cannot be undone.`"
+      :message="`Are you sure you want to permanently delete customer ${customer?.profile.firstName} ${customer?.profile.lastName}? This action cannot be undone.`"
       confirm-text="Yes, Delete"
       confirm-variant="danger"
       @confirm="confirmDeleteUser"
