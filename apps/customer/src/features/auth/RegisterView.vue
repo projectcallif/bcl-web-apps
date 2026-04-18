@@ -3,8 +3,16 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { AppProgressBar, BrandLogo } from '@bcl/ui'
 import { ArrowLeft } from 'lucide-vue-next'
+import type { 
+  InitiateRegisterPayload, 
+  VerifyRegisterOtpPayload, 
+  PersonalDetailsPayload, 
+  EmploymentUpdatePayload, 
+  UtilityBillUpdatePayload 
+} from '@bcl/types'
 
 import RegistrationRequirements from './components/RegistrationRequirements.vue'
+import InitialRegistration from './components/InitialRegistration.vue'
 import PersonalDetailsForm from './components/PersonalDetailsForm.vue'
 import LocationAccess from './components/LocationAccess.vue'
 import OTPVerification from './components/OTPVerification.vue'
@@ -16,27 +24,38 @@ import RegistrationSuccess from './components/RegistrationSuccess.vue'
 const router = useRouter()
 
 const currentStep = ref(1)
-const TOTAL_STEPS = 8
+const TOTAL_STEPS = 9
 
-const formData = ref<Record<string, any>>({})
+interface RegistrationData extends 
+  InitiateRegisterPayload, 
+  Partial<VerifyRegisterOtpPayload>, 
+  Partial<PersonalDetailsPayload>, 
+  Partial<EmploymentUpdatePayload>, 
+  Partial<UtilityBillUpdatePayload> {
+    bvn?: string
+  }
+
+const formData = ref<RegistrationData>({})
 
 const currentComponent = computed(() => {
   switch (currentStep.value) {
     case 1:
       return RegistrationRequirements
     case 2:
-      return PersonalDetailsForm
+      return InitialRegistration
     case 3:
-      return LocationAccess
-    case 4:
       return OTPVerification
+    case 4:
+      return PersonalDetailsForm
     case 5:
-      return EmploymentInfo
+      return LocationAccess
     case 6:
-      return ProofOfAddress
-    case 7:
       return IdentityVerification
+    case 7:
+      return EmploymentInfo
     case 8:
+      return ProofOfAddress
+    case 9:
       return RegistrationSuccess
     default:
       return RegistrationRequirements
@@ -104,12 +123,13 @@ function onIdentityComplete(bvn: string) {
         <BrandLogo size="md" class="inline-block" />
       </div>
       <div v-else class="flex-1 text-center pr-8 font-semibold text-slate-800">
-        <span v-if="currentStep === 2">Personal Details</span>
-        <span v-else-if="currentStep === 3">Location Access</span>
-        <span v-else-if="currentStep === 4">Verify OTP</span>
-        <span v-else-if="currentStep === 5">Employment Information</span>
-        <span v-else-if="currentStep === 6">Proof of Address</span>
-        <span v-else-if="currentStep === 7">Identity Verification</span>
+        <span v-if="currentStep === 2">Create Account</span>
+        <span v-else-if="currentStep === 3">Verify OTP</span>
+        <span v-else-if="currentStep === 4">Personal Details</span>
+        <span v-else-if="currentStep === 5">Location Access</span>
+        <span v-else-if="currentStep === 6">Identity Verification</span>
+        <span v-else-if="currentStep === 7">Employment Information</span>
+        <span v-else-if="currentStep === 8">Proof of Address</span>
       </div>
     </header>
 

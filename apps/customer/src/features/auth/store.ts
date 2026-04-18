@@ -1,17 +1,15 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { User, LoginPayload, RegisterPayload, VerifyEmailPayload } from '@bcl/types'
-import {
-  login as loginApi,
-  register as registerApi,
-  verifyEmail as verifyEmailApi,
-} from './api'
+import type { User, LoginPayload, VerifyEmailPayload } from '@bcl/types'
+import { login as loginApi, verifyEmail as verifyEmailApi } from './api'
 
 const TOKEN_KEY = 'bcl_customer_token'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const user = ref<User | null>(null)
+  const registrationIdentifier = ref<string | null>(null)
+  const registrationType = ref<'EMAIL_VERIFICATION' | 'PHONE_VERIFICATION' | null>(null)
 
   const isAuthenticated = computed(() => token.value !== null)
 
@@ -24,14 +22,6 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = response.data.accessToken
     user.value = response.data.user
     localStorage.setItem(TOKEN_KEY, response.data.accessToken)
-  }
-
-  /**
-   * Create a new account.
-   */
-  async function register(payload: RegisterPayload): Promise<void> {
-    // Just call the API to create the account. Verification happens next.
-    await registerApi(payload)
   }
 
   /**
@@ -50,13 +40,23 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(TOKEN_KEY)
   }
 
+  function setRegistrationData(
+    identifier: string,
+    type: 'EMAIL_VERIFICATION' | 'PHONE_VERIFICATION',
+  ): void {
+    registrationIdentifier.value = identifier
+    registrationType.value = type
+  }
+
   return {
     token,
     user,
     isAuthenticated,
+    registrationIdentifier,
+    registrationType,
     login,
-    register,
     verifyEmail,
     logout,
+    setRegistrationData,
   }
 })

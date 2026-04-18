@@ -18,6 +18,14 @@ export type RegistrationStep =
   | "UTILITY_BILL_COMPLETE"
   | "COMPLETE";
 
+export type EmploymentStatus =
+  | "EMPLOYED"
+  | "SELF_EMPLOYED"
+  | "BUSINESS_OWNER"
+  | "STUDENT"
+  | "UNEMPLOYED"
+  | "RETIRED";
+
 export interface EmploymentInfo {
   jobTitle: string;
   employer: string;
