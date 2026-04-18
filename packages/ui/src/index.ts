@@ -34,3 +34,5 @@ export { default as AppDatePicker } from "./components/AppDatePicker.vue";
 export { default as AppRichTextEditor } from "./components/AppRichTextEditor.vue";
 
 export { default as AppToast } from "./components/AppToast.vue";
+
+export { default as AppFileUpload } from "./components/AppFileUpload.vue";
