@@ -82,12 +82,16 @@ export interface PresignedUrlPayload {
 }
 
 export interface ForgotPasswordPayload {
-  identifier: string; // email or phone
+  email?: string;
+  phone?: string;
 }
 
 export interface ResetPasswordPayload {
-  token: string;
-  password: string;
+  email?: string;
+  phone?: string;
+  otp: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
 
 export interface VerifyEmailPayload {
