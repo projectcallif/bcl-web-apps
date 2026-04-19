@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { LoanEligibility } from '@bcl/types'
+import type { LoanEligibility, LoanSchedule } from '@bcl/types'
 
 export const useLoanApplicationStore = defineStore('loanApplication', () => {
   const currentStep = ref(0)
@@ -15,10 +15,12 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
   // Step 3 — Eligibility
   const eligibility = ref<LoanEligibility | null>(null)
 
-  // Step 4 — Loan Amount
+  // Step 4 — Loan Amount Selection
   const selectedAmount = ref(0)
-  const selectedTenorMonths = ref(0)
-  const selectedInterestRatePerMonth = ref(0)
+  const selectedTenor = ref(0)
+
+  // Step 5 — Schedule (Preview Result)
+  const previewSchedule = ref<LoanSchedule | null>(null)
 
   // Step 6 — Sign Terms
   const signatureName = ref('')
@@ -32,18 +34,17 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
   // Step 8 — Result
   const applicationReference = ref('')
 
-  const monthlyPayment = computed(() => {
-    if (!selectedAmount.value || !selectedTenorMonths.value) return 0
-    const totalInterest = selectedAmount.value * (selectedInterestRatePerMonth.value / 100) * selectedTenorMonths.value
-    return Math.ceil((selectedAmount.value + totalInterest) / selectedTenorMonths.value)
-  })
+  // Computed properties from preview result
+  const monthlyPayment = computed(() => previewSchedule.value?.summary.monthlyPayment ?? 0)
+  const totalRepayment = computed(() => previewSchedule.value?.summary.totalAmountToRepay ?? 0)
+  const totalInterest = computed(() => previewSchedule.value?.summary.totalInterest ?? 0)
 
-  const totalRepayment = computed(() => monthlyPayment.value * selectedTenorMonths.value)
-
-  const totalInterest = computed(() => totalRepayment.value - selectedAmount.value)
-
-  function nextStep(): void { console.log(currentStep.value); currentStep.value = currentStep.value + 1 }
-  function prevStep(): void { if (currentStep.value > 0) currentStep.value = currentStep.value - 1 }
+  function nextStep(): void {
+    currentStep.value = currentStep.value + 1
+  }
+  function prevStep(): void {
+    if (currentStep.value > 0) currentStep.value = currentStep.value - 1
+  }
 
   function reset(): void {
     currentStep.value = 0
@@ -52,8 +53,8 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
     linkedBankName.value = ''
     eligibility.value = null
     selectedAmount.value = 0
-    selectedTenorMonths.value = 0
-    selectedInterestRatePerMonth.value = 0
+    selectedTenor.value = 0
+    previewSchedule.value = null
     signatureName.value = ''
     agreementSigned.value = false
     bankName.value = ''
@@ -69,8 +70,8 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
     linkedBankName,
     eligibility,
     selectedAmount,
-    selectedTenorMonths,
-    selectedInterestRatePerMonth,
+    selectedTenor,
+    previewSchedule,
     signatureName,
     agreementSigned,
     bankName,

@@ -201,7 +201,7 @@ function cancelDeleteUser() {
           </div>
         </div>
 
-        <table class="w-full text-left text-sm text-slate-600 border-collapse">
+        <table class="w-full text-left text-sm text-slate-600 border-collapse min-w-200">
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >

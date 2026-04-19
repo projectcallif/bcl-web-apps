@@ -172,7 +172,7 @@ function formatCurrency(n: number) {
 
       <!-- Desktop Table -->
       <div class="hidden md:block w-full overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600 border-collapse">
+        <table class="w-full text-left text-sm text-slate-600 border-collapse min-w-225">
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >

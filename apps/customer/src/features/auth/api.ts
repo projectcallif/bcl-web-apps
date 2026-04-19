@@ -16,10 +16,15 @@ import type {
   EmploymentUpdatePayload,
   UtilityBillUpdatePayload,
   PresignedUrlPayload,
+  User,
 } from '@bcl/types'
 
 export function login(payload: LoginPayload): Promise<ApiResponse<AuthResponse>> {
   return api.post<AuthResponse>('/v1/auth/login', payload)
+}
+
+export function getMe(): Promise<ApiResponse<User>> {
+  return api.get<User>('/v1/users/me')
 }
 
 export function forgotPassword(payload: ForgotPasswordPayload): Promise<ApiResponse<void>> {

@@ -1,27 +1,44 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { BaseButton } from '@bcl/ui'
+import { Loader2 } from 'lucide-vue-next'
 import { useLoanApplicationStore } from '../store'
+import { previewLoan } from '../../api'
 
 const store = useLoanApplicationStore()
 
 const eligibility = store.eligibility!
 const amount = ref(store.selectedAmount || eligibility.minAmount)
-const selectedTenor = ref(
-  store.selectedTenorMonths || eligibility?.availableTenors?.[0]?.months || 1,
-)
+const selectedTenor = ref(store.selectedTenor || eligibility.tenors[0] || 1)
+const isPreviewing = ref(false)
 
-const currentTenor = computed(() => {
-  const found = eligibility.availableTenors.find((t) => t.months === selectedTenor.value)
-  return found || eligibility.availableTenors[0] || { months: 1, interestRatePerMonth: 0 }
+async function updatePreview() {
+  if (!amount.value || !selectedTenor.value) return
+  isPreviewing.value = true
+  try {
+    const res = await previewLoan({
+      requestedAmount: amount.value,
+      requestedTenor: selectedTenor.value,
+    })
+    store.previewSchedule = res.data
+  } catch (err) {
+    console.error('Preview failed:', err)
+  } finally {
+    isPreviewing.value = false
+  }
+}
+
+watch([amount, selectedTenor], () => {
+  store.selectedAmount = amount.value
+  store.selectedTenor = selectedTenor.value
+  updatePreview()
 })
 
-const monthlyInterest = computed(
-  () => amount.value * (currentTenor.value.interestRatePerMonth / 100),
-)
-const totalInterest = computed(() => monthlyInterest.value * selectedTenor.value)
-const totalRepayment = computed(() => amount.value + totalInterest.value)
-const monthlyPayment = computed(() => Math.ceil(totalRepayment.value / selectedTenor.value))
+onMounted(() => {
+  if (!store.previewSchedule) {
+    updatePreview()
+  }
+})
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('en-NG', {
@@ -31,22 +48,7 @@ function formatCurrency(n: number): string {
   }).format(n)
 }
 
-const sliderPercent = computed(
-  () =>
-    ((amount.value - eligibility.minAmount) / (eligibility.maxAmount - eligibility.minAmount)) *
-    100,
-)
-
-watch([amount, selectedTenor], () => {
-  store.selectedAmount = amount.value
-  store.selectedTenorMonths = selectedTenor.value
-  store.selectedInterestRatePerMonth = currentTenor.value.interestRatePerMonth
-})
-
 function proceed() {
-  store.selectedAmount = amount.value
-  store.selectedTenorMonths = selectedTenor.value
-  store.selectedInterestRatePerMonth = currentTenor.value.interestRatePerMonth
   store.nextStep()
 }
 function goBack() {
@@ -74,14 +76,14 @@ function goBack() {
       <input
         v-model.number="amount"
         type="range"
-        :min="eligibility?.minAmount ?? 50000"
-        :max="eligibility?.maxAmount ?? 500000"
+        :min="eligibility.minAmount"
+        :max="eligibility.maxAmount"
         :step="10_000"
         class="w-full h-2 rounded-full accent-primary cursor-pointer"
       />
       <div class="flex justify-between text-xs text-slate-400 mt-2">
-        <span>{{ formatCurrency(eligibility?.minAmount ?? 50000) }}</span>
-        <span>{{ formatCurrency(eligibility?.maxAmount ?? 500000) }}</span>
+        <span>{{ formatCurrency(eligibility.minAmount) }}</span>
+        <span>{{ formatCurrency(eligibility.maxAmount) }}</span>
       </div>
     </div>
 
@@ -90,40 +92,46 @@ function goBack() {
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
         Repayment Tenor
       </p>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button
-          v-for="tenor in eligibility?.availableTenors ?? []"
-          :key="tenor.months"
+          v-for="t in eligibility.tenors"
+          :key="t"
           class="flex flex-col items-center px-3 py-3 rounded-xl border text-sm font-medium transition-all"
           :class="
-            selectedTenor === tenor.months
+            selectedTenor === t
               ? 'border-primary bg-primary text-white shadow-sm shadow-primary/20'
               : 'border-slate-200 bg-white text-slate-600 hover:border-primary/50'
           "
-          @click="selectedTenor = tenor.months"
+          @click="selectedTenor = t"
         >
-          <span class="font-bold text-xs sm:text-sm">{{ tenor.months }} months</span>
-          <span class="text-[10px] mt-0.5 opacity-75">{{ tenor.interestRatePerMonth }}% p.m.</span>
+          <span class="font-bold">{{ t }} months</span>
         </button>
       </div>
     </div>
 
     <!-- Summary -->
-    <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-6">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Loan Summary</p>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="text-center sm:text-left sm:pr-2">
+    <div class="relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-6 min-h-25 flex flex-col justify-center">
+      <div v-if="isPreviewing" class="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-10">
+        <Loader2 class="w-5 h-5 text-primary animate-spin" />
+      </div>
+
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Estimated Summary</p>
+      <div v-if="store.previewSchedule" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="text-center sm:text-left">
           <p class="text-xs text-slate-400 mb-1">Monthly Payment</p>
-          <p class="text-base font-bold text-primary">{{ formatCurrency(monthlyPayment) }}</p>
+          <p class="text-base font-bold text-primary">{{ formatCurrency(store.monthlyPayment) }}</p>
         </div>
         <div class="text-center border-y sm:border-y-0 sm:border-x border-slate-200 py-3 sm:py-0">
           <p class="text-xs text-slate-400 mb-1">Total Interest</p>
-          <p class="text-base font-bold text-secondary">{{ formatCurrency(totalInterest) }}</p>
+          <p class="text-base font-bold text-secondary">{{ formatCurrency(store.totalInterest) }}</p>
         </div>
-        <div class="text-center sm:text-right sm:pl-2">
+        <div class="text-center sm:text-right">
           <p class="text-xs text-slate-400 mb-1">Total Repayment</p>
-          <p class="text-base font-bold text-slate-800">{{ formatCurrency(totalRepayment) }}</p>
+          <p class="text-base font-bold text-slate-800">{{ formatCurrency(store.totalRepayment) }}</p>
         </div>
+      </div>
+      <div v-else class="text-center py-2">
+        <p class="text-sm text-slate-400 italic">Select amount and tenor to see summary</p>
       </div>
     </div>
 
@@ -131,7 +139,9 @@ function goBack() {
       <button class="text-sm text-slate-500 hover:text-slate-700 transition-colors" @click="goBack">
         Back
       </button>
-      <BaseButton variant="primary" size="lg" @click="proceed">View Repayment Schedule</BaseButton>
+      <BaseButton variant="primary" size="lg" :disabled="isPreviewing || !store.previewSchedule" @click="proceed">
+        View Detailed Schedule
+      </BaseButton>
     </div>
   </div>
 </template>

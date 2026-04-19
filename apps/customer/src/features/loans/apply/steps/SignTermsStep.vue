@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { BaseButton, AppTextInput } from '@bcl/ui'
 import { useLoanApplicationStore } from '../store'
-import { getLoanAgreement } from '../../api'
+import { getLoanContract } from '../../api'
 import { useAuthStore } from '@/features/auth/store'
 
 const store = useLoanApplicationStore()
@@ -13,8 +13,8 @@ const signatureName = ref(store.signatureName)
 const agreed = ref(store.agreementSigned)
 
 onMounted(async () => {
-  const res = await getLoanAgreement('1')
-  html.value = res.data.html
+  const res = await getLoanContract()
+  html.value = res.data.content
 })
 
 const fullName = computed(() =>
@@ -39,8 +39,13 @@ function goBack() { store.prevStep() }
     <p class="text-sm text-slate-500 mb-5">Review and sign your loan agreement to proceed.</p>
 
     <!-- Agreement HTML -->
-    <div class="h-64 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 prose prose-slate prose-sm max-w-none mb-6"
-         v-html="html || 'Loading...'" />
+    <div class="h-64 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden prose prose-slate prose-sm max-w-none mb-6">
+      <iframe
+        :srcdoc="html || 'Loading...'"
+        class="w-full h-full border-0"
+        title="Loan Contract"
+      />
+    </div>
 
     <!-- Loan summary in agreement context -->
     <div class="bg-primary-50 border border-primary-100 rounded-xl p-4 mb-5 text-sm">
@@ -54,7 +59,7 @@ function goBack() { store.prevStep() }
         </div>
         <div>
           <p class="text-slate-500">Tenor</p>
-          <p class="font-semibold text-slate-800">{{ store.selectedTenorMonths }} months</p>
+          <p class="font-semibold text-slate-800">{{ store.selectedTenor }} months</p>
         </div>
         <div>
           <p class="text-slate-500">Monthly Payment</p>

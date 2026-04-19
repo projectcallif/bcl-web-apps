@@ -12,42 +12,84 @@ import { PhoneCall, AlertTriangle, Search, Filter } from "lucide-vue-next";
 import type { Loan, CollectionLog } from "@bcl/types";
 
 // Setup mocks using the Loan interface mapped to ACTIVE/OVERDUE explicitly
-const mockLoans = ref<(Loan & { customerName: string; phone: string })[]>([
+const mockLoans = ref<
+  (Loan & {
+    customerName: string;
+    phone: string;
+    nextRepaymentAmount: number;
+    nextRepaymentDate: string;
+    loanNumber: string;
+  })[]
+>([
   {
     id: "loan_active_1",
+    referenceId: "BCL-2026-A10",
     loanNumber: "BCL-2026-A10",
+    applicationId: "app_1",
     customerName: "Michael Doe",
     phone: "+234 810 123 4444",
-    type: "PERSONAL",
     principal: 500000,
-    totalAmount: 550000,
+    interestAmount: 50000,
+    totalPayable: 550000,
     amountPaid: 200000,
     outstandingBalance: 350000,
+    tenor: 6,
     nextRepaymentDate: "2026-11-25T00:00:00Z",
     nextRepaymentAmount: 50000,
     disbursedAt: "2026-08-01T00:00:00Z",
-    dueDate: "2027-02-01T00:00:00Z",
+    firstDueDate: "2026-09-01T00:00:00Z",
+    finalDueDate: "2027-02-01T00:00:00Z",
     status: "ACTIVE",
-    interestRate: 2,
-    tenorMonths: 6,
+    createdAt: "2026-07-25T00:00:00Z",
+    loanProduct: {
+      id: "prod_1",
+      name: "Personal Loan",
+      interestType: "FIXED",
+      minAmount: 10000,
+      maxAmount: 1000000,
+      tenors: [],
+    },
+    disbursementAccount: {
+      id: "acc_1",
+      bankName: "Zenith Bank",
+      accountNumber: "1234567890",
+      accountName: "Michael Doe",
+    },
   },
   {
     id: "loan_overdue_1",
+    referenceId: "BCL-2026-D99",
     loanNumber: "BCL-2026-D99",
+    applicationId: "app_2",
     customerName: "Sarah Connor",
     phone: "+234 902 333 5555",
-    type: "BUSINESS",
     principal: 2000000,
-    totalAmount: 2400000,
+    interestAmount: 400000,
+    totalPayable: 2400000,
     amountPaid: 400000,
     outstandingBalance: 2000000,
+    tenor: 12,
     nextRepaymentDate: "2026-10-15T00:00:00Z",
     nextRepaymentAmount: 400000,
     disbursedAt: "2026-05-15T00:00:00Z",
-    dueDate: "2027-05-15T00:00:00Z",
+    firstDueDate: "2026-06-15T00:00:00Z",
+    finalDueDate: "2027-05-15T00:00:00Z",
     status: "OVERDUE",
-    interestRate: 3.5,
-    tenorMonths: 12,
+    createdAt: "2026-05-10T00:00:00Z",
+    loanProduct: {
+      id: "prod_2",
+      name: "Business Loan",
+      interestType: "FIXED",
+      minAmount: 500000,
+      maxAmount: 5000000,
+      tenors: [],
+    },
+    disbursementAccount: {
+      id: "acc_2",
+      bankName: "GTBank",
+      accountNumber: "0987654321",
+      accountName: "Sarah Connor",
+    },
   },
 ]);
 
@@ -165,7 +207,9 @@ function formatDateOptions(iso: string) {
 
       <!-- Desktop Table -->
       <div class="hidden md:block w-full overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600 border-collapse">
+        <table
+          class="w-full text-left text-sm text-slate-600 border-collapse min-w-225"
+        >
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >
@@ -206,7 +250,7 @@ function formatDateOptions(iso: string) {
                   {{ formatCurrency(loan.outstandingBalance) }}
                 </div>
                 <div class="text-xs text-slate-500 mt-0.5">
-                  out of {{ formatCurrency(loan.totalAmount) }}
+                  out of {{ formatCurrency(loan.totalPayable) }}
                 </div>
               </td>
               <td class="px-6 py-4">

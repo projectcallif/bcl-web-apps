@@ -30,22 +30,47 @@ const firstName = computed(() => authStore.user?.profile.firstName ?? 'there')
 
 // ── Mock data — replace with dashboard store/API calls ────────────────────────
 
-const activeLoan: Loan = {
+const activeLoan = ref<
+  Loan & {
+    nextRepaymentDate: string
+    nextRepaymentAmount: number
+    interestRate: number
+    loanNumber: string
+  }
+>({
   id: '1',
-  loanNumber: 'BCL-2026-0042',
-  type: 'PERSONAL',
+  referenceId: 'BCL-2026-0042',
+  loanNumber: 'BCL-2026-0042', // Keeping for UI consistency
+  applicationId: 'app_1',
   principal: 500_000,
-  totalAmount: 560_000,
+  interestAmount: 60_000,
+  totalPayable: 560_000,
   amountPaid: 186_668,
   outstandingBalance: 373_332,
   nextRepaymentDate: '2026-04-15',
   nextRepaymentAmount: 46_667,
   disbursedAt: '2025-12-15',
-  dueDate: '2026-12-15',
+  firstDueDate: '2026-01-15',
+  finalDueDate: '2026-12-15',
   status: 'ACTIVE',
   interestRate: 4,
-  tenorMonths: 12,
-}
+  tenor: 12,
+  createdAt: '2025-12-10',
+  loanProduct: {
+    id: 'prod_1',
+    name: 'Personal Loan',
+    interestType: 'FIXED',
+    minAmount: 10000,
+    maxAmount: 1000000,
+    tenors: [],
+  },
+  disbursementAccount: {
+    id: 'acc_1',
+    bankName: 'Zenith Bank',
+    accountNumber: '1234567890',
+    accountName: 'John Doe', // Based on firstName logic
+  },
+})
 
 const recentPayments: LoanPayment[] = [
   {
@@ -84,13 +109,15 @@ const recentPayments: LoanPayment[] = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const repaymentProgress = computed(() =>
-  Math.round((activeLoan.amountPaid / activeLoan.totalAmount) * 100),
-)
+const repaymentProgress = computed(() => {
+  const paid = activeLoan.value.amountPaid ?? 0
+  return Math.round((paid / activeLoan.value.totalPayable) * 100)
+})
 
-const paymentsMade = computed(() =>
-  Math.round(activeLoan.amountPaid / activeLoan.nextRepaymentAmount),
-)
+const paymentsMade = computed(() => {
+  const paid = activeLoan.value.amountPaid ?? 0
+  return Math.round(paid / activeLoan.value.nextRepaymentAmount)
+})
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-NG', {
@@ -171,7 +198,7 @@ const paymentStatusConfig: Record<
       <!-- Header row -->
       <div class="relative flex items-center justify-between mb-6">
         <div class="flex items-center gap-2.5 text-white/70 text-sm font-medium">
-          <span>{{ loanTypeLabel[activeLoan.type] }}</span>
+          <span>{{ loanTypeLabel[activeLoan.loanProduct.name.toUpperCase() as LoanType] || activeLoan.loanProduct.name }}</span>
           <span class="text-white/40">·</span>
           <span class="text-white/50 text-xs font-mono">{{ activeLoan.loanNumber }}</span>
         </div>
@@ -206,7 +233,7 @@ const paymentStatusConfig: Record<
       <div class="relative mb-6">
         <div class="flex justify-between text-xs text-white/50 mb-2">
           <span>{{ repaymentProgress }}% repaid</span>
-          <span>{{ paymentsMade }} of {{ activeLoan.tenorMonths }} payments</span>
+          <span>{{ paymentsMade }} of {{ activeLoan.tenor }} payments</span>
         </div>
         <div class="h-1.5 bg-white/20 rounded-full overflow-hidden">
           <div
@@ -222,11 +249,11 @@ const paymentStatusConfig: Record<
       >
         <div>
           <p class="text-xs text-white/50 mb-1">Total Loan</p>
-          <p class="text-sm font-semibold">{{ formatCurrency(activeLoan.totalAmount) }}</p>
+          <p class="text-sm font-semibold">{{ formatCurrency(activeLoan.totalPayable) }}</p>
         </div>
         <div>
           <p class="text-xs text-white/50 mb-1">Amount Paid</p>
-          <p class="text-sm font-semibold">{{ formatCurrency(activeLoan.amountPaid) }}</p>
+          <p class="text-sm font-semibold">{{ formatCurrency(activeLoan.amountPaid ?? 0) }}</p>
         </div>
         <div>
           <p class="text-xs text-white/50 mb-1">Monthly Repayment</p>
@@ -287,7 +314,7 @@ const paymentStatusConfig: Record<
         </div>
         <p class="text-2xl font-bold text-slate-800 mb-1">{{ repaymentProgress }}%</p>
         <p class="text-sm text-slate-500">
-          {{ paymentsMade }} of {{ activeLoan.tenorMonths }} payments made
+          {{ paymentsMade }} of {{ activeLoan.tenor }} payments made
         </p>
         <div class="mt-4 h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <div
@@ -295,7 +322,7 @@ const paymentStatusConfig: Record<
             :style="{ width: repaymentProgress + '%' }"
           />
         </div>
-        <p class="text-xs text-slate-400 mt-2">Due {{ formatDate(activeLoan.dueDate) }}</p>
+        <p class="text-xs text-slate-400 mt-2">Due {{ formatDate(activeLoan.finalDueDate || '') }}</p>
       </div>
     </div>
 

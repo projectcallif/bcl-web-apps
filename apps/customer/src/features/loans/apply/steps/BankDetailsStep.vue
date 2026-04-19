@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue'
 import { BaseButton, AppTextInput } from '@bcl/ui'
 import { Loader2, CheckCircle2 } from 'lucide-vue-next'
 import { useLoanApplicationStore } from '../store'
+import { applyLoan } from '../../api'
 
 const store = useLoanApplicationStore()
 
@@ -16,6 +17,8 @@ const bankName = ref(store.bankName)
 const accountNumber = ref(store.accountNumber)
 const accountName = ref(store.accountName)
 const isVerifying = ref(false)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
 
 // Simulate account name lookup after 10-digit entry
 watch(accountNumber, async (val) => {
@@ -44,12 +47,26 @@ const canProceed = computed(() =>
   bankName.value && accountNumber.value.length === 10 && accountName.value.length > 0,
 )
 
-function proceed() {
-  store.bankName = bankName.value
-  store.accountNumber = accountNumber.value
-  store.accountName = accountName.value
-  store.applicationReference = 'BCL-APP-' + Math.random().toString(36).substring(2, 10).toUpperCase()
-  store.nextStep()
+async function proceed() {
+  isSubmitting.value = true
+  errorMessage.value = ''
+  try {
+    const res = await applyLoan({
+      requestedAmount: store.selectedAmount,
+      requestedTenor: store.selectedTenor,
+      purpose: 'PERSONAL', // Defaulting for now
+    })
+    store.bankName = bankName.value
+    store.accountNumber = accountNumber.value
+    store.accountName = accountName.value
+    store.applicationReference = res.data.referenceId
+    store.nextStep()
+  } catch (err: any) {
+    console.error('Submission failed:', err)
+    errorMessage.value = err.response?.data?.message || 'Failed to submit application. Please try again.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 function goBack() { store.prevStep() }
 </script>
@@ -125,9 +142,18 @@ function goBack() { store.prevStep() }
       </div>
     </div>
 
+    <!-- Error message -->
+    <p v-if="errorMessage" class="text-xs text-red-500 mb-4">{{ errorMessage }}</p>
+
     <div class="flex justify-between">
-      <button class="text-sm text-slate-500 hover:text-slate-700 transition-colors" @click="goBack">Back</button>
-      <BaseButton variant="primary" size="lg" :disabled="!canProceed" @click="proceed">
+      <button
+        class="text-sm text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50"
+        :disabled="isSubmitting"
+        @click="goBack"
+      >
+        Back
+      </button>
+      <BaseButton variant="primary" size="lg" :disabled="!canProceed" :isLoading="isSubmitting" @click="proceed">
         Confirm &amp; Submit
       </BaseButton>
     </div>

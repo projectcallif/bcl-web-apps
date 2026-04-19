@@ -4,7 +4,7 @@ import type { RepaymentScheduleItem, InstallmentStatus } from '@bcl/types'
 
 const props = defineProps<{
   items: RepaymentScheduleItem[]
-  loanNumber?: string
+  loanReference?: string
 }>()
 
 function formatCurrency(n: number): string {
@@ -22,23 +22,22 @@ const statusConfig: Record<InstallmentStatus, { label: string; classes: string; 
 }
 
 function downloadCSV() {
-  const headers = ['#', 'Due Date', 'Principal (₦)', 'Interest (₦)', 'Total (₦)', 'Balance (₦)', 'Status', 'Paid At']
+  const headers = ['#', 'Due Date', 'Principal Due (₦)', 'Interest Due (₦)', 'Total Due (₦)', 'Balance (₦)', 'Amount Paid (₦)']
   const rows = props.items.map(item => [
-    item.installmentNumber,
+    item.installmentNo,
     item.dueDate,
-    item.principal,
-    item.interest,
-    item.totalAmount,
+    item.principalDue,
+    item.interestDue,
+    item.totalDue,
     item.balance,
-    item.status,
-    item.paidAt ?? '',
+    item.amountPaid ?? 0,
   ])
   const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `repayment-schedule-${props.loanNumber ?? 'loan'}.csv`
+  a.download = `repayment-schedule-${props.loanReference ?? 'loan'}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -63,7 +62,7 @@ function downloadCSV() {
 
     <!-- Table -->
     <div class="overflow-x-auto rounded-xl border border-slate-100">
-      <table class="w-full text-sm">
+      <table class="w-full text-sm min-w-200">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100">
             <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
@@ -78,24 +77,26 @@ function downloadCSV() {
         <tbody class="divide-y divide-slate-50">
           <tr
             v-for="item in items"
-            :key="item.installmentNumber"
+            :key="item.installmentNo"
             class="hover:bg-slate-50/50 transition-colors"
             :class="item.status === 'OVERDUE' ? 'bg-red-50/30' : ''"
           >
-            <td class="px-4 py-3 text-xs font-medium text-slate-400">{{ item.installmentNumber }}</td>
+            <td class="px-4 py-3 text-xs font-medium text-slate-400">{{ item.installmentNo }}</td>
             <td class="px-4 py-3 text-slate-700">{{ formatDate(item.dueDate) }}</td>
-            <td class="px-4 py-3 text-right text-slate-700">{{ formatCurrency(item.principal) }}</td>
-            <td class="px-4 py-3 text-right text-slate-500">{{ formatCurrency(item.interest) }}</td>
-            <td class="px-4 py-3 text-right font-semibold text-slate-800">{{ formatCurrency(item.totalAmount) }}</td>
+            <td class="px-4 py-3 text-right text-slate-700">{{ formatCurrency(item.principalDue) }}</td>
+            <td class="px-4 py-3 text-right text-slate-500">{{ formatCurrency(item.interestDue) }}</td>
+            <td class="px-4 py-3 text-right font-semibold text-slate-800">{{ formatCurrency(item.totalDue) }}</td>
             <td class="px-4 py-3 text-right text-slate-500">{{ formatCurrency(item.balance) }}</td>
             <td class="px-4 py-3 text-center">
               <span
+                v-if="item.status || item.amountPaid"
                 class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                :class="statusConfig[item.status].classes"
+                :class="statusConfig[item.status || (item.amountPaid === item.totalDue ? 'PAID' : 'UPCOMING')].classes"
               >
-                <component :is="statusConfig[item.status].icon" class="w-3 h-3" />
-                {{ statusConfig[item.status].label }}
+                <component :is="statusConfig[item.status || (item.amountPaid === item.totalDue ? 'PAID' : 'UPCOMING')].icon" class="w-3 h-3" />
+                {{ statusConfig[item.status || (item.amountPaid === item.totalDue ? 'PAID' : 'UPCOMING')].label }}
               </span>
+              <span v-else class="text-xs text-slate-400 italic">Expected</span>
             </td>
           </tr>
         </tbody>
@@ -104,13 +105,13 @@ function downloadCSV() {
           <tr>
             <td colspan="2" class="px-4 py-3 text-xs font-bold text-slate-600 uppercase tracking-wider">Total</td>
             <td class="px-4 py-3 text-right text-xs font-bold text-slate-700">
-              {{ formatCurrency(items.reduce((s, i) => s + i.principal, 0)) }}
+              {{ formatCurrency(items.reduce((s, i) => s + i.principalDue, 0)) }}
             </td>
             <td class="px-4 py-3 text-right text-xs font-bold text-slate-700">
-              {{ formatCurrency(items.reduce((s, i) => s + i.interest, 0)) }}
+              {{ formatCurrency(items.reduce((s, i) => s + i.interestDue, 0)) }}
             </td>
             <td class="px-4 py-3 text-right text-xs font-bold text-slate-800">
-              {{ formatCurrency(items.reduce((s, i) => s + i.totalAmount, 0)) }}
+              {{ formatCurrency(items.reduce((s, i) => s + i.totalDue, 0)) }}
             </td>
             <td colspan="2" />
           </tr>

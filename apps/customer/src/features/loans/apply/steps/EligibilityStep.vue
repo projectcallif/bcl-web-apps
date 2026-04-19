@@ -43,7 +43,7 @@ function goBack() { store.prevStep() }
     <template v-else-if="store.eligibility">
 
       <!-- Eligible -->
-      <div v-if="store.eligibility.eligible" class="space-y-5">
+      <div v-if="store.eligibility.isEligible" class="space-y-5">
         <div class="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-4">
           <CheckCircle2 class="w-6 h-6 text-green-600 shrink-0" />
           <div>
@@ -66,7 +66,7 @@ function goBack() { store.prevStep() }
           <div class="bg-slate-50 rounded-xl p-4 text-center">
             <ShieldCheck class="w-6 h-6 text-tertiary mx-auto mb-2" />
             <p class="text-xs text-slate-500 mb-1">Available Tenors</p>
-            <p class="text-base sm:text-lg font-bold text-slate-700">{{ store.eligibility.availableTenors.length }}</p>
+            <p class="text-base sm:text-lg font-bold text-slate-700">{{ store.eligibility.tenors.length }}</p>
           </div>
         </div>
 
@@ -104,7 +104,7 @@ function goBack() { store.prevStep() }
 
     <div class="flex justify-between mt-6">
       <button class="text-sm text-slate-500 hover:text-slate-700 transition-colors" @click="goBack">Back</button>
-      <BaseButton v-if="store.eligibility?.eligible" variant="primary" size="lg" @click="proceed">
+      <BaseButton v-if="store.eligibility?.isEligible" variant="primary" size="lg" @click="proceed">
         View Loan Options
       </BaseButton>
     </div>

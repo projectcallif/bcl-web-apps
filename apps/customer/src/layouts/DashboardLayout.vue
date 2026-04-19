@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { BrandLogo, AppDialog, BaseButton, AppPopover } from '@bcl/ui'
 import HeaderNotifications from '@/features/notifications/components/HeaderNotifications.vue'
@@ -12,10 +12,10 @@ import {
   LifeBuoy,
   Settings,
   LogOut,
-  Bell,
   MessageCircle,
   Menu,
   X,
+  Loader2,
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/store'
 
@@ -59,10 +59,48 @@ const userInitials = computed(() => {
   const last = authStore.user?.profile.lastName?.[0] ?? ''
   return (first + last).toUpperCase()
 })
+
+onMounted(() => {
+  authStore.fetchProfile()
+})
 </script>
 
 <template>
   <div class="flex h-screen bg-slate-50 overflow-hidden relative">
+    <!-- Glassmorphic Loader Overlay -->
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-300 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="authStore.isFetchingProfile"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-xl"
+      >
+        <div class="relative flex flex-col items-center gap-6">
+          <!-- Logo with Pulse -->
+          <div class="relative">
+            <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
+            <BrandLogo size="lg" class="relative z-10" />
+          </div>
+
+          <!-- Loading Text & Spinner -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="flex items-center gap-3">
+              <Loader2 class="w-5 h-5 text-primary animate-spin" />
+              <span class="text-white font-medium tracking-wide">Syncing account data...</span>
+            </div>
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-[0.2em] opacity-80">
+              BCL Secure Session
+            </p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Mobile Overlay -->
     <div
       v-if="isSidebarOpen"

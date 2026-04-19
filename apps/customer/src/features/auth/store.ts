@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { User, LoginPayload, VerifyEmailPayload } from '@bcl/types'
-import { login as loginApi, verifyEmail as verifyEmailApi } from './api'
+import type { User, LoginPayload, VerifyEmailPayload, ApiClientError } from '@bcl/types'
+import { login as loginApi, verifyEmail as verifyEmailApi, getMe as getMeApi } from './api'
 
 const TOKEN_KEY = 'bcl_customer_token'
 
@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const registrationIdentifier = ref<string | null>(null)
   const registrationType = ref<'EMAIL_VERIFICATION' | 'PHONE_VERIFICATION' | null>(null)
+  const isFetchingProfile = ref(false)
 
   const isAuthenticated = computed(() => token.value !== null)
 
@@ -34,6 +35,26 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(TOKEN_KEY, response.data.accessToken)
   }
 
+  /**
+   * Fetch fresh profile data.
+   */
+  async function fetchProfile(): Promise<void> {
+    isFetchingProfile.value = true
+    try {
+      const response = await getMeApi()
+      user.value = response.data
+    } catch (err) {
+      console.error('Failed to fetch profile:', err)
+      // If unauthorized, logout
+      if ((err as ApiClientError)?.isUnauthorized) {
+        logout()
+      }
+      throw err
+    } finally {
+      isFetchingProfile.value = false
+    }
+  }
+
   function logout(): void {
     token.value = null
     user.value = null
@@ -52,10 +73,12 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     user,
     isAuthenticated,
+    isFetchingProfile,
     registrationIdentifier,
     registrationType,
     login,
     verifyEmail,
+    fetchProfile,
     logout,
     setRegistrationData,
   }

@@ -13,22 +13,48 @@ export type PaymentStatus = "SUCCESS" | "PENDING" | "FAILED";
 
 export type InstallmentStatus = "PAID" | "UPCOMING" | "OVERDUE";
 
+export interface LoanProductTenor {
+  id: string
+  tenorValue: number
+  interestRate: number
+}
+
+export interface LoanProduct {
+  id: string
+  name: string
+  interestType: string
+  interestRate?: number
+  minTenor?: number
+  maxTenor?: number
+  minAmount: number
+  maxAmount: number
+  tenors: LoanProductTenor[]
+}
+
+export interface LoanDisbursementAccount {
+  id: string
+  bankName: string
+  accountNumber: string
+  accountName: string
+}
+
 export interface Loan {
-  id: string;
-  loanNumber: string;
-  type: LoanType;
-  purpose?: string;
-  principal: number;
-  totalAmount: number;
-  amountPaid: number;
-  outstandingBalance: number;
-  nextRepaymentDate: string;
-  nextRepaymentAmount: number;
-  disbursedAt: string;
-  dueDate: string;
-  status: LoanStatus;
-  interestRate: number;
-  tenorMonths: number;
+  id: string
+  referenceId: string
+  applicationId: string
+  status: LoanStatus
+  principal: number
+  interestAmount: number
+  totalPayable: number
+  outstandingBalance: number
+  amountPaid?: number // Optional since it might be derived or in detail
+  tenor: number
+  disbursedAt: string | null
+  firstDueDate: string | null
+  finalDueDate: string | null
+  loanProduct: LoanProduct
+  disbursementAccount: LoanDisbursementAccount
+  createdAt: string
 }
 
 export interface LoanPayment {
@@ -41,14 +67,30 @@ export interface LoanPayment {
 }
 
 export interface RepaymentScheduleItem {
-  installmentNumber: number;
-  dueDate: string;
-  principal: number;
-  interest: number;
-  totalAmount: number;
-  balance: number;
-  status: InstallmentStatus;
-  paidAt?: string;
+  installmentNo: number
+  dueDate: string
+  principalDue: number
+  interestDue: number
+  totalDue: number
+  balance: number
+  status?: InstallmentStatus
+  amountPaid?: number
+}
+
+export interface LoanScheduleSummary {
+  amountRequested: number
+  monthlyInterestRate: number
+  tenor: number
+  monthlyPayment: number
+  totalInterest: number
+  totalAmountToRepay: number
+  firstDueDate: string
+  finalDueDate: string
+}
+
+export interface LoanSchedule {
+  summary: LoanScheduleSummary
+  installments: RepaymentScheduleItem[]
 }
 
 export interface TenorOption {
@@ -57,18 +99,34 @@ export interface TenorOption {
 }
 
 export interface LoanEligibility {
-  eligible: boolean;
-  maxAmount: number;
-  minAmount: number;
-  availableTenors: TenorOption[];
-  reason?: string;
+  id: string
+  isEligible: boolean
+  maxAmount: number
+  minAmount: number
+  tenors: number[]
+  reason?: string
 }
 
-export interface LoanStats {
-  totalLoans: number;
-  activeLoans: number;
-  totalBorrowed: number;
-  totalOutstanding: number;
+export interface LoanDashboardStats {
+  activeLoanCount: number
+  outstandingBalance: number
+  totalPayable: number
+  totalCollected: number
+  percentagePaid: number
+  healthScoreInPercent: number
+  status: "EXCELLENT" | "GOOD" | "FAIR" | "POOR"
+}
+
+export interface LoanLegalDocument {
+  id: string
+  type: string
+  version: string
+  title: string
+  content: string
+  isActive: boolean
+  effectiveDate: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CustomField {
@@ -122,20 +180,31 @@ export interface LoanApplication {
   };
 }
 
-export type TransactionType = "DISBURSEMENT" | "REPAYMENT";
+export type TransactionType =
+  | "DISBURSEMENT"
+  | "REPAYMENT"
+  | "PENALTY_CHARGE"
+  | "FEE_CHARGE"
+  | "REFUND"
+  | "REVERSAL";
 
 export interface Transaction {
-  id: string;
-  loanId: string;
-  loanNumber: string;
-  loanType: LoanType;
-  purpose?: string;
-  type: TransactionType;
-  amount: number;
-  date: string;
-  reference: string;
-  status: PaymentStatus;
-  description: string;
+  id: string
+  reference: string
+  userId: string
+  loanId: string
+  loanNumber?: string
+  loanType?: LoanType
+  purpose?: string
+  type: TransactionType
+  amount: string | number
+  currency: string
+  status: PaymentStatus
+  provider: string
+  providerReference?: string | null
+  narration: string
+  metadata?: Record<string, any> | null
+  createdAt: string
 }
 
 export interface CollectionLog {

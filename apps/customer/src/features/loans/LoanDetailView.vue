@@ -1,31 +1,33 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Loader2, CreditCard, Banknote } from 'lucide-vue-next'
-import type { Loan, LoanStatus, LoanType, RepaymentScheduleItem } from '@bcl/types'
+import { ArrowLeft, CreditCard, Banknote } from 'lucide-vue-next'
+import type { Loan, LoanStatus, LoanSchedule } from '@bcl/types'
 import RepaymentScheduleTable from './components/RepaymentScheduleTable.vue'
-import { getLoan, getRepaymentSchedule, getLoanAgreement } from './api'
+import LoanDetailSkeleton from './components/LoanDetailSkeleton.vue'
+import { getLoanDetail, getLoanTerms } from './api'
 
 const route = useRoute()
 const router = useRouter()
 
 const loan = ref<Loan | null>(null)
-const schedule = ref<RepaymentScheduleItem[]>([])
+const schedule = ref<LoanSchedule | null>(null)
 const agreementHtml = ref('')
 const isLoading = ref(true)
 const activeTab = ref<'schedule' | 'agreement'>('schedule')
 
 onMounted(async () => {
   const id = route.params.id as string
-  const [loanRes, scheduleRes, agreementRes] = await Promise.all([
-    getLoan(id),
-    getRepaymentSchedule(id),
-    getLoanAgreement(id),
-  ])
-  loan.value = loanRes.data
-  schedule.value = scheduleRes.data
-  agreementHtml.value = agreementRes.data.html
-  isLoading.value = false
+  try {
+    const [detailRes, termsRes] = await Promise.all([getLoanDetail(id), getLoanTerms()])
+    loan.value = detailRes.data
+    schedule.value = detailRes.data.schedule
+    agreementHtml.value = termsRes.data.content
+  } catch (err) {
+    console.error('Failed to load loan details:', err)
+  } finally {
+    isLoading.value = false
+  }
 })
 
 function formatCurrency(n: number): string {
@@ -44,12 +46,7 @@ function formatDate(s: string): string {
   })
 }
 
-const loanTypeLabel: Record<LoanType, string> = {
-  PERSONAL: 'Personal Loan',
-  BUSINESS: 'Business Loan',
-  EMERGENCY: 'Emergency Loan',
-  SALARY_ADVANCE: 'Salary Advance',
-}
+// Using loanProduct.name for labels
 
 const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: string }> = {
   PENDING: { label: 'Reviewing', dot: 'bg-amber-400', badge: 'bg-amber-100 text-amber-700' },
@@ -71,10 +68,8 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
     <ArrowLeft class="w-4 h-4" /> Back to My Loans
   </button>
 
-  <!-- Loading -->
-  <div v-if="isLoading" class="flex items-center justify-center py-24">
-    <Loader2 class="w-7 h-7 text-primary animate-spin" />
-  </div>
+  <!-- Loading state -->
+  <LoanDetailSkeleton v-if="isLoading" />
 
   <template v-else-if="loan">
     <!-- Loan header card -->
@@ -87,11 +82,7 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
       />
 
       <div class="relative flex items-start justify-between mb-5">
-        <div>
-          <p class="text-white/60 text-sm mb-1">{{ loanTypeLabel[loan.type] }}</p>
-          <p class="text-xs font-mono text-white/40">{{ loan.loanNumber }}</p>
-          <p v-if="loan.purpose" class="text-sm text-white/70 mt-1">{{ loan.purpose }}</p>
-        </div>
+        <p class="text-xs font-mono text-white/40">{{ loan.referenceId }}</p>
         <span
           class="flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1 text-xs font-semibold"
         >
@@ -109,12 +100,23 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
         </div>
         <div class="self-end">
           <div class="flex justify-between text-xs text-white/50 mb-1.5">
-            <span>{{ Math.round((loan.amountPaid / loan.totalAmount) * 100) }}% repaid</span>
+            <span
+              >{{
+                Math.round(
+                  ((loan.totalPayable - loan.outstandingBalance) / loan.totalPayable) * 100,
+                )
+              }}% repaid</span
+            >
           </div>
           <div class="h-1.5 bg-white/20 rounded-full overflow-hidden">
             <div
               class="h-full bg-white rounded-full"
-              :style="{ width: Math.round((loan.amountPaid / loan.totalAmount) * 100) + '%' }"
+              :style="{
+                width:
+                  Math.round(
+                    ((loan.totalPayable - loan.outstandingBalance) / loan.totalPayable) * 100,
+                  ) + '%',
+              }"
             />
           </div>
         </div>
@@ -122,34 +124,40 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
 
       <div class="relative grid grid-cols-4 gap-4 pt-5 border-t border-white/15">
         <div>
-          <p class="text-xs text-white/50 mb-1">Total Loan</p>
-          <p class="text-sm font-semibold">{{ formatCurrency(loan.totalAmount) }}</p>
+          <p class="text-xs text-white/50 mb-1">Total Payable</p>
+          <p class="text-sm font-semibold">{{ formatCurrency(loan.totalPayable) }}</p>
         </div>
         <div>
           <p class="text-xs text-white/50 mb-1">Amount Paid</p>
-          <p class="text-sm font-semibold">{{ formatCurrency(loan.amountPaid) }}</p>
+          <p class="text-sm font-semibold">
+            {{ formatCurrency(loan.totalPayable - loan.outstandingBalance) }}
+          </p>
         </div>
         <div>
           <p class="text-xs text-white/50 mb-1">Disbursed</p>
-          <p class="text-sm font-semibold">{{ formatDate(loan.disbursedAt) }}</p>
+          <p class="text-sm font-semibold">
+            {{ loan.disbursedAt ? formatDate(loan.disbursedAt) : 'Pending' }}
+          </p>
         </div>
         <div>
           <p class="text-xs text-white/50 mb-1">Due Date</p>
-          <p class="text-sm font-semibold">{{ formatDate(loan.dueDate) }}</p>
+          <p class="text-sm font-semibold">
+            {{ loan.finalDueDate ? formatDate(loan.finalDueDate) : 'N/A' }}
+          </p>
         </div>
       </div>
     </div>
 
     <!-- Make Payment button (for active/overdue loans) -->
     <div
-      v-if="loan.status === 'ACTIVE' || loan.status === 'OVERDUE'"
+      v-if="(loan.status === 'ACTIVE' || loan.status === 'OVERDUE') && schedule"
       class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-5 flex items-center justify-between mb-6"
     >
       <div>
         <p class="text-sm font-semibold text-slate-800">Next Payment Due</p>
         <p class="text-xs text-slate-500 mt-0.5">
-          {{ formatCurrency(loan.nextRepaymentAmount) }} due on
-          {{ formatDate(loan.nextRepaymentDate) }}
+          {{ formatCurrency(schedule.summary.monthlyPayment) }} due on
+          {{ formatDate(schedule.summary.firstDueDate) }}
         </p>
       </div>
       <button
@@ -197,13 +205,22 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
       <div class="p-6">
         <!-- Schedule tab -->
         <RepaymentScheduleTable
-          v-if="activeTab === 'schedule'"
-          :items="schedule"
-          :loan-number="loan.loanNumber"
+          v-if="activeTab === 'schedule' && schedule"
+          :items="schedule.installments"
+          :loan-reference="loan.referenceId"
         />
 
         <!-- Agreement tab -->
-        <div v-else class="prose prose-slate prose-sm max-w-none" v-html="agreementHtml" />
+        <div
+          v-else
+          class="prose prose-slate prose-sm max-w-none border border-slate-100 rounded-xl overflow-hidden"
+        >
+          <iframe
+            :srcdoc="agreementHtml"
+            class="w-full min-h-125 border-0"
+            title="Loan Agreement"
+          />
+        </div>
       </div>
     </div>
   </template>

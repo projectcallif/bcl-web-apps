@@ -27,12 +27,14 @@ export type EmploymentStatus =
   | "RETIRED";
 
 export interface EmploymentInfo {
-  jobTitle: string;
-  employer: string;
-  type: string;
-  sector: string;
+  employmentStatus: EmploymentStatus;
+  employerName: string | null;
+  employerAddress: string | null;
+  workEmail: string | null;
+  jobTitle: string | null;
   monthlyIncome: number;
-  workCity: string;
+  salaryDay: number | null;
+  employmentStartDate: string | null;
 }
 
 export interface AddressInfo {
@@ -48,6 +50,7 @@ export interface BankInfo {
 }
 
 export interface KycInfo {
+  bvn: string | null;
   bvnStatus: string | null;
   bvnVerifiedAt: string | null;
   ninStatus: string | null;
@@ -63,13 +66,16 @@ export interface UserProfile {
   gender: UserGender;
   maritalStatus: MaritalStatus;
   residentialAddress?: string | null;
+  addressNo?: string | null;
   city: string;
   state: string;
   lga?: string | null;
   country: string;
+  utilityBillUrl?: string | null;
   monoAccountId?: string | null;
   monoCustomerId?: string | null;
-  employment?: EmploymentInfo;
+  monoCode?: string | null;
+  monoProveCustomerId?: string | null;
   address?: AddressInfo;
   bank?: BankInfo;
 }
@@ -83,6 +89,11 @@ export interface User {
   registrationStep: RegistrationStep;
   status: UserStatus;
   profile: UserProfile;
+  employment: EmploymentInfo;
+  kyc: {
+    bvn: string | null;
+    bvnStatus: string | null;
+  };
   createdAt: string;
 }
 

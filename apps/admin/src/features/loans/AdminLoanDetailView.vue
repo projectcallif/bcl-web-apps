@@ -23,7 +23,7 @@ const mockLoan = ref({
   type: "PERSONAL" as LoanType,
   purpose: "Business Expansion",
   principal: 500000,
-  totalAmount: 550000,
+  totalPayable: 550000,
   amountPaid: 200000,
   outstandingBalance: 350000,
   nextRepaymentDate: "2026-11-24T00:00:00.000Z",
@@ -32,7 +32,7 @@ const mockLoan = ref({
   dueDate: "2027-04-24T00:00:00.000Z",
   status: "ACTIVE" as LoanStatus,
   interestRate: 2,
-  tenorMonths: 6,
+  tenor: 6,
 
   // Custom admin-side fields
   customer: {
@@ -48,20 +48,20 @@ const mockLoan = ref({
 
 const mockSchedule = ref<RepaymentScheduleItem[]>([
   {
-    installmentNumber: 1,
+    installmentNo: 1,
     dueDate: "2026-11-24",
-    principal: 41666,
-    interest: 8334,
-    totalAmount: 50000,
+    principalDue: 41666,
+    interestDue: 8334,
+    totalDue: 50000,
     balance: 350000,
     status: "UPCOMING",
   },
   {
-    installmentNumber: 2,
+    installmentNo: 2,
     dueDate: "2026-12-24",
-    principal: 41666,
-    interest: 8334,
-    totalAmount: 50000,
+    principalDue: 41666,
+    interestDue: 8334,
+    totalDue: 50000,
     balance: 300000,
     status: "UPCOMING",
   },
@@ -192,18 +192,18 @@ const statusConfig: Record<
               <span
                 >{{
                   Math.round(
-                    (mockLoan.amountPaid / mockLoan.totalAmount) * 100,
+                    (mockLoan.amountPaid / mockLoan.totalPayable) * 100,
                   )
                 }}% Repaid</span
               >
               <span
                 >{{ formatCurrency(mockLoan.amountPaid) }} /
-                {{ formatCurrency(mockLoan.totalAmount) }}</span
+                {{ formatCurrency(mockLoan.totalPayable) }}</span
               >
             </div>
             <AppProgressBar
               :progress="
-                Math.round((mockLoan.amountPaid / mockLoan.totalAmount) * 100)
+                Math.round((mockLoan.amountPaid / mockLoan.totalPayable) * 100)
               "
               color-class="bg-emerald-400"
               track-class="bg-slate-800 ring-1 ring-white/10"
@@ -233,7 +233,7 @@ const statusConfig: Record<
           <div>
             <p class="text-xs text-white/50 mb-1">Tenor</p>
             <p class="text-sm font-semibold">
-              {{ mockLoan.tenorMonths }} Months
+              {{ mockLoan.tenor }} Months
             </p>
           </div>
         </div>
@@ -272,7 +272,7 @@ const statusConfig: Record<
           <!-- Schedule Tab -->
           <div v-if="activeTab === 'schedule'">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm text-slate-600">
+              <table class="w-full text-left text-sm text-slate-600 min-w-200">
                 <thead class="bg-slate-50 text-slate-500 font-medium">
                   <tr>
                     <th class="px-4 py-3 rounded-l-lg">Inst.</th>
@@ -285,14 +285,14 @@ const statusConfig: Record<
                 <tbody class="divide-y divide-slate-100">
                   <tr
                     v-for="item in mockSchedule"
-                    :key="item.installmentNumber"
+                    :key="item.installmentNo"
                   >
-                    <td class="px-4 py-3">{{ item.installmentNumber }}</td>
+                    <td class="px-4 py-3">{{ item.installmentNo }}</td>
                     <td class="px-4 py-3 font-medium text-slate-800">
                       {{ formatDate(item.dueDate) }}
                     </td>
                     <td class="px-4 py-3">
-                      {{ formatCurrency(item.totalAmount) }}
+                      {{ formatCurrency(item.totalDue) }}
                     </td>
                     <td class="px-4 py-3 text-right text-slate-500">
                       {{ formatCurrency(item.balance) }}

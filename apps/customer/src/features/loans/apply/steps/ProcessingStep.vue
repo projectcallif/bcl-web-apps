@@ -58,7 +58,7 @@ function viewLoans() {
         </div>
         <div class="border-x border-primary/15">
           <p class="text-xs text-slate-400 mb-0.5">Tenor</p>
-          <p class="font-bold text-slate-800">{{ store.selectedTenorMonths }} months</p>
+          <p class="font-bold text-slate-800">{{ store.selectedTenor }} months</p>
         </div>
         <div>
           <p class="text-xs text-slate-400 mb-0.5">Monthly</p>

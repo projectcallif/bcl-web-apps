@@ -1,37 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { BaseButton } from '@bcl/ui'
-import type { RepaymentScheduleItem } from '@bcl/types'
 import RepaymentScheduleTable from '../../components/RepaymentScheduleTable.vue'
 import { useLoanApplicationStore } from '../store'
 
 const store = useLoanApplicationStore()
 
-const schedule = computed((): RepaymentScheduleItem[] => {
-  const { selectedAmount, selectedTenorMonths, selectedInterestRatePerMonth, monthlyPayment } = store
-  if (!selectedAmount || !selectedTenorMonths) return []
-
-  const monthlyInterest = Math.round(selectedAmount * (selectedInterestRatePerMonth / 100))
-  const monthlyPrincipal = Math.floor(selectedAmount / selectedTenorMonths)
-
-  return Array.from({ length: selectedTenorMonths }, (_, i) => {
-    const n = i + 1
-    const due = new Date()
-    due.setMonth(due.getMonth() + n)
-    return {
-      installmentNumber: n,
-      dueDate: due.toISOString().split('T')[0] || '',
-      principal: monthlyPrincipal,
-      interest: monthlyInterest,
-      totalAmount: monthlyPayment,
-      balance: Math.max(0, selectedAmount + monthlyInterest * selectedTenorMonths - monthlyPayment * n),
-      status: 'UPCOMING',
-    }
-  })
-})
-
-function proceed() { store.nextStep() }
-function goBack() { store.prevStep() }
+function proceed() {
+  store.nextStep()
+}
+function goBack() {
+  store.prevStep()
+}
 </script>
 
 <template>
@@ -43,10 +22,14 @@ function goBack() { store.prevStep() }
         {{ new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(store.selectedAmount) }}
       </span>
       loan over
-      <span class="font-semibold text-slate-700">{{ store.selectedTenorMonths }} months</span>.
+      <span class="font-semibold text-slate-700">{{ store.selectedTenor }} months</span>.
     </p>
 
-    <RepaymentScheduleTable :items="schedule" loan-number="PREVIEW" />
+    <RepaymentScheduleTable
+      v-if="store.previewSchedule"
+      :items="store.previewSchedule.installments"
+      loan-reference="PREVIEW"
+    />
 
     <div class="flex justify-between mt-6">
       <button class="text-sm text-slate-500 hover:text-slate-700 transition-colors" @click="goBack">Back</button>

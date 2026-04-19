@@ -29,6 +29,20 @@ const mockUsers = ref<User[]>([
       state: "Lagos State",
       country: "Nigeria",
     },
+    employment: {
+      employmentStatus: "EMPLOYED",
+      employerName: "Tech Solutions Ltd",
+      employerAddress: "123 Business Way, Lagos",
+      workEmail: "james.k@techsol.com",
+      jobTitle: "Software Engineer",
+      monthlyIncome: 450000,
+      salaryDay: 28,
+      employmentStartDate: "2020-01-15",
+    },
+    kyc: {
+      bvn: "22233344455",
+      bvnStatus: "VERIFIED",
+    },
     createdAt: "2026-03-01T10:00:00.000Z",
   },
   {
@@ -49,6 +63,20 @@ const mockUsers = ref<User[]>([
       state: "FCT",
       country: "Nigeria",
     },
+    employment: {
+      employmentStatus: "SELF_EMPLOYED",
+      employerName: "Aisha Bello Fabrics",
+      employerAddress: "45 Market Street, Abuja",
+      workEmail: null,
+      jobTitle: "Creative Director",
+      monthlyIncome: 800000,
+      salaryDay: null,
+      employmentStartDate: "2015-06-10",
+    },
+    kyc: {
+      bvn: "11122233344",
+      bvnStatus: "VERIFIED",
+    },
     createdAt: "2026-02-15T14:30:00.000Z",
   },
   {
@@ -68,6 +96,20 @@ const mockUsers = ref<User[]>([
       city: "Ibadan",
       state: "Oyo",
       country: "Nigeria",
+    },
+    employment: {
+      employmentStatus: "EMPLOYED",
+      employerName: "Daily Planet",
+      employerAddress: "Planet Square, Oyo",
+      workEmail: "ckent@dailyplanet.com",
+      jobTitle: "Reporter",
+      monthlyIncome: 250000,
+      salaryDay: 25,
+      employmentStartDate: "2018-11-01",
+    },
+    kyc: {
+      bvn: "99988877766",
+      bvnStatus: "PENDING",
     },
     createdAt: "2026-04-01T09:15:00.000Z",
   },
@@ -160,7 +202,7 @@ function getStatusColor(status: string) {
 
       <!-- Desktop Table -->
       <div class="hidden md:block w-full overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600 border-collapse">
+        <table class="w-full text-left text-sm text-slate-600 border-collapse min-w-200">
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >

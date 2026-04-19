@@ -34,14 +34,6 @@ const mockUser = ref<User>({
     city: "Lagos",
     state: "Lagos State",
     country: "Nigeria",
-    employment: {
-      jobTitle: "Senior Software Engineer",
-      employer: "TechCorp Nigeria Ltd",
-      type: "Full-time",
-      sector: "Technology",
-      monthlyIncome: 450000,
-      workCity: "Lagos",
-    },
     address: {
       street: "14 Adeola Odeku Street",
       lga: "Victoria Island",
@@ -52,6 +44,20 @@ const mockUser = ref<User>({
       accountName: "JAMES KOLAWOLE",
       accountType: "Savings",
     },
+  },
+  employment: {
+    jobTitle: "Senior Software Engineer",
+    employerName: "TechCorp Nigeria Ltd",
+    employmentStatus: "EMPLOYED",
+    monthlyIncome: 450000,
+    employerAddress: "14 Adeola Odeku Street, Victoria Island, Lagos",
+    workEmail: "james.k@techcorp.ng",
+    salaryDay: 25,
+    employmentStartDate: "2018-11-01",
+  },
+  kyc: {
+    bvn: "22233344455",
+    bvnStatus: "VERIFIED",
   },
   createdAt: "2026-03-01T10:00:00.000Z",
 });
@@ -218,14 +224,14 @@ function formatDate(iso?: string) {
         </h3>
         <div
           class="flex flex-col gap-4 text-sm relative z-10"
-          v-if="mockUser.profile.employment"
+          v-if="mockUser.employment"
         >
           <div
             class="flex items-center justify-between border-b border-slate-50 pb-3"
           >
             <div class="text-slate-600">Employer</div>
             <div class="font-medium text-slate-800">
-              {{ mockUser.profile.employment.employer }}
+              {{ mockUser.employment.employerName }}
             </div>
           </div>
           <div
@@ -233,24 +239,21 @@ function formatDate(iso?: string) {
           >
             <div class="text-slate-600">Job Title</div>
             <div class="font-medium text-slate-800">
-              {{ mockUser.profile.employment.jobTitle }}
+              {{ mockUser.employment.jobTitle }}
             </div>
           </div>
           <div
             class="flex items-center justify-between border-b border-slate-50 pb-3"
           >
-            <div class="text-slate-600">Sector & Type</div>
+            <div class="text-slate-600">Status</div>
             <div class="font-medium text-slate-800">
-              {{ mockUser.profile.employment.sector }} ({{
-                mockUser.profile.employment.type
-              }})
+              {{ mockUser.employment.employmentStatus }}
             </div>
           </div>
           <div class="flex items-center justify-between">
             <div class="text-slate-600">Monthly Income</div>
             <div class="flex items-center gap-2 font-medium text-slate-800">
-              {{ formatCurrency(mockUser.profile.employment.monthlyIncome) }}
-              <!-- Using a visual checkmark to simulate a validated field (e.g., from an agency API) -->
+              {{ formatCurrency(mockUser.employment.monthlyIncome) }}
               <CheckCircle2 class="w-4 h-4 text-emerald-500" />
             </div>
           </div>

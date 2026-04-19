@@ -516,23 +516,20 @@ function getStatusStyle(status: string) {
               <template v-else-if="activeInfoSubTab === 'employment'">
                 <div
                   v-for="f in [
-                    // { label: 'Employer', value: customer?.profile.employment?.employerName },
-                    // { label: 'Role', value: customer?.profile.employment?.role },
                     {
-                      label: 'Sector',
-                      value: customer?.profile.employment?.sector,
+                      label: 'Employer',
+                      value: customer?.employment?.employerName,
                     },
+                    { label: 'Role', value: customer?.employment?.jobTitle },
                     {
                       label: 'Monthly Income',
-                      value: customer?.profile.employment?.monthlyIncome
-                        ? formatCurrency(
-                            customer.profile.employment.monthlyIncome,
-                          )
+                      value: customer?.employment?.monthlyIncome
+                        ? formatCurrency(customer.employment.monthlyIncome)
                         : null,
                     },
                     {
-                      label: 'Employment Type',
-                      value: customer?.profile.employment?.type,
+                      label: 'Employment Status',
+                      value: customer?.employment?.employmentStatus,
                     },
                   ]"
                   :key="f.label"
@@ -620,7 +617,7 @@ function getStatusStyle(status: string) {
           <div v-if="activeTab === 'loans'" class="space-y-4">
             <div class="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
               <table
-                class="w-full text-left text-sm text-slate-600 border-collapse min-w-125"
+                class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
               >
                 <thead class="bg-slate-50/50 text-slate-500 font-medium">
                   <tr>
@@ -677,7 +674,7 @@ function getStatusStyle(status: string) {
           <div v-if="activeTab === 'transactions'" class="space-y-4">
             <div class="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
               <table
-                class="w-full text-left text-sm text-slate-600 border-collapse min-w-137.5"
+                class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
               >
                 <thead class="bg-slate-50/50 text-slate-500 font-medium">
                   <tr>

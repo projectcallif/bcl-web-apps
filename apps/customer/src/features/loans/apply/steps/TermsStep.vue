@@ -10,7 +10,7 @@ const accepted = ref(store.termsAccepted)
 
 onMounted(async () => {
   const res = await getLoanTerms()
-  html.value = res.data.html
+  html.value = res.data.content
 })
 
 const canProceed = computed(() => accepted.value)

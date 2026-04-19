@@ -36,3 +36,5 @@ export { default as AppRichTextEditor } from "./components/AppRichTextEditor.vue
 export { default as AppToast } from "./components/AppToast.vue";
 
 export { default as AppFileUpload } from "./components/AppFileUpload.vue";
+
+export { default as BaseSkeleton } from "./components/BaseSkeleton.vue";

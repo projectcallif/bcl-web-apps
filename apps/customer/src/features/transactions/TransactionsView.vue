@@ -9,7 +9,9 @@ import {
   XCircle,
   SlidersHorizontal,
 } from 'lucide-vue-next'
+import { AppDatePicker } from '@bcl/ui'
 import type { Transaction, TransactionType } from '@bcl/types'
+import TransactionSkeleton from './components/TransactionSkeleton.vue'
 import { getTransactions } from '../loans/api'
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -21,29 +23,40 @@ const loading = ref(false)
 
 const currentPage = ref(1)
 const pageSize = 10
-
 const typeFilter = ref<TransactionType | null>(null)
-const dateFrom = ref('')
-const dateTo = ref('')
+const dateRange = ref<Date[] | null>(null)
 
 // ── Fetch ──────────────────────────────────────────────────────────────────────
 
 async function fetchTransactions(): Promise<void> {
   loading.value = true
-  const res = await getTransactions({
-    page: currentPage.value,
-    pageSize,
-    type: typeFilter.value,
-    dateFrom: dateFrom.value || null,
-    dateTo: dateTo.value || null,
-  })
-  transactions.value = res.data.items
-  total.value = res.data.total
-  totalPages.value = res.data.totalPages
-  loading.value = false
+  try {
+    let dateFrom: string | null = null
+    let dateTo: string | null = null
+
+    if (dateRange.value && dateRange.value.length === 2) {
+      if (dateRange.value[0]) dateFrom = dateRange.value[0].toISOString().slice(0, 10)
+      if (dateRange.value[1]) dateTo = dateRange.value[1].toISOString().slice(0, 10)
+    }
+
+    const res = await getTransactions({
+      page: currentPage.value,
+      limit: pageSize,
+      type: typeFilter.value,
+      dateFrom,
+      dateTo,
+    })
+    transactions.value = res.data.items
+    total.value = res.data.total
+    totalPages.value = res.data.totalPages
+  } catch (err) {
+    console.error('Failed to fetch transactions:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
-watch([currentPage, typeFilter, dateFrom, dateTo], fetchTransactions, { immediate: true })
+watch([currentPage, typeFilter, dateRange], fetchTransactions, { immediate: true })
 
 function onFilterChange(): void {
   currentPage.value = 1
@@ -54,12 +67,12 @@ function onFilterChange(): void {
 const totalDisbursed = computed(() =>
   transactions.value
     .filter((t) => t.type === 'DISBURSEMENT' && t.status === 'SUCCESS')
-    .reduce((s, t) => s + t.amount, 0),
+    .reduce((s, t) => s + Number(t.amount), 0),
 )
 const totalRepaid = computed(() =>
   transactions.value
     .filter((t) => t.type === 'REPAYMENT' && t.status === 'SUCCESS')
-    .reduce((s, t) => s + t.amount, 0),
+    .reduce((s, t) => s + Number(t.amount), 0),
 )
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
@@ -90,6 +103,10 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
   { label: 'All', value: null },
   { label: 'Disbursement', value: 'DISBURSEMENT' },
   { label: 'Repayment', value: 'REPAYMENT' },
+  { label: 'Penalty', value: 'PENALTY_CHARGE' },
+  { label: 'Fee', value: 'FEE_CHARGE' },
+  { label: 'Refund', value: 'REFUND' },
+  { label: 'Reversal', value: 'REVERSAL' },
 ]
 </script>
 
@@ -132,32 +149,19 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
       <div class="h-px lg:h-5 w-full lg:w-px bg-slate-100 lg:bg-slate-200" />
 
       <!-- Date range -->
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div class="flex items-center gap-2 flex-1">
-          <label class="text-xs font-medium text-slate-500 shrink-0 min-w-8">From</label>
-          <input
-            v-model="dateFrom"
-            type="date"
-            class="flex-1 lg:flex-none text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-            @change="onFilterChange"
-          />
-        </div>
-        <div class="flex items-center gap-2 flex-1">
-          <label class="text-xs font-medium text-slate-500 shrink-0 min-w-8">To</label>
-          <input
-            v-model="dateTo"
-            type="date"
-            class="flex-1 lg:flex-none text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-            @change="onFilterChange"
-          />
-        </div>
+      <div class="flex items-center gap-3 w-full lg:w-72">
+        <AppDatePicker
+          v-model="dateRange"
+          range
+          placeholder="Filter by date range"
+          @update:model-value="onFilterChange"
+        />
         <button
-          v-if="dateFrom || dateTo"
-          class="text-xs text-slate-400 hover:text-slate-600 underline transition-colors sm:ml-2"
+          v-if="dateRange"
+          class="text-xs text-slate-400 hover:text-slate-600 underline transition-colors shrink-0"
           @click="
             () => {
-              dateFrom = ''
-              dateTo = ''
+              dateRange = null
               onFilterChange()
             }
           "
@@ -191,17 +195,7 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
     class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden"
   >
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center py-16">
-      <svg
-        class="w-6 h-6 animate-spin text-primary"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-      </svg>
-    </div>
+    <TransactionSkeleton v-if="loading" />
 
     <!-- Empty state -->
     <div
@@ -246,7 +240,7 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
                 class="text-sm font-bold"
                 :class="txn.type === 'DISBURSEMENT' ? 'text-primary' : 'text-green-600'"
               >
-                {{ txn.type === 'DISBURSEMENT' ? '+' : '−' }}{{ formatCurrency(txn.amount) }}
+                {{ txn.type === 'DISBURSEMENT' ? '+' : '−' }}{{ formatCurrency(Number(txn.amount)) }}
               </p>
               <span
                 class="inline-flex items-center gap-1 text-[10px] font-bold"
@@ -261,21 +255,22 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
             </div>
           </div>
           <div class="flex items-center justify-between text-[11px]">
-            <span class="text-slate-500">{{ formatDate(txn.date) }}</span>
-            <span class="text-slate-400 italic">{{ txn.loanNumber }}</span>
+            <span class="text-slate-500">{{ formatDate(txn.createdAt) }}</span>
+            <span class="text-slate-400 italic">{{ txn.loanId ? `Loan ${txn.loanId.slice(0, 8)}...` : 'N/A' }}</span>
           </div>
         </div>
       </div>
 
       <!-- Desktop Table View -->
-      <table class="w-full text-sm hidden md:table">
-        <thead>
-          <tr class="border-b border-slate-100 bg-slate-50">
-            <th
-              class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
-            >
-              Date
-            </th>
+      <div class="hidden md:block w-full overflow-x-auto">
+        <table class="w-full text-sm min-w-200">
+          <thead>
+            <tr class="border-b border-slate-100 bg-slate-50">
+              <th
+                class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+              >
+                Date
+              </th>
             <th
               class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
             >
@@ -314,7 +309,7 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
             :key="txn.id"
             class="hover:bg-slate-50/60 transition-colors"
           >
-            <td class="px-5 py-3.5 text-slate-600 whitespace-nowrap">{{ formatDate(txn.date) }}</td>
+            <td class="px-5 py-3.5 text-slate-600 whitespace-nowrap">{{ formatDate(txn.createdAt) }}</td>
             <td class="px-5 py-3.5">
               <span class="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{
                 txn.reference
@@ -335,17 +330,17 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
               </span>
             </td>
             <td class="px-5 py-3.5">
-              <p class="font-medium text-slate-800 text-xs">{{ txn.loanNumber }}</p>
+              <p class="font-medium text-slate-800 text-xs">{{ txn.loanId || 'Generic' }}</p>
               <p class="text-slate-400 text-xs">
-                {{ loanTypeLabel(txn.loanType) }}{{ txn.purpose ? ` · ${txn.purpose}` : '' }}
+                Reference: {{ txn.reference }}
               </p>
             </td>
-            <td class="px-5 py-3.5 text-slate-500 text-xs">{{ txn.description }}</td>
+            <td class="px-5 py-3.5 text-slate-500 text-xs max-w-xs truncate">{{ txn.narration }}</td>
             <td
               class="px-5 py-3.5 text-right font-bold whitespace-nowrap"
               :class="txn.type === 'DISBURSEMENT' ? 'text-primary' : 'text-green-600'"
             >
-              {{ txn.type === 'DISBURSEMENT' ? '+' : '−' }}{{ formatCurrency(txn.amount) }}
+              {{ txn.type === 'DISBURSEMENT' ? '+' : '−' }}{{ formatCurrency(Number(txn.amount)) }}
             </td>
             <td class="px-5 py-3.5 text-center">
               <span
@@ -364,7 +359,8 @@ const TYPE_FILTERS: { label: string; value: TransactionType | null }[] = [
             </td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
     </template>
 
     <!-- Pagination -->

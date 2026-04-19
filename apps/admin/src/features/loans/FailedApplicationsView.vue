@@ -2,13 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { AppTextInput, AppPagination, BaseButton } from "@bcl/ui";
-import {
-  Filter,
-  Search,
-  XCircle,
-  AlertTriangle,
-  Eye,
-} from "lucide-vue-next";
+import { Filter, Search, XCircle, AlertTriangle, Eye } from "lucide-vue-next";
 import type { LoanApplication } from "@bcl/types";
 
 const router = useRouter();
@@ -175,7 +169,9 @@ function formatCurrency(n: number) {
 
       <!-- Desktop Table -->
       <div class="hidden md:block w-full overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600 border-collapse">
+        <table
+          class="w-full text-left text-sm text-slate-600 border-collapse min-w-225"
+        >
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >

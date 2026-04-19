@@ -1,27 +1,31 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ChevronRight, Calendar } from 'lucide-vue-next'
-import type { Loan, LoanStatus, LoanType } from '@bcl/types'
+import type { Loan, LoanStatus } from '@bcl/types'
 
 const props = defineProps<{ loan: Loan }>()
 
-const progress = computed(() =>
-  Math.round((props.loan.amountPaid / props.loan.totalAmount) * 100),
-)
+const progress = computed(() => {
+  const paid = props.loan.amountPaid || props.loan.totalPayable - props.loan.outstandingBalance
+  return Math.round((paid / props.loan.totalPayable) * 100)
+})
+
+const estimatedMonthly = computed(() => Math.round(props.loan.totalPayable / props.loan.tenor))
 
 function formatCurrency(n: number): string {
-  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+  }).format(n)
 }
 
 function formatDate(s: string): string {
-  return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-const loanTypeLabel: Record<LoanType, string> = {
-  PERSONAL: 'Personal Loan',
-  BUSINESS: 'Business Loan',
-  EMERGENCY: 'Emergency Loan',
-  SALARY_ADVANCE: 'Salary Advance',
+  return new Date(s).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: string }> = {
@@ -36,13 +40,14 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
 </script>
 
 <template>
-  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-5 hover:shadow-md hover:shadow-slate-200/60 transition-shadow">
-
+  <div
+    class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-5 hover:shadow-md hover:shadow-slate-200/60 transition-shadow"
+  >
     <!-- Row 1: type + status -->
     <div class="flex items-start justify-between mb-3">
       <div>
-        <p class="text-sm font-semibold text-slate-800">{{ loanTypeLabel[loan.type] }}</p>
-        <p class="text-xs text-slate-400 mt-0.5 font-mono">{{ loan.loanNumber }}</p>
+        <p class="text-lg font-bold text-slate-800">{{ formatCurrency(loan.totalPayable) }}</p>
+        <p class="text-xs text-slate-400 mt-0.5 font-mono">{{ loan.referenceId }}</p>
       </div>
       <span
         class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
@@ -53,24 +58,24 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
       </span>
     </div>
 
-    <!-- Purpose -->
-    <p v-if="loan.purpose" class="text-xs text-slate-500 mb-4">
-      Purpose: <span class="font-medium text-slate-700">{{ loan.purpose }}</span>
-    </p>
-
     <!-- Metrics -->
     <div class="grid grid-cols-3 gap-3 mb-4">
       <div>
         <p class="text-xs text-slate-400 mb-0.5">Loan Amount</p>
-        <p class="text-sm font-bold text-slate-800">{{ formatCurrency(loan.totalAmount) }}</p>
+        <p class="text-sm font-bold text-slate-800">{{ formatCurrency(loan.totalPayable) }}</p>
       </div>
       <div>
         <p class="text-xs text-slate-400 mb-0.5">Amount Paid</p>
-        <p class="text-sm font-bold text-slate-800">{{ formatCurrency(loan.amountPaid) }}</p>
+        <p class="text-sm font-bold text-slate-800">
+          {{ formatCurrency(loan.totalPayable - loan.outstandingBalance) }}
+        </p>
       </div>
       <div>
         <p class="text-xs text-slate-400 mb-0.5">Outstanding</p>
-        <p class="text-sm font-bold" :class="loan.outstandingBalance > 0 ? 'text-slate-800' : 'text-green-600'">
+        <p
+          class="text-sm font-bold"
+          :class="loan.outstandingBalance > 0 ? 'text-slate-800' : 'text-green-600'"
+        >
           {{ loan.outstandingBalance > 0 ? formatCurrency(loan.outstandingBalance) : 'Fully paid' }}
         </p>
       </div>
@@ -80,7 +85,7 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
     <div class="mb-4">
       <div class="flex justify-between text-xs text-slate-400 mb-1.5">
         <span>{{ progress }}% repaid</span>
-        <span>{{ loan.tenorMonths }} months · {{ loan.interestRate }}% p.m.</span>
+        <span>{{ loan.tenor }} months tenor</span>
       </div>
       <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div
@@ -93,13 +98,16 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
 
     <!-- Footer -->
     <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-      <div v-if="loan.status === 'ACTIVE' || loan.status === 'OVERDUE'" class="flex items-center gap-1.5 text-xs text-slate-500">
+      <div
+        v-if="(loan.status === 'ACTIVE' || loan.status === 'OVERDUE') && loan.firstDueDate"
+        class="flex items-center gap-1.5 text-xs text-slate-500"
+      >
         <Calendar class="w-3.5 h-3.5" />
-        Next: {{ formatDate(loan.nextRepaymentDate) }} —
-        <span class="font-semibold text-slate-700">{{ formatCurrency(loan.nextRepaymentAmount) }}</span>
+        Next: {{ formatDate(loan.firstDueDate) }} —
+        <span class="font-semibold text-slate-700">{{ formatCurrency(estimatedMonthly) }}</span>
       </div>
       <div v-else class="text-xs text-slate-400">
-        Closed {{ formatDate(loan.dueDate) }}
+        Ended {{ loan.finalDueDate ? formatDate(loan.finalDueDate) : 'N/A' }}
       </div>
 
       <RouterLink
