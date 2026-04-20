@@ -3,26 +3,29 @@ import { ref, watch, onMounted } from 'vue'
 import { BaseButton } from '@bcl/ui'
 import { Loader2 } from 'lucide-vue-next'
 import { useLoanApplicationStore } from '../store'
-import { previewLoan } from '../../api'
+import { getDefaultLoanProduct, checkEligibility } from '../../api'
+import type { LoanProduct } from '@bcl/types'
 
 const store = useLoanApplicationStore()
 
-const eligibility = store.eligibility!
-const amount = ref(store.selectedAmount || eligibility.minAmount)
-const selectedTenor = ref(store.selectedTenor || eligibility.tenors[0] || 1)
+const isFetchingEligibility = ref(true)
+const product = ref<LoanProduct | null>(null)
+
+const amount = ref(store.selectedAmount || 10000)
+const selectedTenor = ref(store.selectedTenor || 1)
 const isPreviewing = ref(false)
 
 async function updatePreview() {
   if (!amount.value || !selectedTenor.value) return
   isPreviewing.value = true
   try {
-    const res = await previewLoan({
-      requestedAmount: amount.value,
-      requestedTenor: selectedTenor.value,
+    const res = await checkEligibility({
+      principal: amount.value,
+      tenor: selectedTenor.value,
     })
-    store.previewSchedule = res.data
+    store.eligibility = res.data
   } catch (err) {
-    console.error('Preview failed:', err)
+    console.error('Check failed:', err)
   } finally {
     isPreviewing.value = false
   }
@@ -34,9 +37,47 @@ watch([amount, selectedTenor], () => {
   updatePreview()
 })
 
-onMounted(() => {
-  if (!store.previewSchedule) {
-    updatePreview()
+onMounted(async () => {
+  try {
+    // 1. Get default product configuration
+    const prodRes = await getDefaultLoanProduct()
+    const productData = prodRes.data
+    product.value = productData
+    
+    // 2. Initiate eligibility check
+    const res = await checkEligibility()
+    const eligibilityData = res.data
+    store.eligibility = eligibilityData
+
+    if (!productData || !eligibilityData) {
+      throw new Error('Required configuration data missing')
+    }
+
+    // Initial values & Parsing
+    const minAmt = parseFloat(productData.minAmount as string) || 10000
+    const maxAmt = parseFloat(productData.maxAmount as string) || 500000
+
+    if (!store.selectedAmount) {
+      amount.value = eligibilityData.eligibleAmountInNaira || minAmt
+      store.selectedAmount = amount.value
+    }
+    
+    if (!store.selectedTenor) {
+      const firstTenor = productData.tenors && productData.tenors.length > 0 ? productData.tenors[0] : null
+      if (firstTenor) {
+        selectedTenor.value = firstTenor.tenorValue
+      } else {
+        selectedTenor.value = productData.minTenor || 1
+      }
+      store.selectedTenor = selectedTenor.value
+    }
+    
+    // 3. Initial preview with defaults
+    await updatePreview()
+  } catch (err) {
+    console.error('Initialization failed:', err)
+  } finally {
+    isFetchingEligibility.value = false
   }
 })
 
@@ -63,51 +104,81 @@ function goBack() {
       Choose how much you need and your preferred repayment period.
     </p>
 
-    <!-- Amount display -->
-    <div class="text-center mb-6">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Loan Amount</p>
-      <p class="text-3xl sm:text-5xl font-bold text-primary tracking-tight">
-        {{ formatCurrency(amount) }}
-      </p>
+    <!-- Loading state -->
+    <div v-if="isFetchingEligibility" class="flex flex-col items-center py-12">
+      <Loader2 class="w-10 h-10 text-primary animate-spin mb-4" />
+      <p class="text-slate-500 animate-pulse">Initializing options...</p>
     </div>
 
-    <!-- Slider -->
-    <div class="mb-6">
-      <input
-        v-model.number="amount"
-        type="range"
-        :min="eligibility.minAmount"
-        :max="eligibility.maxAmount"
-        :step="10_000"
-        class="w-full h-2 rounded-full accent-primary cursor-pointer"
-      />
-      <div class="flex justify-between text-xs text-slate-400 mt-2">
-        <span>{{ formatCurrency(eligibility.minAmount) }}</span>
-        <span>{{ formatCurrency(eligibility.maxAmount) }}</span>
+    <template v-else-if="product">
+      <!-- Amount display -->
+      <div class="text-center mb-6">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Loan Amount</p>
+        <p class="text-3xl sm:text-5xl font-bold text-primary tracking-tight">
+          {{ formatCurrency(amount) }}
+        </p>
       </div>
-    </div>
 
-    <!-- Tenor pills -->
-    <div class="mb-6">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-        Repayment Tenor
-      </p>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <button
-          v-for="t in eligibility.tenors"
-          :key="t"
-          class="flex flex-col items-center px-3 py-3 rounded-xl border text-sm font-medium transition-all"
-          :class="
-            selectedTenor === t
-              ? 'border-primary bg-primary text-white shadow-sm shadow-primary/20'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-primary/50'
-          "
-          @click="selectedTenor = t"
-        >
-          <span class="font-bold">{{ t }} months</span>
-        </button>
+      <!-- Amount Slider -->
+      <div class="mb-6">
+        <input
+          v-model.number="amount"
+          type="range"
+          :min="parseFloat(product.minAmount as string)"
+          :max="parseFloat(product.maxAmount as string)"
+          :step="1000"
+          class="w-full h-2 rounded-full accent-primary cursor-pointer"
+        />
+        <div class="flex justify-between text-xs text-slate-400 mt-2">
+          <span>{{ formatCurrency(parseFloat(product.minAmount as string)) }}</span>
+          <span>{{ formatCurrency(parseFloat(product.maxAmount as string)) }}</span>
+        </div>
       </div>
-    </div>
+
+      <!-- Tenor selection -->
+      <div class="mb-6">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          Repayment Tenor
+        </p>
+        
+        <!-- Fixed Tenors (Pills) -->
+        <div v-if="product.tenors.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button
+            v-for="t in product.tenors"
+            :key="t.id"
+            class="flex flex-col items-center px-3 py-3 rounded-xl border text-sm font-medium transition-all"
+            :class="
+              selectedTenor === t.tenorValue
+                ? 'border-primary bg-primary text-white shadow-sm shadow-primary/20'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-primary/50'
+            "
+            @click="selectedTenor = t.tenorValue"
+          >
+            <span class="font-bold">{{ t.tenorValue }} months</span>
+          </button>
+        </div>
+
+        <!-- Fallback Tenors (Slider) -->
+        <div v-else class="px-1">
+          <div class="flex items-center justify-between mb-3">
+             <span class="text-lg font-bold text-slate-700">{{ selectedTenor }} months</span>
+             <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Duration</span>
+          </div>
+          <input
+            v-model.number="selectedTenor"
+            type="range"
+            :min="product.minTenor"
+            :max="product.maxTenor"
+            step="1"
+            class="w-full h-2 rounded-full accent-primary cursor-pointer"
+          />
+          <div class="flex justify-between text-xs text-slate-400 mt-2">
+            <span>{{ product.minTenor }} Mo.</span>
+            <span>{{ product.maxTenor }} Mo.</span>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <!-- Summary -->
     <div class="relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-6 min-h-25 flex flex-col justify-center">
@@ -116,7 +187,7 @@ function goBack() {
       </div>
 
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Estimated Summary</p>
-      <div v-if="store.previewSchedule" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div v-if="store.eligibility && store.eligibility.status === 'COMPLETED'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="text-center sm:text-left">
           <p class="text-xs text-slate-400 mb-1">Monthly Payment</p>
           <p class="text-base font-bold text-primary">{{ formatCurrency(store.monthlyPayment) }}</p>

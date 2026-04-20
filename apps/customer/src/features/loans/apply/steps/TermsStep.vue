@@ -16,7 +16,7 @@ onMounted(async () => {
 const canProceed = computed(() => accepted.value)
 
 function proceed() {
-  console.log("-----")
+  console.log('-----')
   store.termsAccepted = true
   store.nextStep()
 }
@@ -28,8 +28,15 @@ function proceed() {
     <p class="text-sm text-slate-500 mb-5">Please read and accept our terms before proceeding.</p>
 
     <!-- Terms content -->
-    <div class="h-72 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-5 prose prose-slate prose-sm max-w-none mb-5 scroll-smooth"
-         v-html="html || 'Loading...'" />
+    <div
+      class="h-72 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden prose prose-slate prose-sm max-w-none mb-5"
+    >
+      <iframe
+        :srcdoc="html || 'Loading...'"
+        class="w-full h-full border-0"
+        title="Terms and Conditions"
+      />
+    </div>
 
     <!-- Accept checkbox -->
     <label class="flex items-start gap-3 cursor-pointer group mb-6">
@@ -39,7 +46,9 @@ function proceed() {
         class="mt-0.5 w-4 h-4 accent-primary rounded cursor-pointer"
       />
       <span class="text-sm text-slate-600 leading-relaxed">
-        I have read and agree to BCL Finance's <span class="font-semibold text-primary">Terms and Conditions</span> and <span class="font-semibold text-primary">Privacy Policy</span>.
+        I have read and agree to BCL Finance's
+        <span class="font-semibold text-primary">Terms and Conditions</span> and
+        <span class="font-semibold text-primary">Privacy Policy</span>.
       </span>
     </label>
 

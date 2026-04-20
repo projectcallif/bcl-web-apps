@@ -47,6 +47,10 @@ const mockLoans = ref<
       interestType: "FIXED",
       minAmount: 10000,
       maxAmount: 1000000,
+      minTenor: 1,
+      maxTenor: 12,
+      interestRate: 0.05,
+      isActive: true,
       tenors: [],
     },
     disbursementAccount: {
@@ -82,6 +86,10 @@ const mockLoans = ref<
       interestType: "FIXED",
       minAmount: 500000,
       maxAmount: 5000000,
+      minTenor: 3,
+      maxTenor: 24,
+      interestRate: 0.04,
+      isActive: true,
       tenors: [],
     },
     disbursementAccount: {

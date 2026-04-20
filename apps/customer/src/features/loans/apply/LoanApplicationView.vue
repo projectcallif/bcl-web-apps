@@ -18,8 +18,8 @@ const router = useRouter()
 const STEPS = [
   { label: 'Terms', component: TermsStep },
   { label: 'Bank Link', component: BankLinkStep },
-  { label: 'Eligibility', component: EligibilityStep },
   { label: 'Amount', component: LoanAmountStep },
+  { label: 'Eligibility', component: EligibilityStep },
   { label: 'Schedule', component: ScheduleStep },
   { label: 'Sign', component: SignTermsStep },
   { label: 'Bank', component: BankDetailsStep },

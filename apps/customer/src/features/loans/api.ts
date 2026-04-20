@@ -35,6 +35,14 @@ export function getLoanProducts(): Promise<ApiResponse<LoanProduct[]>> {
   return api.get<LoanProduct[]>('/v1/loans/products')
 }
 
+export function getProductDetail(id: string): Promise<ApiResponse<LoanProduct>> {
+  return api.get<LoanProduct>(`/v1/loans/products/${id}`)
+}
+
+export function getDefaultLoanProduct(): Promise<ApiResponse<LoanProduct>> {
+  return api.get<LoanProduct>('/v1/loans/products/default')
+}
+
 // ── Loan Management ──────────────────────────────────────────────────────────
 
 export function getMyLoans(params: { status?: LoanStatus | null }): Promise<ApiResponse<Loan[]>> {
@@ -64,10 +72,14 @@ export function getProjectedSchedule(eligibilityId: string): Promise<ApiResponse
 // ── Application Flow ─────────────────────────────────────────────────────────
 
 export function checkEligibility(payload?: {
-  requestedAmount?: number
-  requestedTenor?: number
+  principal?: number
+  tenor?: number
 }): Promise<ApiResponse<LoanEligibility>> {
   return api.post<LoanEligibility>('/v1/loans/eligibility-check', payload)
+}
+
+export function getEligibilityResult(): Promise<ApiResponse<LoanEligibility>> {
+  return api.get<LoanEligibility>('/v1/loans/eligibility')
 }
 
 export function previewLoan(payload: {
@@ -104,4 +116,8 @@ export function getTransactions(params: {
   dateTo?: string | null
 }): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
   return api.get<PaginatedResponse<Transaction>>('/v1/transactions', cleanParams(params))
+}
+
+export function getRecentTransactions(limit: number = 10): Promise<ApiResponse<Transaction[]>> {
+  return api.get<Transaction[]>('/v1/transactions/recent', { limit })
 }

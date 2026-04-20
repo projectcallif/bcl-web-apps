@@ -34,10 +34,21 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
   // Step 8 — Result
   const applicationReference = ref('')
 
-  // Computed properties from preview result
-  const monthlyPayment = computed(() => previewSchedule.value?.summary.monthlyPayment ?? 0)
-  const totalRepayment = computed(() => previewSchedule.value?.summary.totalAmountToRepay ?? 0)
-  const totalInterest = computed(() => previewSchedule.value?.summary.totalInterest ?? 0)
+  // Computed properties from eligibility result or preview result
+  const monthlyPayment = computed(() => 
+    eligibility.value?.monthlyPaymentInNaira ?? 
+    previewSchedule.value?.summary.monthlyPayment ?? 0
+  )
+  const totalRepayment = computed(() => 
+    eligibility.value?.totalRepaymentAmountInNaira ?? 
+    previewSchedule.value?.summary.totalAmountToRepay ?? 0
+  )
+  const totalInterest = computed(() => {
+    if (eligibility.value?.totalRepaymentAmountInNaira && selectedAmount.value) {
+      return eligibility.value.totalRepaymentAmountInNaira - selectedAmount.value
+    }
+    return previewSchedule.value?.summary.totalInterest ?? 0
+  })
 
   function nextStep(): void {
     currentStep.value = currentStep.value + 1
