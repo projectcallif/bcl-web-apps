@@ -11,6 +11,7 @@ import type {
   TransactionType,
   LoanProduct,
   LoanLegalDocument,
+  LoanPreview,
 } from '@bcl/types'
 
 function cleanParams(params: Record<string, any>): Record<string, string | number | boolean> {
@@ -85,8 +86,8 @@ export function getEligibilityResult(): Promise<ApiResponse<LoanEligibility>> {
 export function previewLoan(payload: {
   requestedAmount: number
   requestedTenor: number
-}): Promise<ApiResponse<LoanSchedule>> {
-  return api.post<LoanSchedule>('/v1/loans/apply/preview', payload)
+}): Promise<ApiResponse<LoanPreview>> {
+  return api.post<LoanPreview>('/v1/loans/apply/preview', payload)
 }
 
 export function applyLoan(payload: {

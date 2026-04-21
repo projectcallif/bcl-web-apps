@@ -9,12 +9,19 @@ const store = useLoanApplicationStore()
 const authStore = useAuthStore()
 
 const html = ref('')
+const isLoading = ref(true)
 const signatureName = ref(store.signatureName)
 const agreed = ref(store.agreementSigned)
 
 onMounted(async () => {
-  const res = await getLoanContract()
-  html.value = res.data.content
+  try {
+    const res = await getLoanContract()
+    html.value = res.data.content
+  } catch (err) {
+    console.error('Failed to fetch contract:', err)
+  } finally {
+    isLoading.value = false
+  }
 })
 
 const fullName = computed(() =>
@@ -39,9 +46,14 @@ function goBack() { store.prevStep() }
     <p class="text-sm text-slate-500 mb-5">Review and sign your loan agreement to proceed.</p>
 
     <!-- Agreement HTML -->
-    <div class="h-64 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden prose prose-slate prose-sm max-w-none mb-6">
+    <div class="h-64 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden prose prose-slate prose-sm max-w-none mb-6 relative">
+      <div v-if="isLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/80 backdrop-blur-sm z-10">
+        <Loader2 class="w-8 h-8 text-primary animate-spin mb-2" />
+        <p class="text-xs text-slate-500 animate-pulse">Loading contract...</p>
+      </div>
       <iframe
-        :srcdoc="html || 'Loading...'"
+        v-show="!isLoading"
+        :srcdoc="html"
         class="w-full h-full border-0"
         title="Loan Contract"
       />

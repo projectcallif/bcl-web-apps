@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { LoanEligibility, LoanSchedule } from '@bcl/types'
+import type { LoanEligibility, LoanSchedule, LoanPreview } from '@bcl/types'
 
 export const useLoanApplicationStore = defineStore('loanApplication', () => {
   const currentStep = ref(0)
@@ -21,29 +21,35 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
 
   // Step 5 — Schedule (Preview Result)
   const previewSchedule = ref<LoanSchedule | null>(null)
+  
+  // Step 7 — Final Preview/Bank Details
+  const previewData = ref<LoanPreview | null>(null)
 
   // Step 6 — Sign Terms
   const signatureName = ref('')
   const agreementSigned = ref(false)
 
-  // Step 7 — Bank Details
+  // Step 7/8 — Bank Details
   const bankName = ref('')
   const accountNumber = ref('')
   const accountName = ref('')
 
-  // Step 8 — Result
+  // Step 9 — Result
   const applicationReference = ref('')
 
   // Computed properties from eligibility result or preview result
   const monthlyPayment = computed(() => 
+    previewData.value?.monthlyPayment ?? 
     eligibility.value?.monthlyPaymentInNaira ?? 
     previewSchedule.value?.summary.monthlyPayment ?? 0
   )
   const totalRepayment = computed(() => 
+    previewData.value?.totalRepayableAmount ?? 
     eligibility.value?.totalRepaymentAmountInNaira ?? 
     previewSchedule.value?.summary.totalAmountToRepay ?? 0
   )
   const totalInterest = computed(() => {
+    if (previewData.value) return previewData.value.totalInterest
     if (eligibility.value?.totalRepaymentAmountInNaira && selectedAmount.value) {
       return eligibility.value.totalRepaymentAmountInNaira - selectedAmount.value
     }
@@ -66,6 +72,7 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
     selectedAmount.value = 0
     selectedTenor.value = 0
     previewSchedule.value = null
+    previewData.value = null
     signatureName.value = ''
     agreementSigned.value = false
     bankName.value = ''
@@ -83,6 +90,7 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
     selectedAmount,
     selectedTenor,
     previewSchedule,
+    previewData,
     signatureName,
     agreementSigned,
     bankName,

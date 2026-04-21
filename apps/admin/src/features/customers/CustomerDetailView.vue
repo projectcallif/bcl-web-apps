@@ -18,7 +18,6 @@ import {
   ChevronRight,
   ShieldAlert,
   ArrowRightLeft,
-  Trash2,
   Calendar,
   Mail,
   Phone,
@@ -112,7 +111,7 @@ const transactions = [
   },
 ];
 
-// --- Status & Delete Logic (Synced with CustomersView) ---
+// --- Status Logic (Synced with CustomersView) ---
 
 const statusOptions = [
   { label: "Active", value: "ACTIVE" },
@@ -162,23 +161,6 @@ function continueToStatusConfirm() {
     isStatusModalOpen.value = false;
     promptStatusChange(targetStatusSelection.value);
   }
-}
-
-const isDeleteConfirmOpen = ref(false);
-
-function promptDeleteUser() {
-  isDeleteConfirmOpen.value = true;
-}
-
-function confirmDeleteUser() {
-  // Navigation back to list after delete simulation
-  isDeleteConfirmOpen.value = false;
-  toast.success("Customer deleted successfully");
-  router.push({ name: "customers" });
-}
-
-function cancelDeleteUser() {
-  isDeleteConfirmOpen.value = false;
 }
 
 // Helpers
@@ -326,13 +308,6 @@ function getStatusStyle(status: string) {
           class="flex-1 lg:flex-none justify-center"
         >
           <ShieldAlert class="w-4 h-4 mr-2" /> Update Status
-        </BaseButton>
-        <BaseButton
-          variant="danger"
-          @click="promptDeleteUser"
-          class="flex-1 lg:flex-none justify-center"
-        >
-          <Trash2 class="w-4 h-4 mr-2" /> Delete Customer
         </BaseButton>
       </div>
     </div>
@@ -803,16 +778,6 @@ function getStatusStyle(status: string) {
       "
       @confirm="confirmStatusChange"
       @cancel="cancelStatusChange"
-    />
-
-    <AppConfirmDialog
-      v-model="isDeleteConfirmOpen"
-      title="Delete Customer"
-      :message="`Are you sure you want to permanently delete customer ${customer?.profile.firstName} ${customer?.profile.lastName}? This action cannot be undone.`"
-      confirm-text="Yes, Delete"
-      confirm-variant="danger"
-      @confirm="confirmDeleteUser"
-      @cancel="cancelDeleteUser"
     />
   </div>
 </template>

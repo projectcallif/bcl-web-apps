@@ -18,7 +18,6 @@ import {
   Filter,
   MoreVertical,
   ShieldAlert,
-  Trash2,
   ArrowRightLeft,
 } from "lucide-vue-next";
 import type {
@@ -248,30 +247,6 @@ function cancelRoleChange() {
   isRoleConfirmOpen.value = false;
   pendingRoleChange.value = null;
 }
-
-// DELETE
-const pendingDeleteUser = ref<Admin | null>(null);
-const isDeleteConfirmOpen = ref(false);
-
-function promptDeleteUser(user: Admin) {
-  pendingDeleteUser.value = user;
-  isDeleteConfirmOpen.value = true;
-}
-
-function confirmDeleteUser() {
-  if (pendingDeleteUser.value) {
-    adminsStore.admins = adminsStore.admins.filter(
-      (u) => u.id !== pendingDeleteUser.value!.id,
-    );
-  }
-  isDeleteConfirmOpen.value = false;
-  pendingDeleteUser.value = null;
-}
-
-function cancelDeleteUser() {
-  isDeleteConfirmOpen.value = false;
-  pendingDeleteUser.value = null;
-}
 </script>
 
 <template>
@@ -328,7 +303,9 @@ function cancelDeleteUser() {
 
       <!-- Desktop Table -->
       <div class="hidden md:block w-full overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-600 border-collapse min-w-200">
+        <table
+          class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
+        >
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >
@@ -428,16 +405,6 @@ function cancelDeleteUser() {
                         <ArrowRightLeft class="w-4 h-4 text-slate-400" />
                         Change Role
                       </button>
-                      <button
-                        @click="
-                          promptDeleteUser(user);
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-medium flex items-center gap-2 mt-1"
-                      >
-                        <Trash2 class="w-4 h-4 text-rose-500" />
-                        Delete Admin
-                      </button>
                     </template>
                   </AppPopover>
                 </div>
@@ -492,16 +459,6 @@ function cancelDeleteUser() {
                   >
                     <ShieldAlert class="w-4 h-4 text-slate-400" />
                     Update Status
-                  </button>
-                  <button
-                    @click="
-                      promptDeleteUser(user);
-                      close();
-                    "
-                    class="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-medium flex items-center gap-2 mt-1"
-                  >
-                    <Trash2 class="w-4 h-4 text-rose-500" />
-                    Delete Admin
                   </button>
                 </template>
               </AppPopover>
@@ -691,16 +648,6 @@ function cancelDeleteUser() {
       "
       @confirm="confirmStatusChange"
       @cancel="cancelStatusChange"
-    />
-
-    <AppConfirmDialog
-      v-model="isDeleteConfirmOpen"
-      title="Delete Administrator"
-      :message="`Are you sure you want to permanently delete administrator ${pendingDeleteUser?.firstName} ${pendingDeleteUser?.lastName}? This action cannot be undone.`"
-      confirm-text="Yes, Delete"
-      confirm-variant="danger"
-      @confirm="confirmDeleteUser"
-      @cancel="cancelDeleteUser"
     />
   </div>
 </template>

@@ -12,13 +12,7 @@ import {
   AppDialog,
   AppDatePicker,
 } from "@bcl/ui";
-import {
-  Filter,
-  MoreVertical,
-  ShieldAlert,
-  Trash2,
-  User,
-} from "lucide-vue-next";
+import { Filter, MoreVertical, ShieldAlert, User } from "lucide-vue-next";
 import type { UserStatus, CustomerListItem } from "@bcl/types";
 import { useRouter } from "vue-router";
 
@@ -118,29 +112,6 @@ function continueToStatusConfirm() {
     isStatusModalOpen.value = false;
     promptStatusChange(targetUserForStatus.value, targetStatusSelection.value);
   }
-}
-
-const pendingDeleteUser = ref<CustomerListItem | null>(null);
-const isDeleteConfirmOpen = ref(false);
-
-function promptDeleteUser(user: CustomerListItem) {
-  pendingDeleteUser.value = user;
-  isDeleteConfirmOpen.value = true;
-}
-
-function confirmDeleteUser() {
-  if (pendingDeleteUser.value) {
-    customersStore.customers = customersStore.customers.filter(
-      (u) => u.id !== pendingDeleteUser.value!.id,
-    );
-  }
-  isDeleteConfirmOpen.value = false;
-  pendingDeleteUser.value = null;
-}
-
-function cancelDeleteUser() {
-  isDeleteConfirmOpen.value = false;
-  pendingDeleteUser.value = null;
 }
 </script>
 
@@ -318,16 +289,6 @@ function cancelDeleteUser() {
                         <ShieldAlert class="w-4 h-4 text-slate-400" />
                         Update Status
                       </button>
-                      <button
-                        @click="
-                          promptDeleteUser(user);
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-medium flex items-center gap-2 mt-1"
-                      >
-                        <Trash2 class="w-4 h-4 text-rose-500" />
-                        Delete Customer
-                      </button>
                     </template>
                   </AppPopover>
                 </div>
@@ -432,16 +393,6 @@ function cancelDeleteUser() {
                     <ShieldAlert class="w-4 h-4 text-slate-400" />
                     Update Status
                   </button>
-                  <button
-                    @click="
-                      promptDeleteUser(user);
-                      close();
-                    "
-                    class="w-full text-left px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors font-medium flex items-center gap-2 mt-1"
-                  >
-                    <Trash2 class="w-4 h-4 text-rose-500" />
-                    Delete Customer
-                  </button>
                 </template>
               </AppPopover>
             </div>
@@ -504,16 +455,6 @@ function cancelDeleteUser() {
       "
       @confirm="confirmStatusChange"
       @cancel="cancelStatusChange"
-    />
-
-    <AppConfirmDialog
-      v-model="isDeleteConfirmOpen"
-      title="Delete Customer"
-      :message="`Are you sure you want to permanently delete customer ${pendingDeleteUser?.firstName} ${pendingDeleteUser?.lastName}? This action cannot be undone.`"
-      confirm-text="Yes, Delete"
-      confirm-variant="danger"
-      @confirm="confirmDeleteUser"
-      @cancel="cancelDeleteUser"
     />
   </div>
 </template>

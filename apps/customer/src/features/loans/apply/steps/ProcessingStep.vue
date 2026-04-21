@@ -68,9 +68,23 @@ function viewLoans() {
     </div>
 
     <!-- Disbursement info -->
-    <div class="flex items-center gap-2 text-sm text-slate-500 mb-8">
-      <svg class="w-4 h-4 text-tertiary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-      Estimated disbursement: <span class="font-semibold text-slate-700">within 2–4 business hours</span>
+    <div class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10"/><line x1="2" x2="22" y1="15"/></svg>
+        </div>
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Disbursement Target</p>
+      </div>
+      <div class="flex justify-between items-center px-1">
+        <div>
+          <p class="text-sm font-bold text-slate-800">{{ store.bankName }}</p>
+          <p class="text-xs text-slate-400">Acc: {{ store.accountNumber }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] font-bold text-tertiary uppercase tracking-widest mb-0.5">Estimated Arrival</p>
+          <p class="text-xs font-semibold text-slate-600">2-4 Business Hours</p>
+        </div>
+      </div>
     </div>
 
     <!-- Actions -->

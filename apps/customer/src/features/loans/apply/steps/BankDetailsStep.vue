@@ -1,161 +1,200 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { BaseButton, AppTextInput } from '@bcl/ui'
-import { Loader2, CheckCircle2 } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { BaseButton } from '@bcl/ui'
+import { Loader2, AlertCircle, Banknote, Calendar, ShieldCheck } from 'lucide-vue-next'
 import { useLoanApplicationStore } from '../store'
-import { applyLoan } from '../../api'
+import { applyLoan, previewLoan } from '../../api'
 
 const store = useLoanApplicationStore()
-
-const BANKS = [
-  'Access Bank', 'GTBank', 'First Bank', 'Zenith Bank',
-  'UBA', 'Stanbic IBTC', 'Polaris Bank', 'Wema Bank',
-  'Fidelity Bank', 'Union Bank', 'FCMB', 'Keystone Bank',
-]
-
-const bankName = ref(store.bankName)
-const accountNumber = ref(store.accountNumber)
-const accountName = ref(store.accountName)
-const isVerifying = ref(false)
+const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
-// Simulate account name lookup after 10-digit entry
-watch(accountNumber, async (val) => {
-  if (val.length === 10 && bankName.value) {
-    isVerifying.value = true
-    accountName.value = ''
-    await new Promise(r => setTimeout(r, 1500))
-    // Simulate fetched account name
-    accountName.value = 'JOHN ADEWALE SMITH'
-    isVerifying.value = false
-    store.accountName = accountName.value
-  } else {
-    accountName.value = ''
-    store.accountName = ''
+async function fetchPreview() {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const res = await previewLoan({
+      requestedAmount: store.selectedAmount,
+      requestedTenor: store.selectedTenor,
+    })
+    store.previewData = res.data
+
+    // Update store bank info for processing step display
+    store.bankName = res.data.disbursementAccount.bankName
+    store.accountNumber = res.data.disbursementAccount.accountNumber
+    store.accountName = res.data.disbursementAccount.accountName
+  } catch (err: any) {
+    console.error('Preview failed:', err)
+    errorMessage.value =
+      err.response?.data?.message || 'Failed to retrieve loan preview. Please try again.'
+  } finally {
+    isLoading.value = false
   }
+}
+
+onMounted(() => {
+  fetchPreview()
 })
 
-watch(bankName, () => {
-  if (accountNumber.value.length === 10) {
-    accountNumber.value = ''
-    accountName.value = ''
-  }
-})
-
-const canProceed = computed(() =>
-  bankName.value && accountNumber.value.length === 10 && accountName.value.length > 0,
-)
-
-async function proceed() {
+async function submitApplication() {
   isSubmitting.value = true
   errorMessage.value = ''
   try {
     const res = await applyLoan({
       requestedAmount: store.selectedAmount,
       requestedTenor: store.selectedTenor,
-      purpose: 'PERSONAL', // Defaulting for now
+      purpose: 'PERSONAL',
+      productId: 'cfe75bf8-ec72-4642-8e33-f8cd205ed8fd',
     })
-    store.bankName = bankName.value
-    store.accountNumber = accountNumber.value
-    store.accountName = accountName.value
     store.applicationReference = res.data.referenceId
     store.nextStep()
   } catch (err: any) {
     console.error('Submission failed:', err)
-    errorMessage.value = err.response?.data?.message || 'Failed to submit application. Please try again.'
+    errorMessage.value =
+      err.response?.data?.message || 'Failed to submit application. Please try again.'
   } finally {
     isSubmitting.value = false
   }
 }
-function goBack() { store.prevStep() }
+
+function goBack() {
+  store.prevStep()
+}
+
+function formatCurrency(n: number): string {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+  }).format(n)
+}
 </script>
 
 <template>
   <div class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-6">
-    <h2 class="text-lg font-bold text-slate-800 mb-1">Disbursement Account</h2>
-    <p class="text-sm text-slate-500 mb-6">Enter the bank account where your loan should be sent.</p>
+    <h2 class="text-lg font-bold text-slate-800 mb-1">Confirm Disbursement</h2>
+    <p class="text-sm text-slate-500 mb-6">
+      Please review the details below before submitting your application.
+    </p>
 
-    <!-- Bank select -->
-    <div class="mb-4">
-      <label class="block text-sm font-medium text-slate-700 mb-1.5">Bank Name</label>
-      <select
-        v-model="bankName"
-        class="w-full rounded-xl border border-input-border bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-      >
-        <option value="" disabled>Select your bank</option>
-        <option v-for="bank in BANKS" :key="bank" :value="bank">{{ bank }}</option>
-      </select>
+    <!-- Loading state -->
+    <div v-if="isLoading" class="flex flex-col items-center py-12">
+      <Loader2 class="w-10 h-10 text-primary animate-spin mb-4" />
+      <p class="text-slate-500 animate-pulse">Confirming disbursement details...</p>
     </div>
 
-    <!-- Account number -->
-    <div class="mb-4">
-      <AppTextInput
-        v-model="accountNumber"
-        id="accountNumber"
-        label="Account Number"
-        placeholder="0000000000"
-        type="text"
-        :hint="accountNumber.length > 0 ? `${accountNumber.length}/10 digits` : undefined"
-        @input="(e: Event) => {
-          const val = (e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 10)
-          accountNumber = val
-        }"
-      />
+    <!-- Error State (Fetch Failed) -->
+    <div
+      v-else-if="errorMessage && !store.previewData"
+      class="py-8 text-center flex flex-col items-center"
+    >
+      <AlertCircle class="w-12 h-12 text-rose-400 mb-3" />
+      <p class="text-slate-600 font-medium mb-4">{{ errorMessage }}</p>
+      <BaseButton variant="primary" size="sm" @click="fetchPreview">Retry Preview</BaseButton>
     </div>
 
-    <!-- Account name verification -->
-    <div v-if="isVerifying" class="flex items-center gap-2 text-sm text-slate-500 mb-4">
-      <Loader2 class="w-4 h-4 animate-spin text-primary" />
-      Verifying account...
-    </div>
-    <div v-else-if="accountName" class="flex items-center gap-2.5 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
-      <CheckCircle2 class="w-4.5 h-4.5 text-green-600 shrink-0" />
-      <div>
-        <p class="text-xs text-green-600">Account verified</p>
-        <p class="text-sm font-bold text-green-800">{{ accountName }}</p>
-      </div>
-    </div>
-
-    <!-- Confirmation -->
-    <div v-if="canProceed" class="bg-slate-50 rounded-xl border border-slate-200 p-4 mb-5 text-sm overflow-hidden">
-      <p class="font-semibold text-slate-600 mb-2 text-xs uppercase tracking-wider">Confirm Disbursement Details</p>
-      <div class="space-y-1.5 text-sm">
-        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-          <span class="text-slate-500">Bank</span>
-          <span class="font-medium text-slate-800">{{ bankName }}</span>
+    <!-- Preview Content -->
+    <template v-else-if="store.previewData">
+      <!-- Disbursement Account -->
+      <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 mb-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <ShieldCheck class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Disbursement Account
+            </p>
+            <p class="text-sm font-bold text-slate-700">Verified & Linked</p>
+          </div>
         </div>
-        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-          <span class="text-slate-500">Account Number</span>
-          <span class="font-medium text-slate-800 font-mono">{{ accountNumber }}</span>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
-          <span class="text-slate-500">Account Name</span>
-          <span class="font-medium text-slate-800">{{ accountName }}</span>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:justify-between gap-1 pt-1.5 border-t border-slate-200">
-          <span class="text-slate-500">Loan Amount</span>
-          <span class="font-bold text-primary">
-            {{ new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(store.selectedAmount) }}
-          </span>
+
+        <div class="space-y-3">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-slate-500">Bank</span>
+            <span class="font-bold text-slate-800">{{
+              store.previewData.disbursementAccount.bankName
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-slate-500">Account Name</span>
+            <span class="font-bold text-slate-800">{{
+              store.previewData.disbursementAccount.accountName
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-slate-500">Account Number</span>
+            <span class="font-bold text-slate-800 font-mono tracking-wider">{{
+              store.previewData.disbursementAccount.accountNumber
+            }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Error message -->
-    <p v-if="errorMessage" class="text-xs text-red-500 mb-4">{{ errorMessage }}</p>
+      <!-- Loan Summary -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm">
+          <Banknote class="w-5 h-5 text-tertiary mb-2" />
+          <p class="text-xs text-slate-400 mb-0.5">Loan Amount</p>
+          <p class="text-base font-bold text-slate-800">
+            {{ formatCurrency(store.previewData.loanAmount) }}
+          </p>
+        </div>
+        <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm">
+          <Calendar class="w-5 h-5 text-amber-500 mb-2" />
+          <p class="text-xs text-slate-400 mb-0.5">Duration</p>
+          <p class="text-base font-bold text-slate-800">{{ store.previewData.tenor }} Months</p>
+        </div>
+      </div>
 
-    <div class="flex justify-between">
-      <button
-        class="text-sm text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50"
-        :disabled="isSubmitting"
-        @click="goBack"
+      <div class="space-y-2.5 mb-6 px-1">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Monthly Repayment</span>
+          <span class="font-bold text-primary">{{
+            formatCurrency(store.previewData.monthlyPayment)
+          }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">Total Interest</span>
+          <span class="font-semibold text-slate-600">{{
+            formatCurrency(store.previewData.totalInterest)
+          }}</span>
+        </div>
+        <div class="flex justify-between text-base pt-2.5 border-t border-slate-100">
+          <span class="font-bold text-slate-700">Total Repayable</span>
+          <span class="font-black text-slate-900">{{
+            formatCurrency(store.previewData.totalRepayableAmount)
+          }}</span>
+        </div>
+      </div>
+
+      <!-- Submission Error (e.g. Active Loan) -->
+      <div
+        v-if="errorMessage"
+        class="mb-6 flex items-start gap-3 bg-rose-50 border border-rose-100 p-4 rounded-xl animate-in slide-in-from-top-2"
       >
-        Back
-      </button>
-      <BaseButton variant="primary" size="lg" :disabled="!canProceed" :isLoading="isSubmitting" @click="proceed">
-        Confirm &amp; Submit
-      </BaseButton>
-    </div>
+        <AlertCircle class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+        <p class="text-sm text-rose-700 font-medium">{{ errorMessage }}</p>
+      </div>
+
+      <div class="flex justify-between">
+        <button
+          class="text-sm text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50"
+          :disabled="isSubmitting"
+          @click="goBack"
+        >
+          Back
+        </button>
+        <BaseButton
+          variant="primary"
+          size="lg"
+          :isLoading="isSubmitting"
+          @click="submitApplication"
+        >
+          Confirm & Submit Application
+        </BaseButton>
+      </div>
+    </template>
   </div>
 </template>

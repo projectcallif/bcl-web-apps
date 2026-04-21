@@ -101,6 +101,17 @@ export interface LoanSchedule {
   installments: RepaymentScheduleItem[];
 }
 
+export interface LoanPreview {
+  loanAmount: number;
+  monthlyInterestRate: number;
+  interestType: string;
+  tenor: number;
+  monthlyPayment: number;
+  totalInterest: number;
+  totalRepayableAmount: number;
+  disbursementAccount: LoanDisbursementAccount;
+}
+
 export interface TenorOption {
   months: number;
   interestRatePerMonth: number;
