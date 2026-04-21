@@ -34,8 +34,8 @@ async function handleSubmit(): Promise<void> {
 }
 
 function _debugPrefill() {
-  identifier.value = 'udonsichisom02@gmail.com'
-  password.value = 'Ace12345$'
+  identifier.value = 'user3@bcl.com'
+  password.value = 'Password@1'
 }
 </script>
 

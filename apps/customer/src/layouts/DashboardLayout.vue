@@ -6,11 +6,11 @@ import HeaderNotifications from '@/features/notifications/components/HeaderNotif
 import {
   LayoutDashboard,
   CreditCard,
-  History,
+  // History,
   ArrowLeftRight,
   User,
   LifeBuoy,
-  Settings,
+  // Settings,
   LogOut,
   MessageCircle,
   Menu,
@@ -30,13 +30,13 @@ const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, routeName: 'dashboard' },
   { label: 'My Loans', icon: CreditCard, routeName: 'loans' },
   { label: 'Transactions', icon: ArrowLeftRight, routeName: 'transactions' },
-  { label: 'Profile', icon: User, routeName: 'profile' },
   { label: 'Support', icon: LifeBuoy, routeName: 'support' },
-  { label: 'Settings', icon: Settings, routeName: 'settings' },
+  // { label: 'Settings', icon: Settings, routeName: 'settings' },
+  { label: 'Profile', icon: User, routeName: 'profile' },
 ] as const
 
-function isActive(routeName: string): boolean {
-  return route.name === routeName
+function isActive(routeName: string) {
+  return route.name === routeName || String(route.path).includes(routeName)
 }
 
 function closeSidebar() {
@@ -54,6 +54,8 @@ async function executeSignOut(): Promise<void> {
 }
 
 const userFirstName = computed(() => authStore.user?.profile.firstName ?? 'User')
+const userLastName = computed(() => authStore.user?.profile.lastName ?? '')
+const userEmail = computed(() => authStore.user?.email ?? '')
 const userInitials = computed(() => {
   const first = authStore.user?.profile.firstName?.[0] ?? 'U'
   const last = authStore.user?.profile.lastName?.[0] ?? ''
@@ -210,19 +212,25 @@ onMounted(() => {
             </template>
             <template #content>
               <div class="min-w-48 p-1 flex flex-col gap-0.5">
+                <div class="px-3 pt-1 pb-3 border-b border-slate-100 mb-1">
+                  <p class="text-sm font-bold text-slate-800">
+                    {{ userFirstName }} {{ userLastName }}
+                  </p>
+                  <p class="text-xs text-slate-500">{{ userEmail }}</p>
+                </div>
                 <button
                   @click="router.push({ name: 'profile' })"
                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer text-left"
                 >
                   <User class="w-4 h-4" /> My Profile
                 </button>
-                <button
+                <!-- <button
                   @click="router.push({ name: 'settings' })"
                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer text-left"
                 >
                   <Settings class="w-4 h-4" /> Account Settings
-                </button>
-                <div class="h-px bg-slate-50 my-1"></div>
+                </button> -->
+                <!-- <div class="h-px bg-slate-50 my-1"></div> -->
                 <button
                   @click="confirmSignOut"
                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer text-left font-medium"
@@ -244,7 +252,7 @@ onMounted(() => {
 
   <!-- Sign Out Confirmation -->
   <AppDialog v-model="isSignOutOpen" title="Secure Logout" max-width="md">
-    <div class="flex flex-col gap-4 mt-2">
+    <div class="flex flex-col gap-4">
       <p class="text-sm text-slate-600 leading-relaxed">
         Are you sure you want to end your current session? You will need to log in again to access
         your dashboard.

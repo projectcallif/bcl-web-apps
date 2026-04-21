@@ -10,6 +10,7 @@ import {
   AppConfirmDialog,
   AppPopover,
   AppDialog,
+  AppDatePicker,
 } from "@bcl/ui";
 import {
   Filter,
@@ -24,6 +25,7 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const searchQuery = ref("");
 const currentPage = ref(1);
+const dateRange = ref<Date[] | null>(null);
 const customersStore = useCustomersStore();
 
 let searchTimeout: any;
@@ -32,18 +34,15 @@ onMounted(() => {
   customersStore.fetchCustomers(currentPage.value, 10, searchQuery.value);
 });
 
-watch(currentPage, (newPage) => {
-  customersStore.fetchCustomers(newPage, 10, searchQuery.value);
-});
-
-watch(searchQuery, (newQuery) => {
+watch([currentPage, searchQuery, dateRange], ([newPage, newQuery]) => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    if (currentPage.value === 1) {
-      customersStore.fetchCustomers(1, 10, newQuery);
-    } else {
-      currentPage.value = 1;
-    }
+    // Note: Store fetch call can be expanded here once backend filter is ready
+    customersStore.fetchCustomers(
+      newPage === currentPage.value ? newPage : 1,
+      10,
+      newQuery as string,
+    );
   }, 500);
 });
 
@@ -177,8 +176,14 @@ function cancelDeleteUser() {
             type="text"
           />
         </div>
-        <div class="w-full sm:w-auto flex items-center justify-end gap-2">
-          <BaseButton variant="ghost" class="bg-white! border border-slate-200">
+        <div class="w-full sm:w-auto flex items-center justify-end gap-3">
+          <AppDatePicker
+            v-model="dateRange"
+            range
+            placeholder="Registration date"
+            class="w-full sm:w-64"
+          />
+          <BaseButton variant="ghost" class="bg-white border border-slate-200">
             <span class="flex items-center gap-2 text-slate-600"
               ><Filter class="w-4 h-4" /> Filters</span
             >
@@ -201,7 +206,9 @@ function cancelDeleteUser() {
           </div>
         </div>
 
-        <table class="w-full text-left text-sm text-slate-600 border-collapse min-w-200">
+        <table
+          class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
+        >
           <thead
             class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
           >

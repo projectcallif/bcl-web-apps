@@ -7,6 +7,7 @@ import {
   AppDialog,
   AppTextArea,
   AppSelect,
+  AppDatePicker,
 } from "@bcl/ui";
 import { PhoneCall, AlertTriangle, Search, Filter } from "lucide-vue-next";
 import type { Loan, CollectionLog } from "@bcl/types";
@@ -102,10 +103,26 @@ const mockLoans = ref<
 ]);
 
 const searchQuery = ref("");
+const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
 
 const filteredOutstandings = computed(() => {
   let res = mockLoans.value;
+
+  if (dateRange.value && dateRange.value[0]) {
+    const start = new Date(dateRange.value[0]).getTime();
+    res = res.filter(
+      (l) => l.disbursedAt && new Date(l.disbursedAt).getTime() >= start,
+    );
+  }
+
+  if (dateRange.value && dateRange.value[1]) {
+    const end = new Date(dateRange.value[1]).getTime() + 86400000;
+    res = res.filter(
+      (l) => l.disbursedAt && new Date(l.disbursedAt).getTime() < end,
+    );
+  }
+
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
     res = res.filter(
@@ -205,12 +222,20 @@ function formatDateOptions(iso: string) {
             class="pl-10 w-full -ml-4"
           />
         </div>
-        <BaseButton
-          variant="ghost"
-          class="bg-white border border-slate-200 text-slate-600 shadow-sm"
-        >
-          <Filter class="w-4 h-4 mr-2" /> Filters
-        </BaseButton>
+        <div class="w-full sm:w-auto flex items-center justify-end gap-3">
+          <AppDatePicker
+            v-model="dateRange"
+            range
+            placeholder="Disbursement date"
+            class="w-full sm:w-64"
+          />
+          <BaseButton
+            variant="ghost"
+            class="bg-white border border-slate-200 text-slate-600 shadow-sm"
+          >
+            <Filter class="w-4 h-4 mr-2" /> Filters
+          </BaseButton>
+        </div>
       </div>
 
       <!-- Desktop Table -->

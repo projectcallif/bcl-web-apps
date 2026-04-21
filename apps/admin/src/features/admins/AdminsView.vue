@@ -12,6 +12,7 @@ import {
   AppPopover,
   AppDialog,
   AppPasswordInput,
+  AppDatePicker,
 } from "@bcl/ui";
 import {
   Filter,
@@ -28,6 +29,7 @@ import type {
 } from "@bcl/types";
 
 const searchQuery = ref("");
+const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
 
 const adminsStore = useAdminsStore();
@@ -38,14 +40,29 @@ onMounted(() => {
 });
 
 const filteredAdmins = computed(() => {
-  if (!searchQuery.value) return adminsStore.admins;
-  const q = searchQuery.value.toLowerCase();
-  return adminsStore.admins.filter(
-    (a) =>
-      a.firstName.toLowerCase().includes(q) ||
-      a.lastName.toLowerCase().includes(q) ||
-      a.email.toLowerCase().includes(q),
-  );
+  let result = adminsStore.admins;
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    result = result.filter(
+      (a) =>
+        a.firstName.toLowerCase().includes(q) ||
+        a.lastName.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q),
+    );
+  }
+
+  if (dateRange.value && dateRange.value[0]) {
+    const start = new Date(dateRange.value[0]).getTime();
+    result = result.filter((a) => new Date(a.createdAt).getTime() >= start);
+  }
+
+  if (dateRange.value && dateRange.value[1]) {
+    const end = new Date(dateRange.value[1]).getTime() + 86400000;
+    result = result.filter((a) => new Date(a.createdAt).getTime() < end);
+  }
+
+  return result;
 });
 
 function getStatusColor(status: UserStatus) {
@@ -294,7 +311,13 @@ function cancelDeleteUser() {
             type="text"
           />
         </div>
-        <div class="w-full sm:w-auto flex items-center justify-end gap-2">
+        <div class="w-full sm:w-auto flex items-center justify-end gap-3">
+          <AppDatePicker
+            v-model="dateRange"
+            range
+            placeholder="Date added"
+            class="w-full sm:w-64"
+          />
           <BaseButton variant="ghost" class="bg-white border border-slate-200">
             <span class="flex items-center gap-2 text-slate-600"
               ><Filter class="w-4 h-4" /> Filters</span

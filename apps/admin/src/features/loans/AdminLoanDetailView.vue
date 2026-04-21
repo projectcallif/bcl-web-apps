@@ -136,9 +136,9 @@ const statusConfig: Record<
   <!-- Back -->
   <button
     class="flex items-center gap-1.5 cursor-pointer text-sm text-slate-500 hover:text-slate-700 transition-colors mb-6"
-    @click="router.push({ name: 'loans' })"
+    @click="router.push({ name: 'loan-operations' })"
   >
-    <ArrowLeft class="w-4 h-4" /> Back to Loans Triage
+    <ArrowLeft class="w-4 h-4" /> Back to Operations
   </button>
 
   <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
@@ -232,9 +232,7 @@ const statusConfig: Record<
           </div>
           <div>
             <p class="text-xs text-white/50 mb-1">Tenor</p>
-            <p class="text-sm font-semibold">
-              {{ mockLoan.tenor }} Months
-            </p>
+            <p class="text-sm font-semibold">{{ mockLoan.tenor }} Months</p>
           </div>
         </div>
       </div>
@@ -283,10 +281,7 @@ const statusConfig: Record<
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr
-                    v-for="item in mockSchedule"
-                    :key="item.installmentNo"
-                  >
+                  <tr v-for="item in mockSchedule" :key="item.installmentNo">
                     <td class="px-4 py-3">{{ item.installmentNo }}</td>
                     <td class="px-4 py-3 font-medium text-slate-800">
                       {{ formatDate(item.dueDate) }}

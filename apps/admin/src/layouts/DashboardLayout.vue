@@ -14,10 +14,9 @@ import {
   Shield,
   Banknote,
   ShieldCheck,
-  // PhoneCall,
+  ClipboardList,
   PieChart,
   History,
-  XCircle,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -29,12 +28,8 @@ const isSignOutOpen = ref(false);
 
 const navItems = [
   { label: "Dashboard", routeName: "dashboard", icon: LayoutDashboard },
-  { label: "Loan Operations", routeName: "loans", icon: Banknote },
-  {
-    label: "Failed Applications",
-    routeName: "failed-applications",
-    icon: XCircle,
-  },
+  { label: "Loan Applications", routeName: "loan-applications", icon: ClipboardList },
+  { label: "Loan Operations", routeName: "loan-operations", icon: Banknote },
   // { label: "Collections", routeName: "collections", icon: PhoneCall },
   { label: "KYC Operations", routeName: "kyc", icon: ShieldCheck },
   { label: "Customers", routeName: "customers", icon: Users },

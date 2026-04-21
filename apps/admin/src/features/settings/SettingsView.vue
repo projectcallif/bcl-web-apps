@@ -27,7 +27,7 @@ const profileForm = ref({
   firstName: "Super",
   lastName: "Admin",
   email: "admin@bcl.com",
-  phone: "+1 234 567 8900",
+  phone: "+234 905 678 9000",
   currentPassword: "",
   newPassword: "",
   confirmPassword: "",

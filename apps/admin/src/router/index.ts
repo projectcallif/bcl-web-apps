@@ -27,26 +27,26 @@ const router = createRouter({
           component: DashboardView,
         },
         {
-          path: "loans",
-          name: "loans",
-          component: () => import("../features/loans/LoansView.vue"),
+          path: "loan-operations",
+          name: "loan-operations",
+          component: () => import("../features/loans/LoanOperationsView.vue"),
         },
         {
-          path: "loans/:id",
+          path: "loan-operations/:id",
           name: "admin-loan-detail",
           component: () => import("../features/loans/AdminLoanDetailView.vue"),
         },
         {
-          path: "loan-underwriting/:id",
+          path: "loan-applications/:id",
           name: "loan-underwriting",
           component: () =>
             import("../features/loans/UnderwritingReviewView.vue"),
         },
         {
-          path: "failed-applications",
-          name: "failed-applications",
+          path: "loan-applications",
+          name: "loan-applications",
           component: () =>
-            import("../features/loans/FailedApplicationsView.vue"),
+            import("../features/loans/LoanApplicationsView.vue"),
         },
         {
           path: "collections",

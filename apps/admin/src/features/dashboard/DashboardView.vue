@@ -1,22 +1,43 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useDashboardStore } from "./store";
-import { Users, UserCheck, UserX, Activity } from "lucide-vue-next";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  UserPlus,
+  Banknote,
+  CreditCard,
+  Wallet,
+  Clock4,
+} from "lucide-vue-next";
 import DashboardStatCard from "./components/DashboardStatCard.vue";
 import { AppDatePicker } from "@bcl/ui";
 
 const dashboard = useDashboardStore();
 
-const last7Days = [
-  new Date(new Date().setDate(new Date().getDate() - 7)),
-  new Date(),
-];
-const dateFilter = ref<Date | Date[] | null>(last7Days);
+const dateFilter = ref<Date | Date[] | null>(null);
 
 onMounted(() => {
-  // Simulate loading more realistic stats
-  dashboard.setStats(1420, 985);
+  // Simulate loading more realistic stats matching loan theme
+  dashboard.setStats({
+    totalCustomers: 1420,
+    activeCustomers: 985,
+    newToday: 24,
+    totalDisbursed: 12500000,
+    activeLoans: 452,
+    totalRepaid: 8400000,
+    overdueLoans: 12,
+  });
 });
+
+function formatCurrency(n: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
 </script>
 
 <template>
@@ -30,7 +51,7 @@ onMounted(() => {
           Dashboard Overview
         </h1>
         <p class="text-sm text-slate-500 mt-1">
-          Check your key metrics and recent activities.
+          Check your key metrics and loan performance.
         </p>
       </div>
       <div class="flex items-center gap-2 w-full max-w-84">
@@ -80,15 +101,62 @@ onMounted(() => {
         </template>
       </DashboardStatCard>
 
-      <!-- System Activity -->
+      <!-- New Today -->
       <DashboardStatCard
-        title="System Load"
-        value="24%"
+        title="New Registrations (Today)"
+        :value="dashboard.newToday.toLocaleString()"
         variant="secondary"
-        badgeText="Live"
+        badgeText="+2"
       >
         <template #icon>
-          <Activity />
+          <UserPlus />
+        </template>
+      </DashboardStatCard>
+
+      <!-- Total Disbursed -->
+      <DashboardStatCard
+        title="Total Disbursed"
+        :value="formatCurrency(dashboard.totalDisbursed)"
+        variant="primary"
+      >
+        <template #icon>
+          <Banknote />
+        </template>
+      </DashboardStatCard>
+
+      <!-- Active Loans -->
+      <DashboardStatCard
+        title="Active Loans"
+        :value="dashboard.activeLoans.toLocaleString()"
+        variant="emerald"
+      >
+        <template #icon>
+          <CreditCard />
+        </template>
+      </DashboardStatCard>
+
+      <!-- Total Repayments -->
+      <DashboardStatCard
+        title="Total Repaid"
+        :value="formatCurrency(dashboard.totalRepaid)"
+        variant="primary"
+        badgeText="67%"
+        badgeVariant="emerald"
+      >
+        <template #icon>
+          <Wallet />
+        </template>
+      </DashboardStatCard>
+
+      <!-- Overdue Loans -->
+      <DashboardStatCard
+        title="Overdue Loans"
+        :value="dashboard.overdueLoans.toLocaleString()"
+        variant="rose"
+        badgeText="Action Req"
+      >
+        <template #icon>
+          <Clock4 />
         </template>
       </DashboardStatCard>
     </div>

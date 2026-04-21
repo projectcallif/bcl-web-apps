@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { AppTextInput, AppPagination } from "@bcl/ui";
+import { AppTextInput, AppPagination, AppDatePicker } from "@bcl/ui";
 import { Eye } from "lucide-vue-next";
 import type { User } from "@bcl/types";
 
 const router = useRouter();
 const searchQuery = ref("");
+const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
 const activeTab = ref<"PENDING" | "ACTIVE" | "SUSPENDED" | "ALL">("PENDING");
 
@@ -120,6 +121,17 @@ const filteredUsers = computed(() => {
   if (activeTab.value !== "ALL") {
     result = result.filter((u) => u.status === activeTab.value);
   }
+
+  if (dateRange.value && dateRange.value[0]) {
+    const start = new Date(dateRange.value[0]).getTime();
+    result = result.filter((u) => new Date(u.createdAt).getTime() >= start);
+  }
+
+  if (dateRange.value && dateRange.value[1]) {
+    const end = new Date(dateRange.value[1]).getTime() + 86400000;
+    result = result.filter((u) => new Date(u.createdAt).getTime() < end);
+  }
+
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
     result = result.filter(
@@ -189,7 +201,7 @@ function getStatusColor(status: string) {
       class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col"
     >
       <!-- Toolbar -->
-      <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+      <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="w-full sm:max-w-md">
           <AppTextInput
             id="search"
@@ -198,6 +210,12 @@ function getStatusColor(status: string) {
             type="text"
           />
         </div>
+        <AppDatePicker
+          v-model="dateRange"
+          range
+          placeholder="Created date"
+          class="w-full sm:w-64"
+        />
       </div>
 
       <!-- Desktop Table -->

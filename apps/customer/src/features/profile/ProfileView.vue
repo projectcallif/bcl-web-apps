@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from '../auth/store'
 import ProfileInfoSection from './sections/ProfileInfoSection.vue'
 import SecuritySection from './sections/SecuritySection.vue'
+import { BaseButton, AppDialog } from '@bcl/ui'
 
 type ActiveSection =
   | 'personal'
@@ -48,6 +49,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const active = ref<ActiveSection>('personal')
+const isSignOutOpen = ref(false)
 const openGroups = ref(new Set<string>(['profile', 'security', 'legal']))
 
 const profileInfoKeys = new Set<string>(['personal', 'employment', 'address', 'bank'])
@@ -70,7 +72,11 @@ const initials = computed(() => {
   return (f + l).toUpperCase()
 })
 
-async function handleLogout(): Promise<void> {
+function confirmSignOut(): void {
+  isSignOutOpen.value = true
+}
+
+async function executeSignOut(): Promise<void> {
   authStore.logout()
   await router.push({ name: 'login' })
 }
@@ -388,7 +394,7 @@ const openFaq = ref<number | null>(null)
       <div class="border-t border-slate-100">
         <button
           class="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
-          @click="handleLogout"
+          @click="confirmSignOut"
         >
           <LogOut class="w-4 h-4 shrink-0" /> Logout
         </button>
@@ -626,4 +632,24 @@ const openFaq = ref<number | null>(null)
       </div>
     </div>
   </div>
+
+  <!-- Sign Out Confirmation -->
+  <AppDialog v-model="isSignOutOpen" title="Secure Logout" max-width="md">
+    <div class="flex flex-col gap-4">
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Are you sure you want to end your current session? You will need to log in again to access
+        your dashboard.
+      </p>
+      <div class="flex justify-end gap-3 mt-4">
+        <BaseButton variant="ghost" @click="isSignOutOpen = false">Stay Logged In</BaseButton>
+        <BaseButton
+          variant="primary"
+          class="bg-red-600! hover:bg-red-700! border-none"
+          @click="executeSignOut"
+        >
+          Log Me Out
+        </BaseButton>
+      </div>
+    </div>
+  </AppDialog>
 </template>

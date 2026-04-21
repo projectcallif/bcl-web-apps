@@ -14,9 +14,12 @@ import {
   ShieldCheck,
 } from "lucide-vue-next";
 import type { LoanApplication, LoanStatus } from "@bcl/types";
+import { useToastStore } from "@/stores/toast";
 
 const route = useRoute();
 const router = useRouter();
+
+const toastStore = useToastStore();
 
 // Mock Detailed Application
 const application = ref<
@@ -69,7 +72,8 @@ function submitDecision() {
   });
   application.value.status = decisionType.value as LoanStatus;
   isDecisionModalOpen.value = false;
-  // router.push({ name: 'loans' });
+  toastStore.success("Application decision has been saved successfully.");
+  router.push({ name: "loan-applications" });
 }
 </script>
 
@@ -79,7 +83,7 @@ function submitDecision() {
     <div class="flex items-center gap-4 flex-wrap justify-between">
       <div class="flex items-center gap-4">
         <button
-          @click="router.back()"
+          @click="router.push({ name: 'loan-applications' })"
           class="p-2 hover:bg-white cursor-pointer rounded-lg transition-colors border border-transparent hover:border-slate-200"
         >
           <ArrowLeft class="w-5 h-5 text-slate-500" />
@@ -321,6 +325,7 @@ function submitDecision() {
               'bg-rose-600 hover:bg-rose-700 border-rose-600':
                 decisionType === 'REJECTED',
             }"
+            :disabled="!decisionNote && decisionType === 'REJECTED'"
             @click="submitDecision"
           >
             {{
