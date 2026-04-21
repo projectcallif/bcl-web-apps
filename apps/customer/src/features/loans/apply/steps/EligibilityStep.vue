@@ -7,6 +7,7 @@ import { getEligibilityResult } from '../../api'
 
 const store = useLoanApplicationStore()
 const isChecking = ref(true)
+const pollError = ref('')
 
 async function pollEligibility() {
   try {
@@ -18,8 +19,13 @@ async function pollEligibility() {
     } else {
       isChecking.value = false
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Eligibility poll failed:', err)
+    if (err.response?.data?.message) {
+      pollError.value = err.response.data.message
+    } else {
+      pollError.value = 'An unexpected error occurred while checking your eligibility.'
+    }
     isChecking.value = false
   }
 }
@@ -50,6 +56,15 @@ function goBack() { store.prevStep() }
       </div>
       <p class="text-base font-semibold text-slate-700 mb-1">Analyzing your profile...</p>
       <p class="text-sm text-slate-400">Checking BVN, credit history & account activity</p>
+    </div>
+
+    <!-- Global Error (e.g. 400 Active Loan) -->
+    <div v-if="pollError" class="flex flex-col items-center py-8 text-center animate-in fade-in zoom-in duration-300">
+      <XCircle class="w-14 h-14 text-rose-400 mb-4" />
+      <p class="text-base font-semibold text-slate-700 mb-1">Check Failed</p>
+      <p class="text-sm text-slate-400 max-w-sm">
+        {{ pollError }}
+      </p>
     </div>
 
     <!-- Result -->
@@ -112,7 +127,7 @@ function goBack() { store.prevStep() }
 
     <div class="flex justify-between mt-6">
       <button class="text-sm text-slate-500 hover:text-slate-700 transition-colors" @click="goBack">Back</button>
-      <BaseButton v-if="store.eligibility?.canAfford" variant="primary" size="lg" @click="proceed">
+      <BaseButton v-if="store.eligibility?.canAfford && !pollError" variant="primary" size="lg" @click="proceed">
         Proceed to Schedule
       </BaseButton>
     </div>

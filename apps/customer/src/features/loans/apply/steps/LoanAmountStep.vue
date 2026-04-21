@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { BaseButton } from '@bcl/ui'
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2, AlertCircle } from 'lucide-vue-next'
 import { useLoanApplicationStore } from '../store'
 import { getDefaultLoanProduct, checkEligibility } from '../../api'
-import type { LoanProduct } from '@bcl/types'
+import type { ApiClientError, LoanProduct } from '@bcl/types'
 
 const store = useLoanApplicationStore()
 
@@ -14,18 +14,30 @@ const product = ref<LoanProduct | null>(null)
 const amount = ref(store.selectedAmount || 10000)
 const selectedTenor = ref(store.selectedTenor || 1)
 const isPreviewing = ref(false)
+const errorMessage = ref('')
+
+let debounceTimer: ReturnType<typeof setTimeout>
+function debouncedUpdatePreview() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(updatePreview, 500)
+}
 
 async function updatePreview() {
   if (!amount.value || !selectedTenor.value) return
   isPreviewing.value = true
+  errorMessage.value = ''
   try {
     const res = await checkEligibility({
       principal: amount.value,
       tenor: selectedTenor.value,
     })
     store.eligibility = res.data
+    if (res.data.eligibleAmountInNaira === null) {
+      errorMessage.value = 'Sorry, you are not eligible for a loan at this time.'
+    }
   } catch (err) {
-    console.error('Check failed:', err)
+    const error = err as ApiClientError
+    errorMessage.value = error.message || 'Unable to estimate loan details at this time.'
   } finally {
     isPreviewing.value = false
   }
@@ -34,7 +46,7 @@ async function updatePreview() {
 watch([amount, selectedTenor], () => {
   store.selectedAmount = amount.value
   store.selectedTenor = selectedTenor.value
-  updatePreview()
+  debouncedUpdatePreview()
 })
 
 onMounted(async () => {
@@ -43,35 +55,46 @@ onMounted(async () => {
     const prodRes = await getDefaultLoanProduct()
     const productData = prodRes.data
     product.value = productData
-    
+
     // 2. Initiate eligibility check
-    const res = await checkEligibility()
-    const eligibilityData = res.data
-    store.eligibility = eligibilityData
+    try {
+      const res = await checkEligibility()
+      const eligibilityData = res.data
+      store.eligibility = eligibilityData
 
-    if (!productData || !eligibilityData) {
-      throw new Error('Required configuration data missing')
-    }
-
-    // Initial values & Parsing
-    const minAmt = parseFloat(productData.minAmount as string) || 10000
-    const maxAmt = parseFloat(productData.maxAmount as string) || 500000
-
-    if (!store.selectedAmount) {
-      amount.value = eligibilityData.eligibleAmountInNaira || minAmt
-      store.selectedAmount = amount.value
-    }
-    
-    if (!store.selectedTenor) {
-      const firstTenor = productData.tenors && productData.tenors.length > 0 ? productData.tenors[0] : null
-      if (firstTenor) {
-        selectedTenor.value = firstTenor.tenorValue
-      } else {
-        selectedTenor.value = productData.minTenor || 1
+      if (!productData || !eligibilityData) {
+        throw new Error('Required configuration data missing')
       }
-      store.selectedTenor = selectedTenor.value
+
+      if (eligibilityData.eligibleAmountInNaira === null) {
+        errorMessage.value = 'Sorry, you are not eligible for a loan at this time.'
+        isFetchingEligibility.value = false
+        return
+      }
+
+      // Initial values & Parsing
+      const minAmt = parseFloat(productData.minAmount as string) || 10000
+
+      if (!store.selectedAmount) {
+        amount.value = eligibilityData.eligibleAmountInNaira || minAmt
+        store.selectedAmount = amount.value
+      }
+
+      if (!store.selectedTenor) {
+        const firstTenor =
+          productData.tenors && productData.tenors.length > 0 ? productData.tenors[0] : null
+        if (firstTenor) {
+          selectedTenor.value = firstTenor.tenorValue
+        } else {
+          selectedTenor.value = productData.minTenor || 1
+        }
+        store.selectedTenor = selectedTenor.value
+      }
+    } catch (err) {
+      const error = err as ApiClientError
+      errorMessage.value = error.message || 'Unable to estimate loan details at this time.'
     }
-    
+
     // 3. Initial preview with defaults
     await updatePreview()
   } catch (err) {
@@ -113,7 +136,9 @@ function goBack() {
     <template v-else-if="product">
       <!-- Amount display -->
       <div class="text-center mb-6">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Loan Amount</p>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+          Loan Amount
+        </p>
         <p class="text-3xl sm:text-5xl font-bold text-primary tracking-tight">
           {{ formatCurrency(amount) }}
         </p>
@@ -124,14 +149,15 @@ function goBack() {
         <input
           v-model.number="amount"
           type="range"
-          :min="parseFloat(product.minAmount as string)"
-          :max="parseFloat(product.maxAmount as string)"
+          :min="Math.max(1000, parseFloat(product.minAmount as string))"
+          :max="store.eligibility?.eligibleAmountInNaira ?? 0"
           :step="1000"
-          class="w-full h-2 rounded-full accent-primary cursor-pointer"
+          :disabled="!!errorMessage"
+          class="w-full h-2 rounded-full accent-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <div class="flex justify-between text-xs text-slate-400 mt-2">
-          <span>{{ formatCurrency(parseFloat(product.minAmount as string)) }}</span>
-          <span>{{ formatCurrency(parseFloat(product.maxAmount as string)) }}</span>
+          <span>{{ formatCurrency(Math.max(1000, parseFloat(product.minAmount as string))) }}</span>
+          <span>{{ formatCurrency(store.eligibility?.eligibleAmountInNaira ?? 0) }}</span>
         </div>
       </div>
 
@@ -140,7 +166,7 @@ function goBack() {
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
           Repayment Tenor
         </p>
-        
+
         <!-- Fixed Tenors (Pills) -->
         <div v-if="product.tenors.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button
@@ -153,6 +179,7 @@ function goBack() {
                 : 'border-slate-200 bg-white text-slate-600 hover:border-primary/50'
             "
             @click="selectedTenor = t.tenorValue"
+            :disabled="!!errorMessage"
           >
             <span class="font-bold">{{ t.tenorValue }} months</span>
           </button>
@@ -161,8 +188,10 @@ function goBack() {
         <!-- Fallback Tenors (Slider) -->
         <div v-else class="px-1">
           <div class="flex items-center justify-between mb-3">
-             <span class="text-lg font-bold text-slate-700">{{ selectedTenor }} months</span>
-             <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Duration</span>
+            <span class="text-lg font-bold text-slate-700">{{ selectedTenor }} months</span>
+            <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold"
+              >Duration</span
+            >
           </div>
           <input
             v-model.number="selectedTenor"
@@ -171,6 +200,7 @@ function goBack() {
             :max="product.maxTenor"
             step="1"
             class="w-full h-2 rounded-full accent-primary cursor-pointer"
+            :disabled="!!errorMessage"
           />
           <div class="flex justify-between text-xs text-slate-400 mt-2">
             <span>{{ product.minTenor }} Mo.</span>
@@ -180,25 +210,49 @@ function goBack() {
       </div>
     </template>
 
+    <!-- Error Message -->
+    <div
+      v-if="errorMessage"
+      class="mb-6 flex items-start gap-3 bg-rose-50 border border-rose-100 p-4 rounded-xl"
+    >
+      <AlertCircle class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+      <p class="text-sm text-rose-700 font-medium">{{ errorMessage }}</p>
+    </div>
+
     <!-- Summary -->
-    <div class="relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-6 min-h-25 flex flex-col justify-center">
-      <div v-if="isPreviewing" class="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-10">
+    <div
+      v-if="!errorMessage"
+      class="relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-6 min-h-25 flex flex-col justify-center"
+    >
+      <div
+        v-if="isPreviewing"
+        class="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-10"
+      >
         <Loader2 class="w-5 h-5 text-primary animate-spin" />
       </div>
 
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Estimated Summary</p>
-      <div v-if="store.eligibility && store.eligibility.status === 'COMPLETED'" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+        Estimated Summary
+      </p>
+      <div
+        v-if="store.eligibility && store.eligibility.status === 'COMPLETED'"
+        class="grid grid-cols-1 sm:grid-cols-3 gap-4"
+      >
         <div class="text-center sm:text-left">
           <p class="text-xs text-slate-400 mb-1">Monthly Payment</p>
           <p class="text-base font-bold text-primary">{{ formatCurrency(store.monthlyPayment) }}</p>
         </div>
         <div class="text-center border-y sm:border-y-0 sm:border-x border-slate-200 py-3 sm:py-0">
           <p class="text-xs text-slate-400 mb-1">Total Interest</p>
-          <p class="text-base font-bold text-secondary">{{ formatCurrency(store.totalInterest) }}</p>
+          <p class="text-base font-bold text-secondary">
+            {{ formatCurrency(store.totalInterest) }}
+          </p>
         </div>
         <div class="text-center sm:text-right">
           <p class="text-xs text-slate-400 mb-1">Total Repayment</p>
-          <p class="text-base font-bold text-slate-800">{{ formatCurrency(store.totalRepayment) }}</p>
+          <p class="text-base font-bold text-slate-800">
+            {{ formatCurrency(store.totalRepayment) }}
+          </p>
         </div>
       </div>
       <div v-else class="text-center py-2">
@@ -210,8 +264,13 @@ function goBack() {
       <button class="text-sm text-slate-500 hover:text-slate-700 transition-colors" @click="goBack">
         Back
       </button>
-      <BaseButton variant="primary" size="lg" :disabled="isPreviewing || !store.previewSchedule" @click="proceed">
-        View Detailed Schedule
+      <BaseButton
+        variant="primary"
+        size="lg"
+        :disabled="isPreviewing || !store.eligibility || !!errorMessage"
+        @click="proceed"
+      >
+        Check Eligibility
       </BaseButton>
     </div>
   </div>
