@@ -43,20 +43,22 @@ async function updatePreview() {
   }
 }
 
-const minAmount = computed(() => Math.max(1000, parseFloat(product.value?.minAmount as string || '10000')))
+const minAmount = computed(() =>
+  Math.max(1000, parseFloat((product.value?.minAmount as string) || '10000')),
+)
 const maxAmount = computed(() => store.eligibility?.eligibleAmountInNaira ?? 0)
 
 const smartAmounts = computed(() => {
   const min = minAmount.value
   const max = maxAmount.value
   if (!max || max <= min) return [min]
-  
+
   const step = (max - min) / 3
   return [
     min,
     Math.round((min + step) / 1000) * 1000,
     Math.round((min + 2 * step) / 1000) * 1000,
-    max
+    max,
   ].filter((v, i, a) => a.indexOf(v) === i && v >= min && v <= max)
 })
 
@@ -161,12 +163,16 @@ function goBack() {
 
     <template v-else-if="product">
       <!-- Amount Selection Card -->
-      <div class="relative bg-linear-to-br from-indigo-900 to-blue-900 rounded-3xl p-8 mb-8 overflow-hidden shadow-xl shadow-blue-900/20">
+      <div
+        class="relative bg-linear-to-br from-indigo-900 to-blue-900 rounded-3xl p-8 mb-8 overflow-hidden shadow-xl shadow-blue-900/20"
+      >
         <!-- Decorative bg circle -->
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
-        
+
         <div class="relative z-10 text-center mb-8">
-          <p class="text-xs font-bold text-blue-200/60 uppercase tracking-[0.2em] mb-2">Loan Amount</p>
+          <p class="text-xs font-bold text-blue-200/60 uppercase tracking-[0.2em] mb-2">
+            Loan Amount
+          </p>
           <p class="text-4xl sm:text-6xl font-black text-white tracking-tighter">
             {{ formatCurrency(amount) }}
           </p>
@@ -183,7 +189,9 @@ function goBack() {
             :disabled="!!errorMessage"
             class="w-full h-1.5 rounded-full bg-white/20 accent-white cursor-pointer disabled:opacity-50 appearance-none"
           />
-          <div class="flex justify-between text-[10px] font-bold text-blue-100/40 mt-4 uppercase tracking-widest">
+          <div
+            class="flex justify-between text-[10px] font-bold text-blue-100/40 mt-4 uppercase tracking-widest"
+          >
             <span>{{ formatCurrency(minAmount) }}</span>
             <span>{{ formatCurrency(maxAmount) }}</span>
           </div>
@@ -198,21 +206,29 @@ function goBack() {
             v-for="val in smartAmounts"
             :key="val"
             @click="selectAmount(val)"
-            class="py-3 px-1 rounded-xl border text-xs font-bold transition-all duration-200"
-            :class="amount === val 
-              ? 'bg-indigo-900 border-indigo-900 text-white shadow-md shadow-indigo-900/20' 
-              : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300'"
+            class="py-6 px-1 rounded-xl border text-xs font-bold transition-all duration-200"
+            :class="
+              amount === val
+                ? 'bg-indigo-900 border-indigo-900 text-white shadow-md shadow-indigo-900/20'
+                : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300'
+            "
           >
-            ₦{{ val >= 1000 ? (val/1000).toFixed(0) + 'k' : val }}
+            ₦{{ val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val }}
           </button>
         </div>
       </div>
 
       <!-- Custom Amount Input -->
       <div class="mb-8">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Or enter a custom amount</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+          Or enter a custom amount
+        </p>
         <div class="relative group">
-          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-indigo-600 transition-colors">₦</div>
+          <div
+            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-indigo-600 transition-colors"
+          >
+            ₦
+          </div>
           <input
             v-model.number="amount"
             type="number"
@@ -226,27 +242,34 @@ function goBack() {
 
       <!-- Tenor selection -->
       <div class="mb-8">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Repayment Tenor</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+          Repayment Tenor
+        </p>
 
         <!-- Fixed Tenors (Pills) -->
         <div v-if="product.tenors.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <button
             v-for="t in product.tenors"
             :key="t.id"
-            class="relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300 group overflow-hidden"
-            :class="selectedTenor === t.tenorValue
+            class="relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300 group overflow-hidden py-6"
+            :class="
+              selectedTenor === t.tenorValue
                 ? 'border-indigo-900 bg-indigo-900 text-white shadow-lg shadow-indigo-900/20'
                 : 'border-slate-100 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
             "
             @click="selectedTenor = t.tenorValue"
             :disabled="!!errorMessage"
           >
-            <div 
-              v-if="selectedTenor === t.tenorValue" 
-              class="absolute -top-6 -right-6 w-12 h-12 bg-white/10 rounded-full" 
+            <div
+              v-if="selectedTenor === t.tenorValue"
+              class="absolute -top-6 -right-6 w-12 h-12 bg-white/10 rounded-full"
             />
-            <span class="text-sm font-black">{{ t.tenorValue }} {{ t.tenorValue === 1 ? 'Month' : 'Months' }}</span>
-            <span class="text-[10px] font-bold opacity-60 uppercase tracking-tighter mt-0.5">0% Interest</span>
+            <span class="text-sm font-black"
+              >{{ t.tenorValue }} {{ t.tenorValue === 1 ? 'Month' : 'Months' }}</span
+            >
+            <span class="text-[10px] font-bold opacity-60 uppercase tracking-tighter mt-0.5"
+              >0% Interest</span
+            >
           </button>
         </div>
 

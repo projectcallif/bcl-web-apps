@@ -17,6 +17,7 @@ import {
   ClipboardList,
   PieChart,
   History,
+  ArrowRightLeft,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -30,6 +31,7 @@ const navItems = [
   { label: "Dashboard", routeName: "dashboard", icon: LayoutDashboard },
   { label: "Loan Applications", routeName: "loan-applications", icon: ClipboardList },
   { label: "Loan Operations", routeName: "loan-operations", icon: Banknote },
+  { label: "Transactions", routeName: "transactions", icon: ArrowRightLeft },
   // { label: "Collections", routeName: "collections", icon: PhoneCall },
   { label: "KYC Operations", routeName: "kyc", icon: ShieldCheck },
   { label: "Customers", routeName: "customers", icon: Users },

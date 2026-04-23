@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { BaseButton, AppRichTextEditor } from "@bcl/ui";
 import { FileText, Save, History } from "lucide-vue-next";
 
-const disclosureText = ref(
+const privacyPolicy = ref(
   "By clicking 'Accept', you agree to our Terms of Service and Privacy Policy. You also authorize BCL to perform a credit check and verify your employment status through our partner networks. This includes sharing necessary identifiers such as your BVN and Phone number for the sole purpose of loan eligibility evaluation.",
 );
 
@@ -11,11 +11,21 @@ const termsAndConditions = ref(
   "1. LOAN AGREEMENT: The loan is a short-term credit facility provided by BCL...\n2. REPAYMENT: Repayment shall be made via automated debit on the due date.\n3. INTEREST: Interest rates are fixed for the duration of the loan tenor.",
 );
 
+const loanTerms = ref(
+  "These are the summarizing terms for each loan product, including interest calculation methods and default penalties specific to the selected product.",
+);
+
+const loanContract = ref(
+  "<h1>LOAN CONTRACT</h1><p>Dear {{USER_NAME}}, ...</p>",
+);
+
 function saveDisclosure() {
   // Logic to save and trigger audit log
   console.log("Saving legal configuration:", {
-    disclosureText: disclosureText.value,
+    privacyPolicy: privacyPolicy.value,
     termsAndConditions: termsAndConditions.value,
+    loanTerms: loanTerms.value,
+    loanContract: loanContract.value,
   });
   // TODO: Trigger Audit Log US-009
 }
@@ -50,16 +60,15 @@ function saveDisclosure() {
         <label
           class="block text-sm font-bold text-slate-800 mb-2 uppercase tracking-wider"
         >
-          Onboarding Disclosure Text
+          Full Terms & Conditions
         </label>
         <p class="text-xs text-slate-500 mb-4">
-          This text appears when users first register or apply for their first
-          loan.
+          Detailed legal agreement available for the platform.
         </p>
         <AppRichTextEditor
-          id="disclosureText"
-          v-model="disclosureText"
-          placeholder="Enter disclosure text..."
+          id="termsAndConditions"
+          v-model="termsAndConditions"
+          placeholder="Enter terms and conditions..."
         />
       </div>
 
@@ -67,16 +76,48 @@ function saveDisclosure() {
         <label
           class="block text-sm font-bold text-slate-800 mb-2 uppercase tracking-wider"
         >
-          Full Terms & Conditions
+          Privacy Policy
         </label>
         <p class="text-xs text-slate-500 mb-4">
-          Detailed legal agreement available for download or viewing before
-          disbursal.
+          Detailed privacy policy for the platform.
         </p>
         <AppRichTextEditor
-          id="termsAndConditions"
-          v-model="termsAndConditions"
-          placeholder="Enter terms and conditions..."
+          id="privacyPolicy"
+          v-model="privacyPolicy"
+          placeholder="Enter privacy policy..."
+        />
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-bold text-slate-800 mb-2 uppercase tracking-wider"
+        >
+          Loan Terms
+        </label>
+        <p class="text-xs text-slate-500 mb-4">
+          Agreement terms for when a user initiates the loan process
+        </p>
+        <AppRichTextEditor
+          id="loanTerms"
+          v-model="loanTerms"
+          placeholder="Enter loan terms..."
+        />
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-bold text-slate-800 mb-2 uppercase tracking-wider"
+        >
+          Loan Contract
+        </label>
+        <p class="text-xs text-slate-500 mb-4" v-pre>
+          The official binding agreement presented to the user for digital
+          signature. Supports placeholders like {{ USER_NAME }}.
+        </p>
+        <AppRichTextEditor
+          id="loanContract"
+          v-model="loanContract"
+          placeholder="Enter loan contract..."
         />
       </div>
 

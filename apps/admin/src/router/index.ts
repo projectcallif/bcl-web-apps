@@ -95,6 +95,11 @@ const router = createRouter({
           name: "settings",
           component: () => import("../features/settings/SettingsView.vue"),
         },
+        {
+          path: "transactions",
+          name: "transactions",
+          component: () => import("../features/transactions/TransactionsView.vue"),
+        },
       ],
     },
   ],
