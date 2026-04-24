@@ -1,11 +1,7 @@
 export type LoanStatus =
-  | "PENDING"
-  | "REJECTED"
-  | "HALTED"
   | "ACTIVE"
-  | "OVERDUE"
+  | "DEFAULTED"
   | "COMPLETED"
-  | "CLOSED"
   | "WRITTEN_OFF";
 
 export type LoanApplicationStatus =
@@ -355,4 +351,57 @@ export interface AdminDisbursedLoanListItem {
     accountName: string;
   };
   createdAt: string;
+}
+
+export interface AdminDisbursedLoanDetail {
+  id: string;
+  referenceId: string;
+  status: LoanStatus;
+  principal: number;
+  interestAmount: number;
+  processingFee: number;
+  managementFee: number;
+  totalPayable: number;
+  outstandingBalance: number;
+  totalPaid: number;
+  tenor: number;
+  disbursedAt: string;
+  firstDueDate: string;
+  finalDueDate: string;
+  createdAt: string;
+  applicant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    residentialAddress: string;
+    city: string;
+    state: string;
+  };
+  loanProduct: {
+    id: string;
+    name: string;
+    interestRate: number;
+    interestType: string;
+  };
+  disbursementAccount: {
+    bankName: string;
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+  };
+  application: {
+    id: string;
+    trackerId: string;
+    purpose: string;
+    reviewedAt: string;
+  };
+  scheduleInstallments: number;
+  recentTransactions: Transaction[];
+}
+
+export interface AdminLoanRepaymentSchedule {
+  loanId: string;
+  referenceId: string;
+  loanStatus: LoanStatus;
+  installments: RepaymentScheduleItem[];
 }

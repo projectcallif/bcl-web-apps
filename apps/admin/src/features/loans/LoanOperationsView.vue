@@ -9,11 +9,12 @@ import {
 } from "@bcl/ui";
 import {
   Eye,
-  AlertCircle,
-  TrendingUp,
   Clock,
   CheckCircle2,
   Search,
+  ListFilter,
+  History,
+  XCircle,
 } from "lucide-vue-next";
 import {
   type AdminDisbursedLoanListItem,
@@ -39,22 +40,21 @@ const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
 
 const tabs = [
-  { value: "ALL", label: "All Portfolio", icon: Clock },
-  { value: "ACTIVE", label: "Active Loans", icon: TrendingUp },
-  { value: "DEFAULT", label: "Defaults / Overdue", icon: AlertCircle },
-  { value: "CLOSED", label: "Closed / Paid", icon: CheckCircle2 },
+  { value: "ALL", label: "All Portfolio", icon: ListFilter },
+  { value: "ACTIVE", label: "Active Loans", icon: CheckCircle2 },
+  { value: "DEFAULTED", label: "Defaulted", icon: Clock },
+  { value: "COMPLETED", label: "Completed", icon: History },
+  { value: "WRITTEN_OFF", label: "Written Off", icon: XCircle },
 ] as const;
-const activeTab = ref<"ALL" | "ACTIVE" | "DEFAULT" | "CLOSED">("ALL");
+const activeTab = ref<LoanStatus | "ALL">("ALL");
 
 // ── Data Fetching ──────────────────────────────────────────────────────────────
 
 async function fetchLoans(): Promise<void> {
   loading.value = true;
   try {
-    let statusFilter: LoanStatus | undefined;
-    if (activeTab.value === "ACTIVE") statusFilter = "ACTIVE";
-    if (activeTab.value === "DEFAULT") statusFilter = "OVERDUE";
-    if (activeTab.value === "CLOSED") statusFilter = "CLOSED";
+    const statusFilter =
+      activeTab.value === "ALL" ? undefined : activeTab.value;
 
     const res = await getDisbursedLoans({
       status: statusFilter,
@@ -99,15 +99,14 @@ function getStatusColor(status: LoanStatus) {
   switch (status) {
     case "ACTIVE":
       return "bg-emerald-100 text-emerald-700 ring-emerald-200";
-    case "OVERDUE":
-      return "bg-rose-100 text-rose-700 ring-rose-200 font-bold animate-pulse";
+    case "DEFAULTED":
+      return "bg-rose-100 text-rose-700 ring-rose-200";
     case "COMPLETED":
-    case "CLOSED":
       return "bg-blue-100 text-blue-700 ring-blue-200";
     case "WRITTEN_OFF":
-      return "bg-slate-100 text-slate-500 ring-slate-200";
+      return "bg-slate-900 text-slate-100 ring-slate-800";
     default:
-      return "bg-slate-100 text-slate-700 ring-slate-200";
+      return "bg-slate-100 text-slate-500 ring-slate-200";
   }
 }
 
@@ -213,11 +212,12 @@ function formatDate(iso: string | null) {
               class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
             >
               <tr>
-                <th scope="col" class="px-6 py-4 font-medium">Loanee</th>
                 <th scope="col" class="px-6 py-4 font-medium">
-                  Principal & Balance
+                  Loan Reference
                 </th>
-                <th scope="col" class="px-6 py-4 font-medium">Health Status</th>
+                <th scope="col" class="px-6 py-4 font-medium">Customer</th>
+                <th scope="col" class="px-6 py-4 font-medium">Financials</th>
+                <th scope="col" class="px-6 py-4 font-medium">Status</th>
                 <th scope="col" class="px-6 py-4 font-medium">Disbursed On</th>
                 <th scope="col" class="px-6 py-4 font-medium text-right">
                   Actions
@@ -226,61 +226,72 @@ function formatDate(iso: string | null) {
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr v-if="loans.length === 0">
-                <td colspan="5" class="px-6 py-16 text-center">
+                <td colspan="6" class="px-6 py-16 text-center">
                   <div class="flex flex-col items-center gap-2 opacity-30">
                     <Search class="w-10 h-10" />
-                    <p class="font-medium">No records found in this segment.</p>
+                    <p class="font-medium">
+                      No records found matching criteria.
+                    </p>
                   </div>
                 </td>
               </tr>
               <tr
                 v-for="loan in loans"
                 :key="loan.id"
-                class="hover:bg-slate-50 group transition-colors"
+                class="hover:bg-slate-50 transition-colors"
                 :class="{ 'opacity-50 grayscale': loading }"
               >
                 <td class="px-6 py-4">
                   <div class="font-bold text-slate-900">
-                    {{ loan.applicantName }}
+                    {{ loan.referenceId }}
                   </div>
-                  <div class="text-[10px] text-slate-500 font-mono mt-0.5">
-                    REF: {{ loan.referenceId }}
+                  <div
+                    class="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-tighter"
+                  >
+                    ID: {{ loan.id.slice(0, 8) }}...
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  <div class="font-semibold text-slate-800">
-                    {{ formatCurrency(loan.outstandingBalance) }}
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-[10px] shrink-0"
+                    >
+                      {{ loan.applicantName[0] }}
+                    </div>
+                    <div class="font-medium text-slate-800">
+                      {{ loan.applicantName }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="font-bold text-slate-800">
+                    {{ formatCurrency(loan.principal) }}
                   </div>
                   <div
-                    class="text-[10px] text-slate-400 mt-0.5 uppercase font-bold tracking-tight"
+                    class="text-[10px] text-slate-400 font-bold uppercase mt-0.5"
                   >
-                    Out of {{ formatCurrency(loan.totalPayable) }}
+                    Bal: {{ formatCurrency(loan.outstandingBalance) }} ·
+                    {{ loan.tenor }} Months
                   </div>
                 </td>
                 <td class="px-6 py-4">
                   <span
                     :class="[
-                      'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ring-1 shadow-xs',
+                      'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ring-1 shadow-sm',
                       getStatusColor(loan.status),
                     ]"
                   >
                     {{ loan.status.replace("_", " ") }}
                   </span>
-                  <div
-                    v-if="loan.status === 'OVERDUE'"
-                    class="text-[9px] text-rose-500 mt-1 font-black uppercase tracking-tighter"
-                  >
-                    Immediate Follow-up Required
-                  </div>
                 </td>
-                <td class="px-6 py-4 text-slate-400 text-xs font-medium">
+                <td class="px-6 py-4 text-xs text-slate-500 font-medium italic">
                   {{ formatDate(loan.disbursedAt) }}
                 </td>
                 <td class="px-6 py-4 text-right">
                   <BaseButton
                     variant="ghost"
                     size="sm"
-                    class="text-primary-600 hover:bg-primary-50 px-3 font-bold"
+                    class="text-primary hover:bg-primary-50 px-3 font-bold"
                     @click="
                       () => {
                         router.push({
@@ -290,7 +301,7 @@ function formatDate(iso: string | null) {
                       }
                     "
                   >
-                    <Eye class="w-4 h-4 mr-1.5" /> View Ledger
+                    <Eye class="w-4 h-4 mr-1.5" /> View Details
                   </BaseButton>
                 </td>
               </tr>
@@ -302,54 +313,69 @@ function formatDate(iso: string | null) {
         <div class="md:hidden flex flex-col divide-y divide-slate-100">
           <div
             v-for="loan in loans"
-            :key="`mob-${loan.id}`"
-            class="p-4 hover:bg-slate-50 flex flex-col gap-3"
+            :key="`mobile-${loan.id}`"
+            class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
             :class="{ 'opacity-50': loading }"
           >
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="font-bold text-slate-800">
-                  {{ loan.applicantName }}
-                </div>
-                <div class="text-[10px] text-slate-500 font-mono">
-                  {{ loan.referenceId }}
-                </div>
-              </div>
-              <span
-                :class="[
-                  'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
-                  getStatusColor(loan.status),
-                ]"
-              >
-                {{ loan.status.replace("_", " ") }}
-              </span>
-            </div>
-            <div class="flex justify-between items-end">
-              <div>
-                <p
-                  class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0"
                 >
-                  Balance
-                </p>
-                <p class="text-sm font-bold text-slate-800">
-                  {{ formatCurrency(loan.outstandingBalance) }}
-                </p>
+                  {{ loan.applicantName[0] }}
+                </div>
+                <div>
+                  <div class="font-bold text-slate-800">
+                    {{ loan.applicantName }}
+                  </div>
+                  <div
+                    class="text-[10px] text-slate-500 font-mono uppercase mt-0.5 tracking-tight"
+                  >
+                    Ref: {{ loan.referenceId }}
+                  </div>
+                </div>
               </div>
+
               <BaseButton
                 variant="ghost"
                 size="sm"
-                class="text-primary-600 font-bold p-0 h-auto"
+                class="text-primary font-bold p-0 h-auto"
                 @click="
-                  () => {
-                    router.push({
-                      name: 'admin-loan-detail',
-                      params: { id: loan.id },
-                    });
-                  }
+                  router.push({
+                    name: 'admin-loan-detail',
+                    params: { id: loan.id },
+                  })
                 "
               >
                 View Details
               </BaseButton>
+            </div>
+
+            <div class="flex justify-between items-end">
+              <div>
+                <div class="text-sm font-bold text-slate-800">
+                  {{ formatCurrency(loan.principal) }}
+                </div>
+                <div
+                  class="text-[10px] text-slate-500 uppercase font-bold mt-0.5"
+                >
+                  Bal: {{ formatCurrency(loan.outstandingBalance) }} ·
+                  {{ loan.tenor }}M
+                </div>
+              </div>
+              <div class="flex flex-col items-end gap-1.5">
+                <span
+                  :class="[
+                    'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+                    getStatusColor(loan.status),
+                  ]"
+                >
+                  {{ loan.status.replace("_", " ") }}
+                </span>
+                <span class="text-[10px] text-slate-400 italic">{{
+                  formatDate(loan.disbursedAt)
+                }}</span>
+              </div>
             </div>
           </div>
         </div>

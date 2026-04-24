@@ -27,10 +27,12 @@ import {
   XCircle,
   RotateCcw,
 } from "lucide-vue-next";
-import type { UserStatus, Transaction } from "@bcl/types";
+import type { UserStatus, Transaction, ApiClientError } from "@bcl/types";
 import { useCustomersStore } from "./store";
 import { useToastStore } from "@/stores/toast";
 import { getTransactionsAcrossPlatform } from "../transactions/api";
+import { getDisbursedLoansByUser } from "../loans/api";
+import type { AdminDisbursedLoanListItem } from "@bcl/types";
 
 // Store & Route
 const router = useRouter();
@@ -60,12 +62,14 @@ const activeInfoSubTab = ref<"personal" | "employment" | "address" | "bank">(
 );
 
 // Pagination State
-const loansPage = ref(1);
 const transactionsPage = ref(1);
 const totalTransactions = ref(0);
 const transactionsTotalPages = ref(1);
 const transactionsLoading = ref(false);
 const customerTransactions = ref<Transaction[]>([]);
+
+const customerLoans = ref<AdminDisbursedLoanListItem[]>([]);
+const loansLoading = ref(false);
 
 const tabs = [
   { id: "info", label: "Customer Info" },
@@ -80,22 +84,21 @@ const subs = [
   { id: "bank", label: "Bank", icon: Building2 },
 ] as const;
 
-const loans = [
-  {
-    id: "L-9022",
-    amount: 250000,
-    tenor: "6 Months",
-    status: "ACTIVE",
-    date: "Apr 10, 2026",
-  },
-  {
-    id: "L-8812",
-    amount: 100000,
-    tenor: "3 Months",
-    status: "COMPLETED",
-    date: "Jan 15, 2026",
-  },
-];
+// --- Loans Logic ---
+async function fetchCustomerLoans() {
+  if (!customerId) return;
+  loansLoading.value = true;
+  try {
+    const res = await getDisbursedLoansByUser(customerId);
+    customerLoans.value = res.data;
+  } catch (err) {
+    const error = err as ApiClientError;
+    console.error("Failed to fetch customer loans:", error);
+    toast.error(error.message || "Failed to load customer loans");
+  } finally {
+    loansLoading.value = false;
+  }
+}
 
 // --- Transactions Logic ---
 async function fetchCustomerTransactions() {
@@ -111,8 +114,9 @@ async function fetchCustomerTransactions() {
     totalTransactions.value = res.data.total;
     transactionsTotalPages.value = res.data.totalPages;
   } catch (err) {
-    console.error("Failed to fetch customer transactions:", err);
-    toast.error("Failed to load transactions");
+    const error = err as ApiClientError;
+    console.error("Failed to fetch customer transactions:", error);
+    toast.error(error.message || "Failed to load transactions");
   } finally {
     transactionsLoading.value = false;
   }
@@ -121,6 +125,8 @@ async function fetchCustomerTransactions() {
 watch([activeTab, transactionsPage], ([newTab]) => {
   if (newTab === "transactions") {
     fetchCustomerTransactions();
+  } else if (newTab === "loans") {
+    fetchCustomerLoans();
   }
 });
 
@@ -200,7 +206,8 @@ async function copyToClipboard(text: string) {
     await navigator.clipboard.writeText(text);
     toast.success("Customer ID copied to clipboard");
   } catch (err) {
-    toast.error("Failed to copy Customer ID");
+    const error = err as ApiClientError;
+    toast.error(error.message || "Failed to copy Customer ID");
   }
 }
 
@@ -607,7 +614,7 @@ function getStatusStyle(status: string) {
 
           <!-- Loans Tab -->
           <div v-if="activeTab === 'loans'" class="space-y-4">
-            <div class="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+            <div class="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 relative">
               <table
                 class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
               >
@@ -616,49 +623,78 @@ function getStatusStyle(status: string) {
                     <th scope="col" class="px-4 py-3 font-medium rounded-l-xl">
                       Ref ID
                     </th>
-                    <th scope="col" class="px-4 py-3 font-medium">Amount</th>
+                    <th scope="col" class="px-4 py-3 font-medium">Principal</th>
+                    <th scope="col" class="px-4 py-3 font-medium">Balance</th>
                     <th scope="col" class="px-4 py-3 font-medium">Tenor</th>
                     <th scope="col" class="px-4 py-3 font-medium">Status</th>
                     <th scope="col" class="px-4 py-3 font-medium rounded-r-xl">
-                      Date
+                      Disbursed On
                     </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
+                  <tr v-if="loansLoading && customerLoans.length === 0">
+                    <td colspan="6" class="px-4 py-8">
+                      <div class="space-y-3">
+                        <BaseSkeleton
+                          v-for="i in 5"
+                          :key="i"
+                          height="48px"
+                          class="rounded-xl"
+                        />
+                      </div>
+                    </td>
+                  </tr>
                   <tr
-                    v-for="loan in loans"
-                    :key="loan.id"
-                    class="hover:bg-slate-50/50 transition-colors"
+                    v-else-if="customerLoans.length === 0"
+                    class="text-center"
                   >
-                    <td class="px-4 py-4 font-semibold text-slate-800">
-                      {{ loan.id }}
+                    <td colspan="6" class="px-4 py-16 text-slate-400">
+                      <p class="font-medium">
+                        No disbursed loans found for this customer
+                      </p>
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="loan in customerLoans"
+                    :key="loan.id"
+                    class="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                    :class="{ 'opacity-50 grayscale': loansLoading }"
+                    @click="
+                      router.push({
+                        name: 'admin-loan-detail',
+                        params: { id: loan.id },
+                      })
+                    "
+                  >
+                    <td class="px-4 py-4 font-medium text-slate-800">
+                      {{ loan.referenceId }}
                     </td>
                     <td class="px-4 py-4 font-medium text-slate-700">
-                      {{ formatCurrency(loan.amount) }}
+                      {{ formatCurrency(loan.principal) }}
                     </td>
-                    <td class="px-4 py-4 text-slate-500">{{ loan.tenor }}</td>
+                    <td class="px-4 py-4 text-slate-500 font-mono">
+                      {{ formatCurrency(loan.outstandingBalance) }}
+                    </td>
+                    <td class="px-4 py-4 text-slate-500">
+                      {{ loan.tenor }} Months
+                    </td>
                     <td class="px-4 py-4">
                       <span
                         :class="[
-                          'px-2 py-0.5 rounded text-[10px] font-bold uppercase ring-1',
+                          'px-2 py-0.5 rounded text-[10px] font-bold uppercase ring-1 shadow-sm',
                           getStatusStyle(loan.status),
                         ]"
                       >
                         {{ loan.status }}
                       </span>
                     </td>
-                    <td class="px-4 py-4 text-slate-500">{{ loan.date }}</td>
+                    <td class="px-4 py-4 text-slate-500 text-xs italic">
+                      {{ formatDate(loan.disbursedAt) }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
-            </div>
-            <div class="p-2 flex justify-end">
-              <AppPagination
-                v-model:current-page="loansPage"
-                :page-size="10"
-                :total-items="loans.length"
-                :total-pages="1"
-              />
             </div>
           </div>
 
@@ -693,22 +729,34 @@ function getStatusStyle(status: string) {
                     <th scope="col" class="px-4 py-3 font-medium">Amount</th>
                     <th scope="col" class="px-4 py-3 font-medium">Status</th>
                     <th scope="col" class="px-4 py-3 font-medium">Date</th>
-                    <th scope="col" class="px-4 py-3 font-medium rounded-r-xl text-right">
+                    <th
+                      scope="col"
+                      class="px-4 py-3 font-medium rounded-r-xl text-right"
+                    >
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr v-if="transactionsLoading && customerTransactions.length === 0">
+                  <tr
+                    v-if="
+                      transactionsLoading && customerTransactions.length === 0
+                    "
+                  >
                     <td colspan="6" class="px-4 py-8">
                       <div class="space-y-3">
                         <BaseSkeleton v-for="i in 5" :key="i" height="40px" />
                       </div>
                     </td>
                   </tr>
-                  <tr v-else-if="customerTransactions.length === 0" class="text-center">
+                  <tr
+                    v-else-if="customerTransactions.length === 0"
+                    class="text-center"
+                  >
                     <td colspan="6" class="px-4 py-16 text-slate-400">
-                       <p class="font-medium">No transactions found for this customer</p>
+                      <p class="font-medium">
+                        No transactions found for this customer
+                      </p>
                     </td>
                   </tr>
                   <tr
@@ -725,7 +773,7 @@ function getStatusStyle(status: string) {
                         class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset"
                         :class="getStatusStyle(tx.type)"
                       >
-                        {{ tx.type.replace('_', ' ') }}
+                        {{ tx.type.replace("_", " ") }}
                       </span>
                     </td>
                     <td class="px-4 py-4 font-semibold text-slate-800">
@@ -737,7 +785,15 @@ function getStatusStyle(status: string) {
                         :class="getStatusStyle(tx.status)"
                       >
                         <component
-                          :is="tx.status === 'SUCCESS' ? CheckCircle2 : tx.status === 'PENDING' ? Clock : tx.status === 'REVERSED' ? RotateCcw : XCircle"
+                          :is="
+                            tx.status === 'SUCCESS'
+                              ? CheckCircle2
+                              : tx.status === 'PENDING'
+                                ? Clock
+                                : tx.status === 'REVERSED'
+                                  ? RotateCcw
+                                  : XCircle
+                          "
                           class="w-3 h-3"
                         />
                         {{ tx.status }}
@@ -751,7 +807,12 @@ function getStatusStyle(status: string) {
                         variant="ghost"
                         size="sm"
                         class="text-primary p-1"
-                        @click="router.push({ name: 'transaction-detail', params: { id: tx.id } })"
+                        @click="
+                          router.push({
+                            name: 'transaction-detail',
+                            params: { id: tx.id },
+                          })
+                        "
                       >
                         <Eye class="w-4 h-4" />
                       </BaseButton>

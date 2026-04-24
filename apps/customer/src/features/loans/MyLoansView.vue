@@ -21,9 +21,9 @@ const statusFilter = ref<LoanStatus | null>(null)
 const statusFilters: { label: string; value: LoanStatus | null }[] = [
   { label: 'All', value: null },
   { label: 'Active', value: 'ACTIVE' },
-  { label: 'Overdue', value: 'OVERDUE' },
+  { label: 'Defaulted', value: 'DEFAULTED' },
   { label: 'Completed', value: 'COMPLETED' },
-  { label: 'Closed', value: 'CLOSED' },
+  { label: 'Written Off', value: 'WRITTEN_OFF' },
 ]
 
 const filterBadgeClass = computed(

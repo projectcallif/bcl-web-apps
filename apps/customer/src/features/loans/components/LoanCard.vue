@@ -29,13 +29,9 @@ function formatDate(s: string): string {
 }
 
 const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: string }> = {
-  PENDING: { label: 'Reviewing', dot: 'bg-amber-400', badge: 'bg-amber-100 text-amber-700' },
-  REJECTED: { label: 'Rejected', dot: 'bg-rose-500', badge: 'bg-rose-100 text-rose-700' },
-  HALTED: { label: 'Suspended', dot: 'bg-slate-500', badge: 'bg-slate-100 text-slate-700' },
   ACTIVE: { label: 'Active', dot: 'bg-green-500', badge: 'bg-green-100 text-green-700' },
-  OVERDUE: { label: 'Overdue', dot: 'bg-red-500', badge: 'bg-red-100 text-red-700' },
+  DEFAULTED: { label: 'Defaulted', dot: 'bg-red-500', badge: 'bg-red-100 text-red-700' },
   COMPLETED: { label: 'Completed', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
-  CLOSED: { label: 'Closed', dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600' },
   WRITTEN_OFF: { label: 'Written Off', dot: 'bg-slate-900', badge: 'bg-slate-200 text-slate-800' },
 }
 </script>
@@ -91,7 +87,7 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
       <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div
           class="h-full rounded-full transition-all"
-          :class="loan.status === 'OVERDUE' ? 'bg-red-500' : 'bg-primary'"
+          :class="loan.status === 'DEFAULTED' ? 'bg-red-500' : 'bg-primary'"
           :style="{ width: progress + '%' }"
         />
       </div>
@@ -100,7 +96,7 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
     <!-- Footer -->
     <div class="flex items-center justify-between pt-3 border-t border-slate-100">
       <div
-        v-if="(loan.status === 'ACTIVE' || loan.status === 'OVERDUE') && loan.firstDueDate"
+        v-if="(loan.status === 'ACTIVE' || loan.status === 'DEFAULTED') && loan.firstDueDate"
         class="flex items-center gap-1.5 text-xs text-slate-500"
       >
         <Calendar class="w-3.5 h-3.5" />

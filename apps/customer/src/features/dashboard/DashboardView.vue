@@ -111,24 +111,16 @@ const loanTypeLabel: Record<LoanType, string> = {
 }
 
 const statusDotColor: Record<LoanStatus, string> = {
-  PENDING: 'bg-amber-400',
-  REJECTED: 'bg-rose-600',
-  HALTED: 'bg-rose-500',
   ACTIVE: 'bg-green-400',
-  OVERDUE: 'bg-red-400',
+  DEFAULTED: 'bg-red-400',
   COMPLETED: 'bg-blue-400',
-  CLOSED: 'bg-slate-400',
   WRITTEN_OFF: 'bg-slate-900',
 }
 
 const statusLabel: Record<LoanStatus, string> = {
-  PENDING: 'Reviewing',
-  REJECTED: 'Rejected',
-  HALTED: 'Suspended',
   ACTIVE: 'Active',
-  OVERDUE: 'Overdue',
+  DEFAULTED: 'Defaulted',
   COMPLETED: 'Completed',
-  CLOSED: 'Closed',
   WRITTEN_OFF: 'Written Off',
 }
 

@@ -12,7 +12,7 @@ import {
 import { PhoneCall, AlertTriangle, Search, Filter } from "lucide-vue-next";
 import type { Loan, CollectionLog } from "@bcl/types";
 
-// Setup mocks using the Loan interface mapped to ACTIVE/OVERDUE explicitly
+// Setup mocks using the Loan interface mapped to ACTIVE/DEFAULTED explicitly
 const mockLoans = ref<
   (Loan & {
     customerName: string;
@@ -62,7 +62,7 @@ const mockLoans = ref<
     },
   },
   {
-    id: "loan_overdue_1",
+    id: "loan_defaulted_1",
     referenceId: "BCL-2026-D99",
     loanNumber: "BCL-2026-D99",
     applicationId: "app_2",
@@ -79,7 +79,7 @@ const mockLoans = ref<
     disbursedAt: "2026-05-15T00:00:00Z",
     firstDueDate: "2026-06-15T00:00:00Z",
     finalDueDate: "2027-05-15T00:00:00Z",
-    status: "OVERDUE",
+    status: "DEFAULTED",
     createdAt: "2026-05-10T00:00:00Z",
     loanProduct: {
       id: "prod_2",
@@ -199,7 +199,7 @@ function formatDateOptions(iso: string) {
         </h1>
         <p class="text-sm text-slate-500 mt-1">
           Monitor active repayment schedules and log follow-up actions for
-          overdue accounts.
+          defaulted accounts.
         </p>
       </div>
     </div>
@@ -305,13 +305,13 @@ function formatDateOptions(iso: string) {
                 <span
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
                   :class="
-                    loan.status === 'OVERDUE'
+                    loan.status === 'DEFAULTED'
                       ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-200'
                       : 'bg-emerald-100 text-emerald-700'
                   "
                 >
                   <AlertTriangle
-                    v-if="loan.status === 'OVERDUE'"
+                    v-if="loan.status === 'DEFAULTED'"
                     class="w-3.5 h-3.5"
                   />
                   {{ loan.status }}
@@ -355,7 +355,7 @@ function formatDateOptions(iso: string) {
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold uppercase"
               :class="
-                loan.status === 'OVERDUE'
+                loan.status === 'DEFAULTED'
                   ? 'bg-rose-100 text-rose-700'
                   : 'bg-emerald-100 text-emerald-700'
               "
