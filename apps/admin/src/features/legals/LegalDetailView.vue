@@ -18,10 +18,7 @@ import {
   AlertTriangle,
   History,
 } from "lucide-vue-next";
-import {
-  type LoanLegalDocument,
-  type ApiClientError,
-} from "@bcl/types";
+import { type LoanLegalDocument, type ApiClientError } from "@bcl/types";
 import { useToastStore } from "@/stores/toast";
 import {
   getLegalDocument,
@@ -159,13 +156,19 @@ async function handleDelete() {
     </button>
 
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div
+      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    >
       <div>
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
           {{ isEdit ? "Edit Legal Document" : "Create Legal Document" }}
         </h1>
         <p class="text-sm text-slate-500 mt-1">
-          {{ isEdit ? `Managing ${docData?.title || 'document'}` : "Set up a new legal disclosure or contract." }}
+          {{
+            isEdit
+              ? `Managing ${docData?.title || "document"}`
+              : "Set up a new legal disclosure or contract."
+          }}
         </p>
       </div>
       <div class="flex items-center gap-3">
@@ -178,12 +181,8 @@ async function handleDelete() {
         >
           <CheckCircle2 class="w-4 h-4 mr-2" /> Activate Version
         </BaseButton>
-        <BaseButton
-          variant="primary"
-          :loading="saving"
-          @click="handleSave"
-        >
-          <Save class="w-4 h-4 mr-2" /> Save Changes
+        <BaseButton variant="primary" :loading="saving" @click="handleSave">
+          <Save class="w-4 h-4" /> Save Changes
         </BaseButton>
       </div>
     </div>
@@ -192,7 +191,9 @@ async function handleDelete() {
     <div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8 items-start">
       <div class="space-y-8">
         <!-- Main Form Card -->
-        <div class="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 md:p-8 space-y-6">
+        <div
+          class="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 md:p-8 space-y-6"
+        >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AppTextInput
               id="title"
@@ -217,8 +218,10 @@ async function handleDelete() {
               required
             />
             <div class="flex flex-col gap-1.5">
-               <label class="text-sm font-bold text-slate-700">Effective Date</label>
-               <AppDatePicker
+              <label class="text-sm font-bold text-slate-700"
+                >Effective Date</label
+              >
+              <AppDatePicker
                 v-model="form.effectiveDate"
                 placeholder="Pick a date"
               />
@@ -227,15 +230,25 @@ async function handleDelete() {
 
           <div class="pt-4">
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-sm font-bold text-slate-800 uppercase tracking-wider">
+              <label
+                class="block text-sm font-bold text-slate-800 uppercase tracking-wider"
+              >
                 Document Content
               </label>
-              <div v-if="docData?.type === 'LOAN_CONTRACT'" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-black">
+              <div
+                v-if="docData?.type === 'LOAN_CONTRACT'"
+                class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-black"
+              >
                 SUPPORTS PLACEHOLDERS
               </div>
             </div>
-            <p v-if="docData?.type === 'LOAN_CONTRACT'" class="text-xs text-slate-500 mb-4" v-pre>
-              Use <code>{{ USER_NAME }}</code> for applicant name and <code>{{ LOAN_AMOUNT }}</code> for principal amount.
+            <p
+              v-if="docData?.type === 'LOAN_CONTRACT'"
+              class="text-xs text-slate-500 mb-4"
+              v-pre
+            >
+              Use <code>{{ USER_NAME }}</code> for applicant name and
+              <code>{{ LOAN_AMOUNT }}</code> for principal amount.
             </p>
             <AppRichTextEditor
               id="content"
@@ -247,12 +260,18 @@ async function handleDelete() {
         </div>
 
         <!-- Danger Zone -->
-        <div v-if="isEdit" class="bg-rose-50/50 border border-rose-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div
+          v-if="isEdit"
+          class="bg-rose-50/50 border border-rose-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
           <div>
             <h3 class="text-sm font-bold text-rose-800 flex items-center gap-2">
               <AlertTriangle class="w-4 h-4" /> Danger Zone
             </h3>
-            <p class="text-xs text-rose-600 mt-1">Once deleted, this document version cannot be recovered. Active documents should not be deleted.</p>
+            <p class="text-xs text-rose-600 mt-1">
+              Once deleted, this document version cannot be recovered. Active
+              documents should not be deleted.
+            </p>
           </div>
           <BaseButton
             variant="ghost"
@@ -266,61 +285,106 @@ async function handleDelete() {
 
       <!-- Sidebar info -->
       <aside class="space-y-6 sticky xl:top-0">
-        <div class="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4">
+        <div
+          class="bg-white border border-slate-100 rounded-2xl shadow-sm p-6 space-y-4"
+        >
           <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
             <FileText class="w-4 h-4 text-primary" />
             Metadata
           </h3>
           <div class="space-y-3">
             <div class="flex flex-col">
-              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Status</span>
-              <div v-if="loading" class="mt-1"><BaseSkeleton width="80px" height="20px" rounded="4px" /></div>
+              <span
+                class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                >Status</span
+              >
+              <div v-if="loading" class="mt-1">
+                <BaseSkeleton width="80px" height="20px" rounded="4px" />
+              </div>
               <div v-else class="mt-1 flex items-center gap-2">
-                <div :class="docData?.isActive ? 'bg-emerald-500' : 'bg-slate-300'" class="w-2 h-2 rounded-full"></div>
-                <span class="text-sm font-semibold" :class="docData?.isActive ? 'text-emerald-700' : 'text-slate-500'">
-                  {{ docData?.isActive ? 'Active & Published' : 'Draft / Inactive' }}
+                <div
+                  :class="docData?.isActive ? 'bg-emerald-500' : 'bg-slate-300'"
+                  class="w-2 h-2 rounded-full"
+                ></div>
+                <span
+                  class="text-sm font-semibold"
+                  :class="
+                    docData?.isActive ? 'text-emerald-700' : 'text-slate-500'
+                  "
+                >
+                  {{
+                    docData?.isActive
+                      ? "Active & Published"
+                      : "Draft / Inactive"
+                  }}
                 </span>
               </div>
             </div>
             <div class="flex flex-col" v-if="docData">
-              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Last Updated</span>
-              <span class="text-sm text-slate-600 mt-0.5">{{ new Date(docData.updatedAt).toLocaleString() }}</span>
+              <span
+                class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                >Last Updated</span
+              >
+              <span class="text-sm text-slate-600 mt-0.5">{{
+                new Date(docData.updatedAt).toLocaleString()
+              }}</span>
             </div>
             <div class="flex flex-col" v-if="docData">
-              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">System ID</span>
-              <span class="text-[10px] font-mono text-slate-500 mt-1 break-all">{{ docData.id }}</span>
+              <span
+                class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                >System ID</span
+              >
+              <span
+                class="text-[10px] font-mono text-slate-500 mt-1 break-all"
+                >{{ docData.id }}</span
+              >
             </div>
           </div>
         </div>
 
         <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
-           <div class="flex items-center gap-3 mb-3">
-             <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-600 shadow-sm">
-                <History class="w-4 h-4" />
-             </div>
-             <h3 class="text-sm font-bold text-indigo-900">Compliance Info</h3>
-           </div>
-           <p class="text-xs text-indigo-700 leading-relaxed">
-             This legal document is a binding agreement. Ensure all versions are reviewed by the legal department before activation.
-           </p>
+          <div class="flex items-center gap-3 mb-3">
+            <div
+              class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-600 shadow-sm"
+            >
+              <History class="w-4 h-4" />
+            </div>
+            <h3 class="text-sm font-bold text-indigo-900">Compliance Info</h3>
+          </div>
+          <p class="text-xs text-indigo-700 leading-relaxed">
+            This legal document is a binding agreement. Ensure all versions are
+            reviewed by the legal department before activation.
+          </p>
         </div>
       </aside>
     </div>
 
     <!-- Delete Confirm -->
     <AppDialog v-model="isDeleteDialogOpen" title="Delete Legal Document">
-       <div class="flex flex-col gap-4 py-2">
-          <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm flex gap-3">
-             <AlertTriangle class="w-5 h-5 shrink-0" />
-             <p>Are you sure you want to delete <strong>{{ docData?.title }}</strong>? This action is permanent and will remove all associated content.</p>
-          </div>
-          <div class="flex justify-end gap-3 mt-4">
-             <BaseButton variant="ghost" @click="isDeleteDialogOpen = false">Cancel</BaseButton>
-             <BaseButton variant="primary" class="bg-rose-600 border-none hover:bg-rose-700 text-white" :loading="deleting" @click="handleDelete">
-               Confirm Delete
-             </BaseButton>
-          </div>
-       </div>
+      <div class="flex flex-col gap-4 py-2">
+        <div
+          class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-sm flex gap-3"
+        >
+          <AlertTriangle class="w-5 h-5 shrink-0" />
+          <p>
+            Are you sure you want to delete <strong>{{ docData?.title }}</strong
+            >? This action is permanent and will remove all associated content.
+          </p>
+        </div>
+        <div class="flex justify-end gap-3 mt-4">
+          <BaseButton variant="ghost" @click="isDeleteDialogOpen = false"
+            >Cancel</BaseButton
+          >
+          <BaseButton
+            variant="primary"
+            class="bg-rose-600 border-none hover:bg-rose-700 text-white"
+            :loading="deleting"
+            @click="handleDelete"
+          >
+            Confirm Delete
+          </BaseButton>
+        </div>
+      </div>
     </AppDialog>
   </div>
 </template>

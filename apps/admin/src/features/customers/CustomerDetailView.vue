@@ -331,7 +331,7 @@ function getStatusStyle(status: string) {
           @click="openStatusDialog"
           class="flex-1 lg:flex-none justify-center"
         >
-          <ShieldAlert class="w-4 h-4 mr-2" /> Update Status
+          <ShieldAlert class="w-4 h-4" /> Update Status
         </BaseButton>
       </div>
     </div>

@@ -19,11 +19,7 @@ import {
   AppConfirmDialog,
   AppTextInput,
 } from "@bcl/ui";
-import type {
-  LoanProduct,
-  LoanProductTenor,
-  ApiClientError,
-} from "@bcl/types";
+import type { LoanProduct, LoanProductTenor, ApiClientError } from "@bcl/types";
 import {
   getAdminProductDetail,
   updateProduct,
@@ -77,8 +73,10 @@ async function fetchDetail() {
     product.value = res.data;
     // Normalize numeric rates from decimals to percentages for display
     product.value.interestRate = Number(product.value.interestRate) * 100;
-    product.value.processingFeeRate = Number(product.value.processingFeeRate || 0) * 100;
-    product.value.managementFeeRate = Number(product.value.managementFeeRate || 0) * 100;
+    product.value.processingFeeRate =
+      Number(product.value.processingFeeRate || 0) * 100;
+    product.value.managementFeeRate =
+      Number(product.value.managementFeeRate || 0) * 100;
     product.value.penaltyRate = Number(product.value.penaltyRate || 0) * 100;
   } catch (err) {
     const error = err as ApiClientError;
@@ -207,16 +205,21 @@ onUnmounted(() => {
       >
         <ArrowLeft class="w-4 h-4" /> Back to Products
       </button>
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-4">
         <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
           {{ loading ? "Loading Product..." : product?.name }}
         </h1>
         <div class="flex items-center gap-3">
           <BaseButton variant="ghost" @click="fetchDetail" :disabled="loading">
-            <History class="w-4 h-4 mr-2" /> Refresh
+            <History class="w-4 h-4" /> Refresh
           </BaseButton>
-          <BaseButton variant="primary" @click="handleSaveProduct" :loading="saving" :disabled="loading">
-            <Save class="w-4 h-4 mr-2" /> Save Configuration
+          <BaseButton
+            variant="primary"
+            @click="handleSaveProduct"
+            :loading="saving"
+            :disabled="loading"
+          >
+            <Save class="w-4 h-4" /> Save Configuration
           </BaseButton>
         </div>
       </div>
@@ -227,22 +230,39 @@ onUnmounted(() => {
       <BaseSkeleton height="400px" class="rounded-3xl" />
     </div>
 
-    <div v-else-if="product" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    <div
+      v-else-if="product"
+      class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
+    >
       <!-- Main Configuration -->
       <div class="lg:col-span-2 flex flex-col gap-6">
-        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
+        <div
+          class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8"
+        >
           <div class="flex items-center gap-2 mb-6">
             <Settings2 class="w-5 h-5 text-primary-500" />
-            <h2 class="text-lg font-bold text-slate-800 tracking-tight">Basic Configuration</h2>
+            <h2 class="text-lg font-bold text-slate-800 tracking-tight">
+              Basic Configuration
+            </h2>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Product Name</label>
-              <AppTextInput v-model="product.name" id="name" placeholder="e.g. Personal Salary Loan" />
+              <label
+                class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+                >Product Name</label
+              >
+              <AppTextInput
+                v-model="product.name"
+                id="name"
+                placeholder="e.g. Personal Salary Loan"
+              />
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Description</label>
+              <label
+                class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+                >Description</label
+              >
               <textarea
                 v-model="product.description"
                 rows="3"
@@ -252,46 +272,94 @@ onUnmounted(() => {
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Min Amount (₦)</label>
-              <AppTextInput v-model="product.minAmount" id="minAmount" type="number" />
+              <label
+                class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+                >Min Amount (₦)</label
+              >
+              <AppTextInput
+                v-model="product.minAmount"
+                id="minAmount"
+                type="number"
+              />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Max Amount (₦)</label>
-              <AppTextInput v-model="product.maxAmount" id="maxAmount" type="number" />
+              <label
+                class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+                >Max Amount (₦)</label
+              >
+              <AppTextInput
+                v-model="product.maxAmount"
+                id="maxAmount"
+                type="number"
+              />
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Min Tenor</label>
-              <AppTextInput v-model="product.minTenor" id="minTenor" type="number" />
+              <label
+                class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+                >Min Tenor</label
+              >
+              <AppTextInput
+                v-model="product.minTenor"
+                id="minTenor"
+                type="number"
+              />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Max Tenor</label>
-              <AppTextInput v-model="product.maxTenor" id="maxTenor" type="number" />
+              <label
+                class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+                >Max Tenor</label
+              >
+              <AppTextInput
+                v-model="product.maxTenor"
+                id="maxTenor"
+                type="number"
+              />
             </div>
           </div>
         </div>
 
         <!-- Tenor Management -->
-        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
+        <div
+          class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8"
+        >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-2">
               <Calendar class="w-5 h-5 text-primary-500" />
-              <h2 class="text-lg font-bold text-slate-800 tracking-tight">Custom Tenors</h2>
+              <h2 class="text-lg font-bold text-slate-800 tracking-tight">
+                Custom Tenors
+              </h2>
             </div>
-            <BaseButton variant="ghost" size="sm" class="text-primary-600 bg-primary-50" @click="openAddTenor">
+            <BaseButton
+              variant="ghost"
+              size="sm"
+              class="text-primary-600 bg-primary-50"
+              @click="openAddTenor"
+            >
               <Plus class="w-4 h-4 mr-1" /> Add Tenor
             </BaseButton>
           </div>
 
-          <div v-if="product.tenors.length === 0" class="py-12 text-center border-2 border-dashed border-slate-100 rounded-3xl">
-            <p class="text-slate-400 text-sm font-medium">No custom tenors defined.</p>
-            <p class="text-[10px] text-slate-300 uppercase tracking-widest mt-1">Using fallback min/max range</p>
+          <div
+            v-if="product.tenors.length === 0"
+            class="py-12 text-center border-2 border-dashed border-slate-100 rounded-3xl"
+          >
+            <p class="text-slate-400 text-sm font-medium">
+              No custom tenors defined.
+            </p>
+            <p
+              class="text-[10px] text-slate-300 uppercase tracking-widest mt-1"
+            >
+              Using fallback min/max range
+            </p>
           </div>
 
           <div v-else class="overflow-x-auto">
             <table class="w-full text-sm text-left">
               <thead>
-                <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                <tr
+                  class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50"
+                >
                   <th class="px-4 py-3">Duration</th>
                   <th class="px-4 py-3 text-center">Interest / Mo</th>
                   <th class="px-4 py-3 text-center">Status</th>
@@ -299,17 +367,30 @@ onUnmounted(() => {
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-50">
-                <tr v-for="tenor in product.tenors" :key="tenor.id" class="hover:bg-slate-50/50 transition-colors">
-                  <td class="px-4 py-4 font-bold text-slate-800">{{ tenor.tenorValue }} {{ (product.tenorUnit || 'Months').toLowerCase() }}</td>
-                  <td class="px-4 py-4 text-center font-mono text-xs text-primary-700 font-bold">
+                <tr
+                  v-for="tenor in product.tenors"
+                  :key="tenor.id"
+                  class="hover:bg-slate-50/50 transition-colors"
+                >
+                  <td class="px-4 py-4 font-bold text-slate-800">
+                    {{ tenor.tenorValue }}
+                    {{ (product.tenorUnit || "Months").toLowerCase() }}
+                  </td>
+                  <td
+                    class="px-4 py-4 text-center font-mono text-xs text-primary-700 font-bold"
+                  >
                     {{ (tenor.interestRate * 100).toFixed(1) }}%
                   </td>
                   <td class="px-4 py-4 text-center">
                     <span
                       class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest ring-1 ring-inset"
-                      :class="tenor.isActive ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-slate-100 text-slate-500 ring-slate-200'"
+                      :class="
+                        tenor.isActive
+                          ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+                          : 'bg-slate-100 text-slate-500 ring-slate-200'
+                      "
                     >
-                      {{ tenor.isActive ? 'Active' : 'Hidden' }}
+                      {{ tenor.isActive ? "Active" : "Hidden" }}
                     </span>
                   </td>
                   <td class="px-4 py-4 text-right">
@@ -335,9 +416,13 @@ onUnmounted(() => {
                         <button
                           @click="toggleTenorStatus(tenor)"
                           class="w-full text-left px-4 py-2 text-xs font-medium transition-colors cursor-pointer"
-                          :class="tenor.isActive ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'"
+                          :class="
+                            tenor.isActive
+                              ? 'text-rose-600 hover:bg-rose-50'
+                              : 'text-emerald-600 hover:bg-emerald-50'
+                          "
                         >
-                          {{ tenor.isActive ? 'Deactivate' : 'Activate' }}
+                          {{ tenor.isActive ? "Deactivate" : "Activate" }}
                         </button>
                         <div class="border-t border-slate-50 my-1"></div>
                         <button
@@ -358,42 +443,90 @@ onUnmounted(() => {
 
       <!-- Fees & Rates -->
       <div class="flex flex-col gap-6">
-        <div class="bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-900/10 text-white">
+        <div
+          class="bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-900/10 text-white"
+        >
           <div class="flex items-center gap-2 mb-6">
             <Percent class="w-5 h-5 text-primary-400" />
-            <h2 class="text-lg font-bold tracking-tight">Financial Parameters</h2>
+            <h2 class="text-lg font-bold tracking-tight">
+              Financial Parameters
+            </h2>
           </div>
 
           <div class="flex flex-col gap-5">
             <div>
-              <label class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Fallback Interest (%)</label>
+              <label
+                class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2"
+                >Fallback Interest (%)</label
+              >
               <div class="relative">
-                <AppTextInput v-model="product.interestRate" id="int" type="number" class="bg-white/10 border-white/10 text-white focus:border-primary-400" />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">%</span>
+                <AppTextInput
+                  v-model="product.interestRate"
+                  id="int"
+                  type="number"
+                  class="bg-white/10 border-white/10 text-white focus:border-primary-400"
+                />
+                <span
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold"
+                  >%</span
+                >
               </div>
             </div>
 
             <div>
-              <label class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Processing Fee (%)</label>
+              <label
+                class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2"
+                >Processing Fee (%)</label
+              >
               <div class="relative">
-                <AppTextInput v-model="product.processingFeeRate" id="pFee" type="number" class="bg-white/10 border-white/10 text-white focus:border-primary-400" />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">%</span>
+                <AppTextInput
+                  v-model="product.processingFeeRate"
+                  id="pFee"
+                  type="number"
+                  class="bg-white/10 border-white/10 text-white focus:border-primary-400"
+                />
+                <span
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold"
+                  >%</span
+                >
               </div>
             </div>
 
             <div>
-              <label class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Management Fee (%)</label>
+              <label
+                class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2"
+                >Management Fee (%)</label
+              >
               <div class="relative">
-                <AppTextInput v-model="product.managementFeeRate" id="mFee" type="number" class="bg-white/10 border-white/10 text-white focus:border-primary-400" />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">%</span>
+                <AppTextInput
+                  v-model="product.managementFeeRate"
+                  id="mFee"
+                  type="number"
+                  class="bg-white/10 border-white/10 text-white focus:border-primary-400"
+                />
+                <span
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold"
+                  >%</span
+                >
               </div>
             </div>
 
             <div class="pt-4 border-t border-white/10">
-              <label class="block text-[10px] font-bold text-rose-400/60 uppercase tracking-widest mb-2">Penalty Rate / Day (%)</label>
+              <label
+                class="block text-[10px] font-bold text-rose-400/60 uppercase tracking-widest mb-2"
+                >Penalty Rate / Day (%)</label
+              >
               <div class="relative">
-                <AppTextInput v-model="product.penaltyRate" id="pRate" type="number" class="bg-white/10 border-white/10 text-white focus:border-rose-400/50" />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-rose-400/40 font-bold">%</span>
+                <AppTextInput
+                  v-model="product.penaltyRate"
+                  id="pRate"
+                  type="number"
+                  class="bg-white/10 border-white/10 text-white focus:border-rose-400/50"
+                />
+                <span
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-rose-400/40 font-bold"
+                  >%</span
+                >
               </div>
             </div>
           </div>
@@ -402,22 +535,31 @@ onUnmounted(() => {
         <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
           <div class="flex items-center gap-2 mb-4">
             <AlertCircle class="w-5 h-5 text-amber-500" />
-            <h3 class="font-bold text-slate-800 tracking-tight">Deployment Info</h3>
+            <h3 class="font-bold text-slate-800 tracking-tight">
+              Deployment Info
+            </h3>
           </div>
           <div class="space-y-4 text-xs text-slate-500">
             <div class="flex justify-between">
               <span>Status</span>
-              <span class="font-bold" :class="product.isActive ? 'text-emerald-600' : 'text-rose-600'">
-                {{ product.isActive ? 'Live' : 'Maintenance' }}
+              <span
+                class="font-bold"
+                :class="product.isActive ? 'text-emerald-600' : 'text-rose-600'"
+              >
+                {{ product.isActive ? "Live" : "Maintenance" }}
               </span>
             </div>
             <div class="flex justify-between">
               <span>Interest Type</span>
-              <span class="font-bold text-slate-700">{{ product.interestType }}</span>
+              <span class="font-bold text-slate-700">{{
+                product.interestType
+              }}</span>
             </div>
             <div class="flex justify-between">
               <span>Created At</span>
-              <span class="font-bold text-slate-700">{{ new Date(product.createdAt || '').toLocaleDateString() }}</span>
+              <span class="font-bold text-slate-700">{{
+                new Date(product.createdAt || "").toLocaleDateString()
+              }}</span>
             </div>
           </div>
         </div>
@@ -425,22 +567,50 @@ onUnmounted(() => {
     </div>
 
     <!-- Tenor Modal -->
-    <AppDialog v-model="isTenorModalOpen" :title="isEditingTenor ? 'Update Tenor' : 'Add New Tenor'">
+    <AppDialog
+      v-model="isTenorModalOpen"
+      :title="isEditingTenor ? 'Update Tenor' : 'Add New Tenor'"
+    >
       <div class="space-y-6 pt-4">
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Duration ({{ (product?.tenorUnit || 'Months').toLowerCase() }})</label>
-          <AppTextInput v-model="tenorForm.tenorValue" id="tVal" type="number" placeholder="e.g. 6" />
+          <label
+            class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >Duration ({{
+              (product?.tenorUnit || "Months").toLowerCase()
+            }})</label
+          >
+          <AppTextInput
+            v-model="tenorForm.tenorValue"
+            id="tVal"
+            type="number"
+            placeholder="e.g. 6"
+          />
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Monthly Interest Rate (%)</label>
+          <label
+            class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >Monthly Interest Rate (%)</label
+          >
           <div class="relative">
-            <AppTextInput v-model="tenorForm.interestRate" id="tInt" type="number" placeholder="e.g. 5.5" />
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+            <AppTextInput
+              v-model="tenorForm.interestRate"
+              id="tInt"
+              type="number"
+              placeholder="e.g. 5.5"
+            />
+            <span
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold"
+              >%</span
+            >
           </div>
         </div>
         <div class="flex justify-end gap-3 pt-4">
-          <BaseButton variant="ghost" @click="isTenorModalOpen = false">Cancel</BaseButton>
-          <BaseButton variant="primary" @click="handleTenorSubmit">{{ isEditingTenor ? 'Update' : 'Add Tenor' }}</BaseButton>
+          <BaseButton variant="ghost" @click="isTenorModalOpen = false"
+            >Cancel</BaseButton
+          >
+          <BaseButton variant="primary" @click="handleTenorSubmit">{{
+            isEditingTenor ? "Update" : "Add Tenor"
+          }}</BaseButton>
         </div>
       </div>
     </AppDialog>
