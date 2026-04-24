@@ -155,15 +155,9 @@ export interface LoanDashboardStats {
   status: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
 }
 
-export type LegalDocumentType =
-  | "LOAN_CONTRACT"
-  | "LOAN_TERMS"
-  | "PRIVACY_POLICY"
-  | "TERMS_AND_CONDITIONS";
-
 export interface LoanLegalDocument {
   id: string;
-  type: LegalDocumentType;
+  type: string;
   version: string;
   title: string;
   content: string;

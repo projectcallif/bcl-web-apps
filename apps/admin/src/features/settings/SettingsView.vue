@@ -11,6 +11,7 @@ import {
   FileKey,
   Bell,
   Terminal,
+  Settings2,
 } from "lucide-vue-next";
 import type { LoanRuleConfig } from "@bcl/types";
 import ProfileTab from "./components/ProfileTab.vue";
@@ -18,6 +19,7 @@ import SecurityTab from "./components/SecurityTab.vue";
 import LoanRulesTab from "./components/LoanRulesTab.vue";
 import NotificationsTab from "./components/NotificationsTab.vue";
 import DevToolsTab from "./components/DevToolsTab.vue";
+import AppConfigTab from "./components/AppConfigTab.vue";
 
 const activeTab = ref("profile");
 
@@ -35,6 +37,7 @@ const tabs = [
   { id: "profile", label: "Profile Information", icon: User },
   { id: "security", label: "Security & Auth", icon: Shield },
   { id: "loan-rules", label: "Loan Underwriting Rules", icon: FileKey },
+  { id: "app-config", label: "Application Configuration", icon: Settings2 },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "dev-tools", label: "Developer Tools", icon: Terminal },
 ];
@@ -104,16 +107,16 @@ const loanRules = ref<LoanRuleConfig>({
   </div>
 
   <!-- Two-column layout -->
-  <div class="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 items-start">
+  <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
     <!-- Left menu -->
     <div
-      class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden md:sticky top-6"
+      class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden lg:sticky top-6"
     >
       <div class="flex flex-col">
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          class="w-full flex items-center gap-3 px-5 py-4 text-sm text-left transition-colors font-medium border-l-[3px] border-b border-slate-50 last:border-b-0"
+          class="w-full flex items-center gap-3 px-5 py-4 text-sm text-left transition-colors font-medium border-l-[3px] border-b border-slate-50 last:border-b-0 min-w-max"
           :class="
             activeTab === tab.id
               ? 'bg-primary-50/50 text-primary-700 border-l-primary-500'
@@ -150,6 +153,7 @@ const loanRules = ref<LoanRuleConfig>({
         v-model="loanRules"
       />
       <NotificationsTab v-else-if="activeTab === 'notifications'" />
+      <AppConfigTab v-else-if="activeTab === 'app-config'" />
       <DevToolsTab v-else-if="activeTab === 'dev-tools'" />
     </div>
   </div>

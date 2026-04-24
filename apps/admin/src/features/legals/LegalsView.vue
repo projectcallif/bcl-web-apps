@@ -19,7 +19,6 @@ import {
 } from "lucide-vue-next";
 import {
   type LoanLegalDocument,
-  type LegalDocumentType,
   type ApiClientError,
 } from "@bcl/types";
 import { useToastStore } from "@/stores/toast";
@@ -35,7 +34,6 @@ const documents = ref<LoanLegalDocument[]>([]);
 const loading = ref(true);
 
 const searchQuery = ref("");
-const filterType = ref<LegalDocumentType | "">("");
 const filterStatus = ref<"ACTIVE" | "INACTIVE" | "">("");
 const dateRange = ref<Date[] | null>(null);
 
@@ -45,7 +43,6 @@ async function fetchDocuments(): Promise<void> {
   loading.value = true;
   try {
     const res = await getLegalDocuments({
-      type: filterType.value || undefined,
       isActive: filterStatus.value === "" ? undefined : filterStatus.value === "ACTIVE",
       search: searchQuery.value || undefined,
       dateFrom: dateRange.value?.[0]?.toISOString(),
@@ -60,7 +57,7 @@ async function fetchDocuments(): Promise<void> {
   }
 }
 
-watch([filterType, filterStatus, dateRange], fetchDocuments);
+watch([filterStatus, dateRange], fetchDocuments);
 
 let searchTimeout: ReturnType<typeof setTimeout>;
 watch(searchQuery, () => {
@@ -81,14 +78,6 @@ function formatDate(iso: string) {
     year: "numeric",
   });
 }
-
-const typeOptions = [
-  { label: "All Types", value: "" },
-  { label: "Loan Contract", value: "LOAN_CONTRACT" },
-  { label: "Loan Terms", value: "LOAN_TERMS" },
-  { label: "Privacy Policy", value: "PRIVACY_POLICY" },
-  { label: "Terms & Conditions", value: "TERMS_AND_CONDITIONS" },
-];
 
 const statusOptions = [
   { label: "All Status", value: "" },
@@ -125,19 +114,10 @@ const statusOptions = [
           :icon="Search"
         />
       </div>
-      <div class="w-full xl:w-48">
-        <AppSelect
-          id="type"
-          v-model="filterType"
-          label="Document Type"
-          :options="typeOptions"
-        />
-      </div>
       <div class="w-full xl:w-40">
         <AppSelect
           id="status"
           v-model="filterStatus"
-          label="Status"
           :options="statusOptions"
         />
       </div>

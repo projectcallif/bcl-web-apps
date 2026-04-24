@@ -24,14 +24,14 @@ const internalValue = computed({
 </script>
 
 <template>
-  <div
+  <label
     class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors cursor-pointer shrink-0"
     :class="internalValue ? activeColorClass : inactiveColorClass"
   >
-    <input type="checkbox" v-model="internalValue" class="peer sr-only" />
+    <input type="checkbox" v-model="internalValue" class="sr-only" />
     <span
       class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform shadow-sm"
       :class="internalValue ? 'translate-x-[22px]' : 'translate-x-1'"
     />
-  </div>
+  </label>
 </template>

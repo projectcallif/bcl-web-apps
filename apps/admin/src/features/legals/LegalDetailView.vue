@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   AppTextInput,
-  AppSelect,
   BaseButton,
   AppRichTextEditor,
   AppDatePicker,
@@ -21,7 +20,6 @@ import {
 } from "lucide-vue-next";
 import {
   type LoanLegalDocument,
-  type LegalDocumentType,
   type ApiClientError,
 } from "@bcl/types";
 import { useToastStore } from "@/stores/toast";
@@ -49,13 +47,13 @@ const deleting = ref(false);
 const isDeleteDialogOpen = ref(false);
 
 const form = ref<{
-  type: LegalDocumentType;
+  type: string;
   title: string;
   version: string;
   content: string;
   effectiveDate: string;
 }>({
-  type: "LOAN_CONTRACT",
+  type: "",
   title: "",
   version: "1.0.0",
   content: "",
@@ -147,13 +145,6 @@ async function handleDelete() {
     isDeleteDialogOpen.value = false;
   }
 }
-
-const typeOptions = [
-  { label: "Loan Contract", value: "LOAN_CONTRACT" },
-  { label: "Loan Terms", value: "LOAN_TERMS" },
-  { label: "Privacy Policy", value: "PRIVACY_POLICY" },
-  { label: "Terms & Conditions", value: "TERMS_AND_CONDITIONS" },
-];
 </script>
 
 <template>
@@ -210,12 +201,13 @@ const typeOptions = [
               placeholder="e.g. Loan Terms and Conditions"
               required
             />
-            <AppSelect
+            <AppTextInput
               id="type"
               v-model="form.type"
               label="Document Type"
-              :options="typeOptions"
+              placeholder="e.g. LOAN_CONTRACT"
               :disabled="isEdit"
+              required
             />
             <AppTextInput
               id="version"
