@@ -18,6 +18,7 @@ import {
   PieChart,
   History,
   ArrowRightLeft,
+  FileText,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -38,6 +39,7 @@ const navItems = [
   { label: "Administrators", routeName: "admins", icon: Shield },
   { label: "Reports & Analytics", routeName: "reports", icon: PieChart },
   { label: "Audit Logs", routeName: "audit-logs", icon: History },
+  { label: "Legals", routeName: "legals", icon: FileText },
   { label: "Settings", routeName: "settings", icon: SettingsIcon },
 ];
 

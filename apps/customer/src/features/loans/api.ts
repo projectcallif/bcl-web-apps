@@ -1,3 +1,4 @@
+import { ApiHelper } from '@/helpers/ApiHelper'
 import { api } from '@/lib/api'
 import type {
   ApiResponse,
@@ -13,18 +14,6 @@ import type {
   LoanLegalDocument,
   LoanPreview,
 } from '@bcl/types'
-
-function cleanParams(params: Record<string, any>): Record<string, string | number | boolean> {
-  return Object.entries(params).reduce(
-    (acc, [key, value]) => {
-      if (value !== null && value !== undefined) {
-        acc[key] = value
-      }
-      return acc
-    },
-    {} as Record<string, string | number | boolean>,
-  )
-}
 
 // ── Dashboard & Stats ────────────────────────────────────────────────────────
 
@@ -47,7 +36,7 @@ export function getDefaultLoanProduct(): Promise<ApiResponse<LoanProduct>> {
 // ── Loan Management ──────────────────────────────────────────────────────────
 
 export function getMyLoans(params: { status?: LoanStatus | null }): Promise<ApiResponse<Loan[]>> {
-  return api.get<Loan[]>('/v1/loans/my-loans', cleanParams(params))
+  return api.get<Loan[]>('/v1/loans/my-loans', ApiHelper.cleanParams(params))
 }
 
 export function getLoanDetail(id: string): Promise<ApiResponse<Loan & { schedule: LoanSchedule }>> {
@@ -116,7 +105,7 @@ export function getTransactions(params: {
   dateFrom?: string | null
   dateTo?: string | null
 }): Promise<ApiResponse<PaginatedResponse<Transaction>>> {
-  return api.get<PaginatedResponse<Transaction>>('/v1/transactions', cleanParams(params))
+  return api.get<PaginatedResponse<Transaction>>('/v1/transactions', ApiHelper.cleanParams(params))
 }
 
 export function getRecentTransactions(limit: number = 10): Promise<ApiResponse<Transaction[]>> {

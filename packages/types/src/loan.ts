@@ -5,7 +5,14 @@ export type LoanStatus =
   | "ACTIVE"
   | "OVERDUE"
   | "COMPLETED"
-  | "CLOSED";
+  | "CLOSED"
+  | "WRITTEN_OFF";
+
+  export type LoanApplicationStatus =
+    | "UNDER_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "DISBURSED"
 
 export type LoanType = "PERSONAL" | "BUSINESS" | "EMERGENCY" | "SALARY_ADVANCE";
 
@@ -148,9 +155,15 @@ export interface LoanDashboardStats {
   status: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
 }
 
+export type LegalDocumentType =
+  | "LOAN_CONTRACT"
+  | "LOAN_TERMS"
+  | "PRIVACY_POLICY"
+  | "TERMS_AND_CONDITIONS";
+
 export interface LoanLegalDocument {
   id: string;
-  type: string;
+  type: LegalDocumentType;
   version: string;
   title: string;
   content: string;
@@ -158,6 +171,7 @@ export interface LoanLegalDocument {
   effectiveDate: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface CustomField {
@@ -245,4 +259,93 @@ export interface CollectionLog {
   date: string;
   note: string;
   method: "CALL" | "EMAIL" | "SMS" | "OTHER";
+}
+
+export interface AdminLoanApplicationListItem {
+  id: string;
+  userId: string;
+  applicantName: string;
+  status: LoanApplicationStatus;
+  requestedAmount: number;
+  requestedTenor: number;
+  purpose: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminLoanApplicationResponse {
+  data: AdminLoanApplicationListItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface AdminLoanApplicationDetail {
+  id: string;
+  status: LoanApplicationStatus;
+  requestedAmount: number;
+  requestedTenor: number;
+  purpose: string;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  applicant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    gender: string;
+    residentialAddress: string;
+    city: string;
+    state: string;
+    monoAccountId: string;
+  };
+  kyc: {
+    bvnStatus: string;
+    bvnVerifiedAt: string;
+    tier: string;
+  };
+  eligibility: {
+    canAfford: boolean;
+    eligibleAmountInNaira: number;
+    monthlyPaymentInNaira: number;
+    assessedFrom: string;
+    assessedTo: string;
+    expiresAt: string;
+  };
+  loanProduct: LoanProduct;
+  offer: {
+    id: string;
+    offeredAmount: number;
+    interestRate: number;
+    tenor: number;
+    status: string;
+    expiresAt: string;
+  } | null;
+}
+
+export interface AdminDisbursedLoanListItem {
+  id: string;
+  referenceId: string;
+  userId: string;
+  applicantName: string;
+  principal: number;
+  totalPayable: number;
+  outstandingBalance: number;
+  tenor: number;
+  status: LoanStatus;
+  disbursedAt: string;
+  firstDueDate: string;
+  finalDueDate: string;
+  disbursementAccount: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  };
+  createdAt: string;
 }

@@ -129,6 +129,11 @@ const statusConfig: Record<
     dot: "bg-orange-500",
     badge: "bg-orange-100 text-orange-700",
   },
+  WRITTEN_OFF: {
+    label: "Written Off",
+    dot: "bg-slate-900",
+    badge: "bg-slate-200 text-slate-800",
+  },
 };
 </script>
 

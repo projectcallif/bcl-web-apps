@@ -26,6 +26,7 @@ import type {
   Admin,
   CreateAdminPayload,
 } from "@bcl/types";
+import AdminSkeleton from "./components/AdminSkeleton.vue";
 
 const searchQuery = ref("");
 const dateRange = ref<Date[] | null>(null);
@@ -301,185 +302,181 @@ function cancelRoleChange() {
         </div>
       </div>
 
-      <!-- Desktop Table -->
-      <div class="hidden md:block w-full overflow-x-auto">
-        <table
-          class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
-        >
-          <thead
-            class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
+      <AdminSkeleton v-if="adminsStore.loading && !adminsStore.admins.length" />
+
+      <template v-else>
+        <!-- Desktop Table -->
+        <div class="hidden md:block w-full overflow-x-auto">
+          <table
+            class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
           >
-            <tr>
-              <th scope="col" class="px-6 py-4 font-medium">Administrator</th>
-              <th scope="col" class="px-6 py-4 font-medium">Role</th>
-              <th scope="col" class="px-6 py-4 font-medium">Status</th>
-              <th scope="col" class="px-6 py-4 font-medium">Added</th>
-              <th scope="col" class="px-6 py-4 font-medium text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-if="adminsStore.loading && !adminsStore.admins.length">
-              <td colspan="5" class="px-6 py-10 text-center">
-                <div class="flex flex-col items-center gap-2">
-                  <div
-                    class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
-                  ></div>
-                  <p class="text-sm text-slate-500">
-                    Loading administrators...
-                  </p>
-                </div>
-              </td>
-            </tr>
-            <tr
-              v-else
-              v-for="user in filteredAdmins"
-              :key="user.id"
-              class="hover:bg-slate-50/80 transition-colors"
+            <thead
+              class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
             >
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-9 h-9 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0"
-                  >
-                    {{ user.firstName[0] }}{{ user.lastName[0] }}
-                  </div>
-                  <div>
-                    <div class="font-medium text-slate-800">
-                      {{ user.firstName }} {{ user.lastName }}
-                    </div>
-                    <div class="text-xs text-slate-500">{{ user.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 font-medium text-slate-700">
-                {{ formatRole(user.role) }}
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
-                    getStatusColor(user.status),
-                  ]"
-                >
-                  {{ user.status }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-slate-500">
-                {{ dayjs(user.createdAt).format("MMM DD, YYYY") }}
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex justify-end">
-                  <AppPopover>
-                    <template #trigger="{ isOpen }">
-                      <button
-                        :class="[
-                          'text-slate-400 p-1.5 rounded-lg transition-colors',
-                          isOpen
-                            ? 'bg-primary-50 text-primary-600'
-                            : 'hover:bg-slate-100 hover:text-slate-600',
-                        ]"
-                      >
-                        <MoreVertical class="w-5 h-5" />
-                      </button>
-                    </template>
-                    <template #content="{ close }">
-                      <button
-                        @click="
-                          openStatusDialog(user);
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                      >
-                        <ShieldAlert class="w-4 h-4 text-slate-400" />
-                        Update Status
-                      </button>
-                      <button
-                        @click="
-                          openRoleDialog(user);
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                      >
-                        <ArrowRightLeft class="w-4 h-4 text-slate-400" />
-                        Change Role
-                      </button>
-                    </template>
-                  </AppPopover>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="md:hidden flex flex-col divide-y divide-slate-100">
-        <div
-          v-for="user in filteredAdmins"
-          :key="`mobile-${user.id}`"
-          class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shrink-0"
+              <tr>
+                <th scope="col" class="px-6 py-4 font-medium">Administrator</th>
+                <th scope="col" class="px-6 py-4 font-medium">Role</th>
+                <th scope="col" class="px-6 py-4 font-medium">Status</th>
+                <th scope="col" class="px-6 py-4 font-medium">Added</th>
+                <th scope="col" class="px-6 py-4 font-medium text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-if="filteredAdmins.length === 0">
+                <td colspan="5" class="px-6 py-10 text-center text-slate-500">
+                  No administrators found.
+                </td>
+              </tr>
+              <tr
+                v-for="user in filteredAdmins"
+                :key="user.id"
+                class="hover:bg-slate-50/80 transition-colors"
               >
-                {{ user.firstName[0] }}{{ user.lastName[0] }}
-              </div>
-              <div>
-                <div class="font-medium text-slate-800">
-                  {{ user.firstName }} {{ user.lastName }}
-                </div>
-                <div class="text-xs text-slate-500">{{ user.email }}</div>
-              </div>
-            </div>
-
-            <div class="flex justify-end">
-              <AppPopover>
-                <template #trigger="{ isOpen }">
-                  <button
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0"
+                    >
+                      {{ user.firstName[0] }}{{ user.lastName[0] }}
+                    </div>
+                    <div>
+                      <div class="font-medium text-slate-800">
+                        {{ user.firstName }} {{ user.lastName }}
+                      </div>
+                      <div class="text-xs text-slate-500">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 font-medium text-slate-700">
+                  {{ formatRole(user.role) }}
+                </td>
+                <td class="px-6 py-4">
+                  <span
                     :class="[
-                      'text-slate-400 p-1.5 rounded-lg transition-colors',
-                      isOpen
-                        ? 'bg-primary-50 text-primary-600'
-                        : 'hover:bg-slate-100 hover:text-slate-600',
+                      'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
+                      getStatusColor(user.status),
                     ]"
                   >
-                    <MoreVertical class="w-5 h-5" />
-                  </button>
-                </template>
-                <template #content="{ close }">
-                  <button
-                    @click="
-                      openStatusDialog(user);
-                      close();
-                    "
-                    class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                  >
-                    <ShieldAlert class="w-4 h-4 text-slate-400" />
-                    Update Status
-                  </button>
-                </template>
-              </AppPopover>
+                    {{ user.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-slate-500">
+                  {{ dayjs(user.createdAt).format("MMM DD, YYYY") }}
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex justify-end">
+                    <AppPopover>
+                      <template #trigger="{ isOpen }">
+                        <button
+                          :class="[
+                            'text-slate-400 p-1.5 rounded-lg transition-colors',
+                            isOpen
+                              ? 'bg-primary-50 text-primary-600'
+                              : 'hover:bg-slate-100 hover:text-slate-600',
+                          ]"
+                        >
+                          <MoreVertical class="w-5 h-5" />
+                        </button>
+                      </template>
+                      <template #content="{ close }">
+                        <button
+                          @click="
+                            openStatusDialog(user);
+                            close();
+                          "
+                          class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                        >
+                          <ShieldAlert class="w-4 h-4 text-slate-400" />
+                          Update Status
+                        </button>
+                        <button
+                          @click="
+                            openRoleDialog(user);
+                            close();
+                          "
+                          class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                        >
+                          <ArrowRightLeft class="w-4 h-4 text-slate-400" />
+                          Change Role
+                        </button>
+                      </template>
+                    </AppPopover>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="md:hidden flex flex-col divide-y divide-slate-100">
+          <div
+            v-for="user in filteredAdmins"
+            :key="`mobile-${user.id}`"
+            class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shrink-0"
+                >
+                  {{ user.firstName[0] }}{{ user.lastName[0] }}
+                </div>
+                <div>
+                  <div class="font-medium text-slate-800">
+                    {{ user.firstName }} {{ user.lastName }}
+                  </div>
+                  <div class="text-xs text-slate-500">{{ user.email }}</div>
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <AppPopover>
+                  <template #trigger="{ isOpen }">
+                    <button
+                      :class="[
+                        'text-slate-400 p-1.5 rounded-lg transition-colors',
+                        isOpen
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'hover:bg-slate-100 hover:text-slate-600',
+                      ]"
+                    >
+                      <MoreVertical class="w-5 h-5" />
+                    </button>
+                  </template>
+                  <template #content="{ close }">
+                    <button
+                      @click="
+                        openStatusDialog(user);
+                        close();
+                      "
+                      class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                    >
+                      <ShieldAlert class="w-4 h-4 text-slate-400" />
+                      Update Status
+                    </button>
+                  </template>
+                </AppPopover>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span
+                class="text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded"
+                >{{ formatRole(user.role) }}</span
+              >
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded text-xs font-semibold capitalize',
+                  getStatusColor(user.status),
+                ]"
+              >
+                {{ user.status }}
+              </span>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span
-              class="text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded"
-              >{{ formatRole(user.role) }}</span
-            >
-            <span
-              :class="[
-                'px-2 py-0.5 rounded text-xs font-semibold capitalize',
-                getStatusColor(user.status),
-              ]"
-            >
-              {{ user.status }}
-            </span>
-          </div>
         </div>
-      </div>
+      </template>
 
       <!-- Pagination -->
       <div

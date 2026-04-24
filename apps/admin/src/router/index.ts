@@ -96,6 +96,21 @@ const router = createRouter({
           component: () => import("../features/settings/SettingsView.vue"),
         },
         {
+          path: "legals",
+          name: "legals",
+          component: () => import("../features/legals/LegalsView.vue"),
+        },
+        {
+          path: "legals/create",
+          name: "legal-create",
+          component: () => import("../features/legals/LegalDetailView.vue"),
+        },
+        {
+          path: "legals/:id",
+          name: "legal-detail",
+          component: () => import("../features/legals/LegalDetailView.vue"),
+        },
+        {
           path: "transactions",
           name: "transactions",
           component: () => import("../features/transactions/TransactionsView.vue"),

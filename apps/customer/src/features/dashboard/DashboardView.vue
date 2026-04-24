@@ -118,6 +118,7 @@ const statusDotColor: Record<LoanStatus, string> = {
   OVERDUE: 'bg-red-400',
   COMPLETED: 'bg-blue-400',
   CLOSED: 'bg-slate-400',
+  WRITTEN_OFF: 'bg-slate-900',
 }
 
 const statusLabel: Record<LoanStatus, string> = {
@@ -128,6 +129,7 @@ const statusLabel: Record<LoanStatus, string> = {
   OVERDUE: 'Overdue',
   COMPLETED: 'Completed',
   CLOSED: 'Closed',
+  WRITTEN_OFF: 'Written Off',
 }
 
 const transactionTypeConfig = {

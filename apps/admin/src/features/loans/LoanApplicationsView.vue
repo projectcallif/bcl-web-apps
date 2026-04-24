@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import {
   AppTextInput,
@@ -7,154 +7,112 @@ import {
   BaseButton,
   AppDatePicker,
 } from "@bcl/ui";
-import { Clock, XCircle, ShieldAlert, ListFilter, Eye } from "lucide-vue-next";
-import type { LoanApplication, LoanStatus } from "@bcl/types";
+import {
+  Clock,
+  XCircle,
+  ListFilter,
+  Eye,
+  CheckCircle2,
+  Banknote,
+} from "lucide-vue-next";
+import type {
+  AdminLoanApplicationListItem,
+  LoanApplicationStatus,
+} from "@bcl/types";
+import { getLoanApplications } from "./api";
+import LoanApplicationSkeleton from "./components/LoanApplicationSkeleton.vue";
 
 const router = useRouter();
+
+// ── State ──────────────────────────────────────────────────────────────────────
+
+const applications = ref<AdminLoanApplicationListItem[]>([]);
+const totalItems = ref(0);
+const totalPages = ref(1);
+const loading = ref(false);
 
 const searchQuery = ref("");
 const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
-const activeTab = ref<
-  "ALL" | "PENDING" | "AUTO_REJECTED" | "MANUALLY_REJECTED" | "REJECT_LOGS"
->("ALL");
+const activeTab = ref<LoanApplicationStatus | "ALL">("ALL");
 
-// Mock Data for Applications
-type AugmentedApplication = LoanApplication & {
-  customerName: string;
-  email: string;
-  rejectType?: "AUTO" | "MANUAL";
-};
+// ── Data Fetching ──────────────────────────────────────────────────────────────
 
-const mockApps = ref<AugmentedApplication[]>([
-  {
-    id: "APP-122",
-    userId: "usr_1",
-    customerName: "Jane Foster",
-    email: "jane@thor.com",
-    amountRequested: 300000,
-    tenorMonths: 6,
-    purpose: "Business Equipment",
-    status: "PENDING",
-    appliedAt: "2026-10-25T14:30:00Z",
-  },
-  {
-    id: "APP-123",
-    userId: "usr_2",
-    customerName: "Tony Stark",
-    email: "tony@stark.id",
-    amountRequested: 5000000,
-    tenorMonths: 12,
-    purpose: "Arc Reactor Maintenance",
-    status: "REJECTED",
-    appliedAt: "2026-10-24T09:15:00Z",
-    rejectionReason: "CREDIT_SCORE_BELOW_THRESHOLD",
-    rejectType: "AUTO",
-  },
-  {
-    id: "APP-124",
-    userId: "usr_3",
-    customerName: "Steve Rogers",
-    email: "cap@vanguard.org",
-    amountRequested: 100000,
-    tenorMonths: 24,
-    purpose: "Classic Shield Restoration",
-    status: "REJECTED",
-    appliedAt: "2026-10-23T11:45:00Z",
-    rejectionReason:
-      "Inconsistent employment history found during manual verification.",
-    rejectType: "MANUAL",
-  },
-  {
-    id: "APP-125",
-    userId: "usr_4",
-    customerName: "Wanda Maximoff",
-    email: "wanda@chaos.io",
-    amountRequested: 750000,
-    tenorMonths: 6,
-    purpose: "Education",
-    status: "PENDING",
-    appliedAt: "2026-10-25T16:00:00Z",
-  },
-]);
-
-const filteredApps = computed(() => {
-  let result = mockApps.value;
-
-  if (activeTab.value !== "ALL") {
-    switch (activeTab.value) {
-      case "PENDING":
-        result = result.filter((a) => a.status === "PENDING");
-        break;
-      case "AUTO_REJECTED":
-        result = result.filter(
-          (a) => a.status === "REJECTED" && a.rejectType === "AUTO",
-        );
-        break;
-      case "MANUALLY_REJECTED":
-        result = result.filter(
-          (a) => a.status === "REJECTED" && a.rejectType === "MANUAL",
-        );
-        break;
-      case "REJECT_LOGS":
-        result = result.filter((a) => a.status === "REJECTED");
-        break;
-    }
+async function fetchApplications(): Promise<void> {
+  loading.value = true;
+  try {
+    const res = await getLoanApplications({
+      status: activeTab.value === "ALL" ? undefined : activeTab.value,
+      page: currentPage.value,
+      limit: 10,
+    });
+    applications.value = res.data.data;
+    totalItems.value = res.data.meta.total;
+    totalPages.value = res.data.meta.totalPages;
+  } catch (err) {
+    console.error("Failed to fetch applications:", err);
+  } finally {
+    loading.value = false;
   }
-
-  if (dateRange.value && dateRange.value[0]) {
-    const start = new Date(dateRange.value[0]).getTime();
-    result = result.filter(
-      (a) => a.appliedAt && new Date(a.appliedAt).getTime() >= start,
-    );
-  }
-
-  if (dateRange.value && dateRange.value[1]) {
-    const end = new Date(dateRange.value[1]).getTime() + 86400000;
-    result = result.filter(
-      (a) => a.appliedAt && new Date(a.appliedAt).getTime() < end,
-    );
-  }
-
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (a) =>
-        a.customerName.toLowerCase().includes(q) ||
-        a.email.toLowerCase().includes(q) ||
-        a.id.toLowerCase().includes(q),
-    );
-  }
-  return result;
-});
-
-function getStatusColor(status: LoanStatus, rejectType?: string) {
-  if (status === "PENDING") return "bg-amber-100 text-amber-700";
-  if (status === "REJECTED") {
-    return rejectType === "AUTO"
-      ? "bg-rose-100 text-rose-700 font-bold"
-      : "bg-slate-200 text-slate-700 font-bold";
-  }
-  return "bg-slate-100 text-slate-400";
 }
 
-function formatCurrency(n: number) {
-  return new Intl.NumberFormat("en-NG", {
+watch([currentPage, activeTab, dateRange], fetchApplications);
+
+// Debounce search
+let searchTimeout: ReturnType<typeof setTimeout>;
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1;
+    fetchApplications();
+  }, 500);
+});
+
+onMounted(fetchApplications);
+
+// ── Formatters ─────────────────────────────────────────────────────────────────
+
+function getStatusColor(status: LoanApplicationStatus): string {
+  switch (status) {
+    case "UNDER_REVIEW":
+    case "APPROVED":
+      return "bg-emerald-100 text-emerald-700 ring-emerald-200";
+    case "REJECTED":
+      return "bg-rose-100 text-rose-700 ring-rose-200";
+    case "DISBURSED":
+      return "bg-primary-100 text-primary-700 ring-primary-200";
+    default:
+      return "bg-slate-100 text-slate-500 ring-slate-200";
+  }
+}
+
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
     maximumFractionDigits: 0,
   }).format(n);
-}
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
-}
+
+const TABS: {
+  label: string;
+  value: LoanApplicationStatus | "ALL";
+  icon: any;
+}[] = [
+  { label: "All Requests", value: "ALL", icon: ListFilter },
+  { label: "Under Review", value: "UNDER_REVIEW", icon: Clock },
+  { label: "Approved", value: "APPROVED", icon: CheckCircle2 },
+  { label: "Disbursed", value: "DISBURSED", icon: Banknote },
+  { label: "Rejected", value: "REJECTED", icon: XCircle },
+];
 </script>
 
 <template>
@@ -168,7 +126,7 @@ function formatDate(iso: string) {
           Loan Applications
         </h1>
         <p class="text-sm text-slate-500 mt-1">
-          Review new loan requests and audit rejection decisions.
+          Review new loan requests and manage the underwriting pipeline.
         </p>
       </div>
     </div>
@@ -176,27 +134,16 @@ function formatDate(iso: string) {
     <!-- Tabs -->
     <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
       <button
-        v-for="tab in [
-          { value: 'ALL', label: 'All Requests', icon: ListFilter },
-          { value: 'PENDING', label: 'Pending Review', icon: Clock },
-          { value: 'AUTO_REJECTED', label: 'Auto Rejected', icon: ShieldAlert },
-          {
-            value: 'MANUALLY_REJECTED',
-            label: 'Manual Rejected',
-            icon: XCircle,
-          },
-          {
-            value: 'REJECT_LOGS',
-            label: 'Audit Logs (Rejections)',
-            icon: ListFilter,
-          },
-        ]"
+        v-for="tab in TABS"
         :key="tab.value"
-        @click="activeTab = tab.value as any"
+        @click="
+          activeTab = tab.value;
+          currentPage = 1;
+        "
         class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors whitespace-nowrap"
         :class="
           activeTab === tab.value
-            ? 'bg-primary-900 text-white shadow-sm'
+            ? 'bg-slate-900 text-white shadow-sm'
             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
         "
       >
@@ -229,156 +176,163 @@ function formatDate(iso: string) {
             class="w-full sm:w-64"
           />
           <div
+            v-if="!loading"
             class="hidden sm:block text-xs text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap"
           >
-            {{ filteredApps.length }} found
+            {{ totalItems }} found
           </div>
         </div>
       </div>
 
-      <!-- Desktop Table -->
-      <div class="hidden md:block w-full overflow-x-auto">
-        <table
-          class="w-full text-left text-sm text-slate-600 border-collapse min-w-225"
-        >
-          <thead
-            class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
+      <LoanApplicationSkeleton v-if="loading && applications.length === 0" />
+
+      <template v-else>
+        <!-- Desktop Table -->
+        <div class="hidden md:block w-full overflow-x-auto">
+          <table
+            class="w-full text-left text-sm text-slate-600 border-collapse min-w-225"
           >
-            <tr>
-              <th scope="col" class="px-6 py-4 font-medium">Applicant</th>
-              <th scope="col" class="px-6 py-4 font-medium">
-                Underwriting Info
-              </th>
-              <th scope="col" class="px-6 py-4 font-medium">Current Status</th>
-              <th scope="col" class="px-6 py-4 font-medium italic">
-                Applied On
-              </th>
-              <th scope="col" class="px-6 py-4 font-medium text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-if="filteredApps.length === 0">
-              <td
-                colspan="5"
-                class="px-6 py-12 text-center text-slate-400 font-medium"
+            <thead
+              class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
+            >
+              <tr>
+                <th scope="col" class="px-6 py-4 font-medium">Applicant</th>
+                <th scope="col" class="px-6 py-4 font-medium">
+                  Underwriting Info
+                </th>
+                <th scope="col" class="px-6 py-4 font-medium">
+                  Current Status
+                </th>
+                <th scope="col" class="px-6 py-4 font-medium italic">
+                  Applied On
+                </th>
+                <th scope="col" class="px-6 py-4 font-medium text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-if="applications.length === 0">
+                <td colspan="5" class="px-6 py-16 text-center">
+                  <div class="flex flex-col items-center gap-2 opacity-30">
+                    <ListFilter class="w-10 h-10" />
+                    <p class="font-medium">No matching applications found</p>
+                  </div>
+                </td>
+              </tr>
+              <tr
+                v-for="app in applications"
+                :key="app.id"
+                class="hover:bg-slate-50 group transition-colors"
+                :class="{ 'opacity-50 grayscale shadow-inner': loading }"
               >
-                No matching applications in this queue.
-              </td>
-            </tr>
-            <tr
-              v-for="app in filteredApps"
-              :key="app.id"
-              class="hover:bg-slate-50 group transition-colors"
-            >
-              <td class="px-6 py-4">
-                <div class="font-bold text-slate-900">
-                  {{ app.customerName }}
-                </div>
-                <div class="text-[10px] text-slate-500 font-mono mt-0.5">
-                  {{ app.email }}
-                </div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="font-semibold text-slate-800">
-                  {{ formatCurrency(app.amountRequested) }}
-                </div>
-                <div class="text-[10px] text-slate-400 uppercase font-bold">
-                  {{ app.tenorMonths }} Months · {{ app.purpose }}
-                </div>
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'px-2 py-0.5 rounded text-[10px] font-bold uppercase ring-1 shadow-xs',
-                    getStatusColor(app.status, app.rejectType),
-                  ]"
-                >
-                  {{ app.status }}
-                  {{ app.rejectType ? `(${app.rejectType})` : "" }}
-                </span>
-                <div
-                  v-if="app.rejectionReason"
-                  class="mt-2 text-[10px] text-rose-600 bg-rose-50 p-1.5 rounded border border-rose-100 max-w-64 line-clamp-2 italic"
-                >
-                  {{ app.rejectionReason }}
-                </div>
-              </td>
-              <td class="px-6 py-4 text-xs text-slate-400 font-medium">
-                {{ formatDate(app.appliedAt) }}
-              </td>
-              <td class="px-6 py-4 text-right">
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  class="text-primary-600 hover:bg-primary-50 px-3"
-                  @click="
-                    router.push({
-                      name: 'loan-underwriting',
-                      params: { id: app.id },
-                    })
-                  "
-                >
-                  <Eye class="w-4 h-4 mr-1.5" />
-                  Review Decision
-                </BaseButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <td class="px-6 py-4">
+                  <div class="font-bold text-slate-900">
+                    {{ app.applicantName }}
+                  </div>
+                  <div class="text-[10px] text-slate-500 font-mono mt-0.5">
+                    ID: {{ app.id.slice(0, 8) }}...
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="font-semibold text-slate-800">
+                    {{ formatCurrency(app.requestedAmount) }}
+                  </div>
+                  <div class="text-[10px] text-slate-400 uppercase font-bold">
+                    {{ app.requestedTenor }} Months · {{ app.purpose }}
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span
+                    :class="[
+                      'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ring-1 shadow-xs',
+                      getStatusColor(app.status),
+                    ]"
+                  >
+                    {{ app.status.replace("_", " ") }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-xs text-slate-400 font-medium">
+                  {{ formatDate(app.createdAt) }}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    class="text-primary-600 hover:bg-primary-50 px-3 font-bold"
+                    @click="
+                      router.push({
+                        name: 'loan-underwriting',
+                        params: { id: app.id },
+                      })
+                    "
+                  >
+                    <Eye class="w-4 h-4 mr-1.5" />
+                    Review Decision
+                  </BaseButton>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      <!-- Mobile Cards -->
-      <div class="md:hidden flex flex-col divide-y divide-slate-100">
-        <div
-          v-for="app in filteredApps"
-          :key="`mob-app-${app.id}`"
-          class="p-4 hover:bg-slate-50 flex flex-col gap-3"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="font-bold text-slate-800">{{ app.customerName }}</div>
-              <div class="text-[10px] text-slate-500">{{ app.email }}</div>
+        <!-- Mobile Cards -->
+        <div class="md:hidden flex flex-col divide-y divide-slate-100">
+          <div
+            v-for="app in applications"
+            :key="`mob-app-${app.id}`"
+            class="p-4 hover:bg-slate-50 flex flex-col gap-3"
+            :class="{ 'opacity-50': loading }"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="font-bold text-slate-800">
+                  {{ app.applicantName }}
+                </div>
+                <div class="text-[10px] text-slate-500 font-mono uppercase">
+                  {{ app.id.slice(0, 8) }}
+                </div>
+              </div>
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+                  getStatusColor(app.status),
+                ]"
+              >
+                {{ app.status.replace("_", " ") }}
+              </span>
             </div>
-            <span
-              :class="[
-                'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
-                getStatusColor(app.status, app.rejectType),
-              ]"
-            >
-              {{ app.status }}
-            </span>
-          </div>
-          <div class="flex justify-between items-center mt-1">
-            <div class="text-sm font-bold text-slate-800">
-              {{ formatCurrency(app.amountRequested) }}
+            <div class="flex justify-between items-center mt-1">
+              <div class="text-sm font-bold text-slate-800">
+                {{ formatCurrency(app.requestedAmount) }}
+              </div>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                class="text-primary-600 font-bold p-0 h-auto"
+                @click="
+                  router.push({
+                    name: 'loan-underwriting',
+                    params: { id: app.id },
+                  })
+                "
+              >
+                Review Decision
+              </BaseButton>
             </div>
-            <BaseButton
-              variant="ghost"
-              size="sm"
-              class="text-primary-600 font-bold p-0 h-auto"
-              @click="
-                router.push({
-                  name: 'loan-underwriting',
-                  params: { id: app.id },
-                })
-              "
-            >
-              Review Decision
-            </BaseButton>
           </div>
         </div>
-      </div>
+      </template>
 
       <!-- Pagination -->
       <div
+        v-if="totalPages > 1"
         class="p-4 border-t border-slate-100 flex items-center justify-end bg-slate-50/30"
       >
         <AppPagination
           v-model:current-page="currentPage"
-          :total-pages="1"
-          :total-items="filteredApps.length"
+          :total-pages="totalPages"
+          :total-items="totalItems"
           :page-size="10"
         />
       </div>

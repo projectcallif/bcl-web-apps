@@ -15,6 +15,7 @@ import {
 import { Filter, MoreVertical, ShieldAlert, User } from "lucide-vue-next";
 import type { UserStatus, CustomerListItem } from "@bcl/types";
 import { useRouter } from "vue-router";
+import CustomerSkeleton from "./components/CustomerSkeleton.vue";
 
 const router = useRouter();
 const searchQuery = ref("");
@@ -162,243 +163,232 @@ function continueToStatusConfirm() {
         </div>
       </div>
 
-      <!-- Desktop Table (hidden on mobile) -->
-      <div class="hidden md:block w-full overflow-x-auto relative min-h-100">
-        <!-- Loading Overlay -->
+      <CustomerSkeleton
+        v-if="customersStore.loading && !customersStore.customers.length"
+      />
+
+      <template v-else>
+        <!-- Desktop Table (hidden on mobile) -->
+        <div class="hidden md:block w-full overflow-x-auto relative min-h-100">
+          <!-- Optional: Small overlay spinner for subsequent loads when data already exists -->
+          <div
+            v-if="customersStore.loading && customersStore.customers.length"
+            class="absolute inset-0 z-10 bg-white/40 backdrop-blur-[0.5px] flex items-center justify-center transition-all duration-300"
+          >
+            <div
+              class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
+            ></div>
+          </div>
+
+          <table
+            class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
+          >
+            <thead
+              class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
+            >
+              <tr>
+                <th scope="col" class="px-6 py-4 font-medium">Customer</th>
+                <th scope="col" class="px-6 py-4 font-medium">Status</th>
+                <th scope="col" class="px-6 py-4 font-medium">
+                  Registration Stage
+                </th>
+                <th scope="col" class="px-6 py-4 font-medium">Joined</th>
+                <th scope="col" class="px-6 py-4 font-medium text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-if="customersStore.customers.length === 0">
+                <td colspan="5" class="px-6 py-10 text-center text-slate-500">
+                  No customers found.
+                </td>
+              </tr>
+              <tr
+                v-for="user in customersStore.customers"
+                :key="user.id"
+                class="hover:bg-slate-50/80 transition-colors"
+              >
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-xs ring-1 ring-primary-100 shrink-0"
+                    >
+                      {{ user.firstName?.[0] || "?"
+                      }}{{ user.lastName?.[0] || "?" }}
+                    </div>
+                    <div>
+                      <div class="font-medium text-slate-800">
+                        {{ user.firstName }} {{ user.lastName }}
+                      </div>
+                      <div class="text-xs text-slate-500">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span
+                    :class="[
+                      'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
+                      getStatusColor(user.status),
+                    ]"
+                  >
+                    {{ user.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <span
+                    class="text-[10px] font-mono font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded uppercase"
+                  >
+                    {{ user.registrationStep.replace(/_/g, " ") }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-slate-500">
+                  {{ dayjs(user.createdAt).format("MMM DD, YYYY") }}
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex justify-end">
+                    <AppPopover>
+                      <template #trigger="{ isOpen }">
+                        <button
+                          :class="[
+                            'text-slate-400 p-1.5 rounded-lg transition-colors',
+                            isOpen
+                              ? 'bg-primary-50 text-primary-600'
+                              : 'hover:bg-slate-100 hover:text-slate-600',
+                          ]"
+                        >
+                          <MoreVertical class="w-5 h-5" />
+                        </button>
+                      </template>
+                      <template #content="{ close }">
+                        <button
+                          @click="
+                            router.push({
+                              name: 'customer-detail',
+                              params: { id: user.id },
+                            });
+                            close();
+                          "
+                          class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                        >
+                          <User class="w-4 h-4 text-slate-400" /> View Customer
+                          Details
+                        </button>
+                        <button
+                          @click="
+                            openStatusDialog(user);
+                            close();
+                          "
+                          class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                        >
+                          <ShieldAlert class="w-4 h-4 text-slate-400" />
+                          Update Status
+                        </button>
+                      </template>
+                    </AppPopover>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Cards (hidden on desktop) -->
         <div
-          v-if="customersStore.loading && customersStore.customers.length"
-          class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
+          class="md:hidden flex flex-col divide-y divide-slate-100 relative min-h-75"
         >
-          <div class="flex flex-col items-center gap-2">
+          <!-- Subtle loading overlay for mobile -->
+          <div
+            v-if="customersStore.loading && customersStore.customers.length"
+            class="absolute inset-0 z-10 bg-white/40 backdrop-blur-[0.5px] flex items-center justify-center transition-all duration-300"
+          >
             <div
               class="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"
             ></div>
-            <p class="text-xs font-medium text-slate-500">Updating list...</p>
           </div>
-        </div>
 
-        <table
-          class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
-        >
-          <thead
-            class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
+          <div
+            v-for="user in customersStore.customers"
+            :key="`mobile-${user.id}`"
+            class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
           >
-            <tr>
-              <th scope="col" class="px-6 py-4 font-medium">Customer</th>
-              <th scope="col" class="px-6 py-4 font-medium">Status</th>
-              <th scope="col" class="px-6 py-4 font-medium">
-                Registration Stage
-              </th>
-              <th scope="col" class="px-6 py-4 font-medium">Joined</th>
-              <th scope="col" class="px-6 py-4 font-medium text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr
-              v-if="customersStore.loading && !customersStore.customers.length"
-            >
-              <td colspan="5" class="px-6 py-10 text-center">
-                <div class="flex flex-col items-center gap-2">
-                  <div
-                    class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"
-                  ></div>
-                  <p class="text-sm text-slate-500">Loading customers...</p>
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-sm ring-1 ring-primary-100 shrink-0"
+                >
+                  {{ user.firstName?.[0] || "?"
+                  }}{{ user.lastName?.[0] || "?" }}
                 </div>
-              </td>
-            </tr>
-            <tr
-              v-else
-              v-for="user in customersStore.customers"
-              :key="user.id"
-              class="hover:bg-slate-50/80 transition-colors"
-            >
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-9 h-9 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-xs ring-1 ring-primary-100 shrink-0"
-                  >
-                    {{ user.firstName?.[0] || "?"
-                    }}{{ user.lastName?.[0] || "?" }}
+                <div>
+                  <div class="font-medium text-slate-800">
+                    {{ user.firstName }} {{ user.lastName }}
                   </div>
-                  <div>
-                    <div class="font-medium text-slate-800">
-                      {{ user.firstName }} {{ user.lastName }}
-                    </div>
-                    <div class="text-xs text-slate-500">{{ user.email }}</div>
-                  </div>
+                  <div class="text-xs text-slate-500">{{ user.email }}</div>
                 </div>
-              </td>
-              <td class="px-6 py-4">
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
                 <span
                   :class="[
-                    'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
+                    'px-2 py-0.5 rounded text-xs font-semibold capitalize',
                     getStatusColor(user.status),
                   ]"
                 >
                   {{ user.status }}
                 </span>
-              </td>
-              <td class="px-6 py-4">
                 <span
-                  class="text-[10px] font-mono font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded uppercase"
+                  class="text-[10px] font-mono font-bold text-slate-400 uppercase ml-2"
                 >
-                  {{ user.registrationStep.replace(/_/g, " ") }}
+                  • {{ user.registrationStep.replace(/_/g, " ") }}
                 </span>
-              </td>
-              <td class="px-6 py-4 text-slate-500">
-                {{ dayjs(user.createdAt).format("MMM DD, YYYY") }}
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex justify-end">
-                  <AppPopover>
-                    <template #trigger="{ isOpen }">
-                      <button
-                        :class="[
-                          'text-slate-400 p-1.5 rounded-lg transition-colors',
-                          isOpen
-                            ? 'bg-primary-50 text-primary-600'
-                            : 'hover:bg-slate-100 hover:text-slate-600',
-                        ]"
-                      >
-                        <MoreVertical class="w-5 h-5" />
-                      </button>
-                    </template>
-                    <template #content="{ close }">
-                      <button
-                        @click="
-                          router.push({
-                            name: 'customer-detail',
-                            params: { id: user.id },
-                          });
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                      >
-                        <User class="w-4 h-4 text-slate-400" /> View Customer
-                        Details
-                      </button>
-                      <button
-                        @click="
-                          openStatusDialog(user);
-                          close();
-                        "
-                        class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                      >
-                        <ShieldAlert class="w-4 h-4 text-slate-400" />
-                        Update Status
-                      </button>
-                    </template>
-                  </AppPopover>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Mobile Cards (hidden on desktop) -->
-      <div
-        class="md:hidden flex flex-col divide-y divide-slate-100 relative min-h-75"
-      >
-        <!-- Loading Overlay for Mobile -->
-        <div
-          v-if="customersStore.loading && customersStore.customers.length"
-          class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300"
-        >
-          <div
-            class="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"
-          ></div>
-        </div>
-
-        <div
-          v-if="customersStore.loading && !customersStore.customers.length"
-          class="p-8 text-center text-slate-500"
-        >
-          Loading...
-        </div>
-        <div
-          v-else
-          v-for="user in customersStore.customers"
-          :key="`mobile-${user.id}`"
-          class="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-4"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-full bg-primary-50 text-primary-700 flex items-center justify-center font-bold text-sm ring-1 ring-primary-100 shrink-0"
-              >
-                {{ user.firstName?.[0] || "?" }}{{ user.lastName?.[0] || "?" }}
               </div>
-              <div>
-                <div class="font-medium text-slate-800">
-                  {{ user.firstName }} {{ user.lastName }}
-                </div>
-                <div class="text-xs text-slate-500">{{ user.email }}</div>
+
+              <div class="flex justify-end">
+                <AppPopover>
+                  <template #trigger="{ isOpen }">
+                    <button
+                      :class="[
+                        'text-slate-400 p-1.5 rounded-lg transition-colors',
+                        isOpen
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'hover:bg-slate-100 hover:text-slate-600',
+                      ]"
+                    >
+                      <MoreVertical class="w-5 h-5" />
+                    </button>
+                  </template>
+                  <template #content="{ close }">
+                    <button
+                      @click="
+                        router.push({
+                          name: 'customer-detail',
+                          params: { id: user.id },
+                        });
+                        close();
+                      "
+                      class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                    >
+                      <User class="w-4 h-4 text-slate-400" /> View Details
+                    </button>
+                    <button
+                      @click="
+                        openStatusDialog(user);
+                        close();
+                      "
+                      class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
+                    >
+                      <ShieldAlert class="w-4 h-4 text-slate-400" />
+                      Update Status
+                    </button>
+                  </template>
+                </AppPopover>
               </div>
             </div>
           </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span
-                :class="[
-                  'px-2 py-0.5 rounded text-xs font-semibold capitalize',
-                  getStatusColor(user.status),
-                ]"
-              >
-                {{ user.status }}
-              </span>
-              <span
-                class="text-[10px] font-mono font-bold text-slate-400 uppercase ml-2"
-              >
-                • {{ user.registrationStep.replace(/_/g, " ") }}
-              </span>
-            </div>
-
-            <div class="flex justify-end">
-              <AppPopover>
-                <template #trigger="{ isOpen }">
-                  <button
-                    :class="[
-                      'text-slate-400 p-1.5 rounded-lg transition-colors',
-                      isOpen
-                        ? 'bg-primary-50 text-primary-600'
-                        : 'hover:bg-slate-100 hover:text-slate-600',
-                    ]"
-                  >
-                    <MoreVertical class="w-5 h-5" />
-                  </button>
-                </template>
-                <template #content="{ close }">
-                  <button
-                    @click="
-                      router.push({
-                        name: 'customer-detail',
-                        params: { id: user.id },
-                      });
-                      close();
-                    "
-                    class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                  >
-                    <User class="w-4 h-4 text-slate-400" /> View Details
-                  </button>
-                  <button
-                    @click="
-                      openStatusDialog(user);
-                      close();
-                    "
-                    class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors font-medium flex items-center gap-2"
-                  >
-                    <ShieldAlert class="w-4 h-4 text-slate-400" />
-                    Update Status
-                  </button>
-                </template>
-              </AppPopover>
-            </div>
-          </div>
         </div>
-      </div>
+      </template>
 
       <!-- Pagination -->
       <div

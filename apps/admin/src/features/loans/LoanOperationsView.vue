@@ -1,184 +1,113 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { AppTextInput, AppPagination, BaseButton, AppDatePicker } from "@bcl/ui";
+import {
+  AppTextInput,
+  AppPagination,
+  BaseButton,
+  AppDatePicker,
+} from "@bcl/ui";
 import {
   Eye,
   AlertCircle,
   TrendingUp,
   Clock,
   CheckCircle2,
+  Search,
 } from "lucide-vue-next";
-import type { Loan, LoanStatus } from "@bcl/types";
+import {
+  type AdminDisbursedLoanListItem,
+  type LoanStatus,
+  type ApiClientError,
+} from "@bcl/types";
+import { useToastStore } from "@/stores/toast";
+import { getDisbursedLoans } from "./api";
+import LoanTableSkeleton from "./components/LoanTableSkeleton.vue";
 
 const router = useRouter();
+const toastStore = useToastStore();
+
+// ── State ──────────────────────────────────────────────────────────────────────
+
+const loans = ref<AdminDisbursedLoanListItem[]>([]);
+const totalItems = ref(0);
+const totalPages = ref(1);
+const loading = ref(false);
 
 const searchQuery = ref("");
 const dateRange = ref<Date[] | null>(null);
 const currentPage = ref(1);
+
+const tabs = [
+  { value: "ALL", label: "All Portfolio", icon: Clock },
+  { value: "ACTIVE", label: "Active Loans", icon: TrendingUp },
+  { value: "DEFAULT", label: "Defaults / Overdue", icon: AlertCircle },
+  { value: "CLOSED", label: "Closed / Paid", icon: CheckCircle2 },
+] as const;
 const activeTab = ref<"ALL" | "ACTIVE" | "DEFAULT" | "CLOSED">("ALL");
 
-// Mock Data for Operations
-type AugmentedLoan = Loan & {
-  customerName: string;
-  email: string;
-};
+// ── Data Fetching ──────────────────────────────────────────────────────────────
 
-const mockLoans = ref<AugmentedLoan[]>([
-  {
-    id: "LOAN-88221",
-    referenceId: "BCL-2026-A10",
-    applicationId: "app_1",
-    customerName: "Michael Doe",
-    email: "michael@example.com",
-    principal: 500000,
-    interestAmount: 50000,
-    totalPayable: 550000,
-    outstandingBalance: 350000,
-    tenor: 6,
-    disbursedAt: "2026-08-01T00:00:00Z",
-    firstDueDate: "2026-09-01T00:00:00Z",
-    finalDueDate: "2027-02-01T00:00:00Z",
-    status: "ACTIVE",
-    createdAt: "2026-07-25T00:00:00Z",
-    loanProduct: {
-      id: "p1",
-      name: "Personal Loan",
-      minAmount: 10000,
-      maxAmount: 1000000,
-      minTenor: 1,
-      maxTenor: 12,
-      interestRate: 0.05,
-      interestType: "FIXED",
-      isActive: true,
-      tenors: [],
-    },
-    disbursementAccount: {
-      id: "acc_1",
-      bankName: "Zenith Bank",
-      accountNumber: "1234567890",
-      accountName: "Michael Doe",
-    },
-  },
-  {
-    id: "LOAN-98104",
-    referenceId: "BCL-2026-D99",
-    applicationId: "app_2",
-    customerName: "Sarah Connor",
-    email: "sarah@example.com",
-    principal: 2000000,
-    interestAmount: 400000,
-    totalPayable: 2400000,
-    outstandingBalance: 2000000,
-    tenor: 12,
-    disbursedAt: "2026-05-15T00:00:00Z",
-    firstDueDate: "2026-06-15T00:00:00Z",
-    finalDueDate: "2027-05-15T00:00:00Z",
-    status: "OVERDUE",
-    createdAt: "2026-05-10T00:00:00Z",
-    loanProduct: {
-      id: "p2",
-      name: "Business Loan",
-      minAmount: 500000,
-      maxAmount: 5000000,
-      minTenor: 3,
-      maxTenor: 24,
-      interestRate: 0.04,
-      interestType: "FIXED",
-      isActive: true,
-      tenors: [],
-    },
-    disbursementAccount: {
-      id: "acc_2",
-      bankName: "GTBank",
-      accountNumber: "0987654321",
-      accountName: "Sarah Connor",
-    },
-  },
-  {
-    id: "LOAN-77221",
-    referenceId: "BCL-2025-C01",
-    applicationId: "app_3",
-    customerName: "James Bond",
-    email: "007@mi6.com",
-    principal: 100000,
-    interestAmount: 10000,
-    totalPayable: 110000,
-    outstandingBalance: 0,
-    tenor: 3,
-    disbursedAt: "2025-01-01T00:00:00Z",
-    firstDueDate: "2025-02-01T00:00:00Z",
-    finalDueDate: "2025-04-01T00:00:00Z",
-    status: "CLOSED",
-    createdAt: "2024-12-25T00:00:00Z",
-    loanProduct: {
-      id: "p1",
-      name: "Personal Loan",
-      minAmount: 10000,
-      maxAmount: 1000000,
-      minTenor: 1,
-      maxTenor: 12,
-      interestRate: 0.05,
-      interestType: "FIXED",
-      isActive: true,
-      tenors: [],
-    },
-    disbursementAccount: {
-      id: "acc_3",
-      bankName: "First Bank",
-      accountNumber: "1122334455",
-      accountName: "James Bond",
-    },
-  },
-]);
+async function fetchLoans(): Promise<void> {
+  loading.value = true;
+  try {
+    let statusFilter: LoanStatus | undefined;
+    if (activeTab.value === "ACTIVE") statusFilter = "ACTIVE";
+    if (activeTab.value === "DEFAULT") statusFilter = "OVERDUE";
+    if (activeTab.value === "CLOSED") statusFilter = "CLOSED";
 
-const filteredLoans = computed(() => {
-  let result = mockLoans.value;
-  if (activeTab.value !== "ALL") {
-    if (activeTab.value === "DEFAULT") {
-      result = result.filter((l) => l.status === "OVERDUE");
-    } else {
-      result = result.filter((l) => l.status === activeTab.value);
-    }
+    const res = await getDisbursedLoans({
+      status: statusFilter,
+      page: currentPage.value,
+      limit: 10,
+      search: searchQuery.value || undefined,
+      dateFrom: dateRange.value?.[0]?.toISOString(),
+      dateTo: dateRange.value?.[1]?.toISOString(),
+    });
+
+    loans.value = res.data.items;
+    totalItems.value = res.data.total;
+    totalPages.value = res.data.totalPages;
+  } catch (err) {
+    const error = err as ApiClientError;
+    toastStore.error(error.message || "Failed to fetch loans");
+    console.error("Fetch loans failed:", error);
+  } finally {
+    loading.value = false;
   }
+}
 
-  if (dateRange.value && dateRange.value[0]) {
-    const start = new Date(dateRange.value[0]).getTime();
-    result = result.filter(
-      (l) => l.disbursedAt && new Date(l.disbursedAt).getTime() >= start,
-    );
-  }
-
-  if (dateRange.value && dateRange.value[1]) {
-    const end = new Date(dateRange.value[1]).getTime() + 86400000;
-    result = result.filter(
-      (l) => l.disbursedAt && new Date(l.disbursedAt).getTime() < end,
-    );
-  }
-
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (l) =>
-        l.customerName.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
-        l.referenceId.toLowerCase().includes(q),
-    );
-  }
-  return result;
+// Watchers
+watch([currentPage, activeTab, dateRange], () => {
+  fetchLoans();
 });
+
+let searchTimeout: ReturnType<typeof setTimeout>;
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1;
+    fetchLoans();
+  }, 500);
+});
+
+onMounted(fetchLoans);
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function getStatusColor(status: LoanStatus) {
   switch (status) {
     case "ACTIVE":
-      return "bg-emerald-100 text-emerald-700";
+      return "bg-emerald-100 text-emerald-700 ring-emerald-200";
     case "OVERDUE":
-      return "bg-rose-100 text-rose-700 font-bold animate-pulse";
-    case "CLOSED":
+      return "bg-rose-100 text-rose-700 ring-rose-200 font-bold animate-pulse";
     case "COMPLETED":
-      return "bg-blue-100 text-blue-700";
+    case "CLOSED":
+      return "bg-blue-100 text-blue-700 ring-blue-200";
+    case "WRITTEN_OFF":
+      return "bg-slate-100 text-slate-500 ring-slate-200";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-slate-100 text-slate-700 ring-slate-200";
   }
 }
 
@@ -220,18 +149,18 @@ function formatDate(iso: string | null) {
     <!-- Tabs -->
     <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
       <button
-        v-for="tab in [
-          { value: 'ALL', label: 'All Portfolio', icon: Clock },
-          { value: 'ACTIVE', label: 'Active Loans', icon: TrendingUp },
-          { value: 'DEFAULT', label: 'Defaults / Overdue', icon: AlertCircle },
-          { value: 'CLOSED', label: 'Closed / Paid', icon: CheckCircle2 },
-        ]"
+        v-for="tab in tabs"
         :key="tab.value"
-        @click="activeTab = tab.value as any"
+        @click="
+          () => {
+            activeTab = tab.value;
+            currentPage = 1;
+          }
+        "
         class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors whitespace-nowrap"
         :class="
           activeTab === tab.value
-            ? 'bg-slate-800 text-white shadow-sm'
+            ? 'bg-slate-900 text-white shadow-sm'
             : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
         "
       >
@@ -264,165 +193,177 @@ function formatDate(iso: string | null) {
             class="w-full sm:w-64"
           />
           <div
-            class="hidden sm:block text-xs text-slate-400 font-medium italic whitespace-nowrap"
+            v-if="!loading"
+            class="hidden sm:block text-xs text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap"
           >
-            Showing {{ filteredLoans.length }} records
+            {{ totalItems }} found
           </div>
         </div>
       </div>
 
-      <!-- Desktop Table -->
-      <div class="hidden md:block w-full overflow-x-auto">
-        <table
-          class="w-full text-left text-sm text-slate-600 border-collapse min-w-225"
-        >
-          <thead
-            class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
+      <LoanTableSkeleton v-if="loading && loans.length === 0" />
+
+      <template v-else>
+        <!-- Desktop Table -->
+        <div class="hidden md:block w-full overflow-x-auto">
+          <table
+            class="w-full text-left text-sm text-slate-600 border-collapse min-w-225"
           >
-            <tr>
-              <th scope="col" class="px-6 py-4 font-medium">Loanee</th>
-              <th scope="col" class="px-6 py-4 font-medium">
-                Principal & Balance
-              </th>
-              <th scope="col" class="px-6 py-4 font-medium">Health Status</th>
-              <th scope="col" class="px-6 py-4 font-medium">Disbursed On</th>
-              <th scope="col" class="px-6 py-4 font-medium text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-if="filteredLoans.length === 0">
-              <td
-                colspan="5"
-                class="px-6 py-8 text-center text-slate-500 italic"
-              >
-                No records found in this segment.
-              </td>
-            </tr>
-            <tr
-              v-for="loan in filteredLoans"
-              :key="loan.id"
-              class="hover:bg-slate-50/80 transition-colors"
+            <thead
+              class="bg-slate-50/80 text-slate-500 font-medium border-b border-slate-100"
             >
-              <td class="px-6 py-4">
-                <div class="font-medium text-slate-800">
-                  {{ loan.customerName }}
+              <tr>
+                <th scope="col" class="px-6 py-4 font-medium">Loanee</th>
+                <th scope="col" class="px-6 py-4 font-medium">
+                  Principal & Balance
+                </th>
+                <th scope="col" class="px-6 py-4 font-medium">Health Status</th>
+                <th scope="col" class="px-6 py-4 font-medium">Disbursed On</th>
+                <th scope="col" class="px-6 py-4 font-medium text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr v-if="loans.length === 0">
+                <td colspan="5" class="px-6 py-16 text-center">
+                  <div class="flex flex-col items-center gap-2 opacity-30">
+                    <Search class="w-10 h-10" />
+                    <p class="font-medium">No records found in this segment.</p>
+                  </div>
+                </td>
+              </tr>
+              <tr
+                v-for="loan in loans"
+                :key="loan.id"
+                class="hover:bg-slate-50 group transition-colors"
+                :class="{ 'opacity-50 grayscale': loading }"
+              >
+                <td class="px-6 py-4">
+                  <div class="font-bold text-slate-900">
+                    {{ loan.applicantName }}
+                  </div>
+                  <div class="text-[10px] text-slate-500 font-mono mt-0.5">
+                    REF: {{ loan.referenceId }}
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="font-semibold text-slate-800">
+                    {{ formatCurrency(loan.outstandingBalance) }}
+                  </div>
+                  <div
+                    class="text-[10px] text-slate-400 mt-0.5 uppercase font-bold tracking-tight"
+                  >
+                    Out of {{ formatCurrency(loan.totalPayable) }}
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span
+                    :class="[
+                      'px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ring-1 shadow-xs',
+                      getStatusColor(loan.status),
+                    ]"
+                  >
+                    {{ loan.status.replace("_", " ") }}
+                  </span>
+                  <div
+                    v-if="loan.status === 'OVERDUE'"
+                    class="text-[9px] text-rose-500 mt-1 font-black uppercase tracking-tighter"
+                  >
+                    Immediate Follow-up Required
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-slate-400 text-xs font-medium">
+                  {{ formatDate(loan.disbursedAt) }}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    class="text-primary-600 hover:bg-primary-50 px-3 font-bold"
+                    @click="
+                      () => {
+                        router.push({
+                          name: 'admin-loan-detail',
+                          params: { id: loan.id },
+                        });
+                      }
+                    "
+                  >
+                    <Eye class="w-4 h-4 mr-1.5" /> View Ledger
+                  </BaseButton>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="md:hidden flex flex-col divide-y divide-slate-100">
+          <div
+            v-for="loan in loans"
+            :key="`mob-${loan.id}`"
+            class="p-4 hover:bg-slate-50 flex flex-col gap-3"
+            :class="{ 'opacity-50': loading }"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="font-bold text-slate-800">
+                  {{ loan.applicantName }}
                 </div>
-                <div class="text-xs text-slate-500 font-mono mt-0.5">
+                <div class="text-[10px] text-slate-500 font-mono">
                   {{ loan.referenceId }}
                 </div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="font-semibold text-slate-800">
+              </div>
+              <span
+                :class="[
+                  'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+                  getStatusColor(loan.status),
+                ]"
+              >
+                {{ loan.status.replace("_", " ") }}
+              </span>
+            </div>
+            <div class="flex justify-between items-end">
+              <div>
+                <p
+                  class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                >
+                  Balance
+                </p>
+                <p class="text-sm font-bold text-slate-800">
                   {{ formatCurrency(loan.outstandingBalance) }}
-                </div>
-                <div
-                  class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter"
-                >
-                  Out of {{ formatCurrency(loan.totalPayable) }}
-                </div>
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
-                    getStatusColor(loan.status),
-                  ]"
-                >
-                  {{ loan.status }}
-                </span>
-                <div
-                  v-if="loan.status === 'OVERDUE'"
-                  class="text-[10px] text-rose-500 mt-1 font-bold"
-                >
-                  Immediate Follow-up Required
-                </div>
-              </td>
-              <td class="px-6 py-4 text-slate-500 text-xs">
-                {{ formatDate(loan.disbursedAt) }}
-              </td>
-              <td class="px-6 py-4 text-right">
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  class="text-slate-500 hover:text-primary-600 font-medium"
-                  @click="
+                </p>
+              </div>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                class="text-primary-600 font-bold p-0 h-auto"
+                @click="
+                  () => {
                     router.push({
                       name: 'admin-loan-detail',
                       params: { id: loan.id },
-                    })
-                  "
-                >
-                  <Eye class="w-4 h-4 mr-1.5" /> View Ledger
-                </BaseButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Mobile Cards -->
-      <div class="md:hidden flex flex-col divide-y divide-slate-100">
-        <div
-          v-for="loan in filteredLoans"
-          :key="`mob-${loan.id}`"
-          class="p-4 hover:bg-slate-50 flex flex-col gap-3"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="font-bold text-slate-800">
-                {{ loan.customerName }}
-              </div>
-              <div class="text-[10px] text-slate-500 font-mono">
-                {{ loan.referenceId }}
-              </div>
-            </div>
-            <span
-              :class="[
-                'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
-                getStatusColor(loan.status),
-              ]"
-            >
-              {{ loan.status }}
-            </span>
-          </div>
-          <div class="flex justify-between items-end">
-            <div>
-              <p
-                class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                    });
+                  }
+                "
               >
-                Balance
-              </p>
-              <p class="text-sm font-bold text-slate-800">
-                {{ formatCurrency(loan.outstandingBalance) }}
-              </p>
+                View Details
+              </BaseButton>
             </div>
-            <BaseButton
-              variant="ghost"
-              size="sm"
-              class="text-primary-600 p-0 h-auto"
-              @click="
-                router.push({
-                  name: 'admin-loan-detail',
-                  params: { id: loan.id },
-                })
-              "
-            >
-              View Details
-            </BaseButton>
           </div>
         </div>
-      </div>
+      </template>
 
       <!-- Pagination -->
       <div
+        v-if="totalPages > 1"
         class="p-4 border-t border-slate-100 flex items-center justify-end bg-slate-50/30"
       >
         <AppPagination
           v-model:current-page="currentPage"
-          :total-pages="1"
-          :total-items="filteredLoans.length"
+          :total-pages="totalPages"
+          :total-items="totalItems"
           :page-size="10"
         />
       </div>
