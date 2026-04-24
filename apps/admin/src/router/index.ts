@@ -120,6 +120,21 @@ const router = createRouter({
           name: "transaction-detail",
           component: () => import("../features/transactions/TransactionDetailView.vue"),
         },
+        {
+          path: "products",
+          name: "products",
+          component: () => import("../features/products/ProductsView.vue"),
+        },
+        {
+          path: "products/create",
+          name: "create-product",
+          component: () => import("../features/products/CreateProductView.vue"),
+        },
+        {
+          path: "products/:id",
+          name: "product-detail",
+          component: () => import("../features/products/ProductDetailView.vue"),
+        },
       ],
     },
   ],

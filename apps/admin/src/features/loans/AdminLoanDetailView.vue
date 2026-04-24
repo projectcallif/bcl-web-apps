@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   ArrowLeft,
@@ -106,11 +106,20 @@ async function fetchLoanTransactions() {
   }
 }
 
+const isActionsOpen = ref(false);
+const dropdownRef = ref<HTMLElement | null>(null);
 const pendingStatusChange = ref<LoanStatus | null>(null);
 const isConfirmOpen = ref(false);
 
+function handleClickOutside(event: MouseEvent) {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+    isActionsOpen.value = false;
+  }
+}
+
 async function handleStatusUpdate(newStatus: LoanStatus) {
   if (!loan.value) return;
+  isActionsOpen.value = false;
   pendingStatusChange.value = newStatus;
   isConfirmOpen.value = true;
 }
@@ -137,6 +146,11 @@ async function confirmStatusUpdate() {
 onMounted(() => {
   fetchLoanData();
   fetchSchedule();
+  window.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("click", handleClickOutside);
 });
 
 watch([activeTab, transactionsPage], ([newTab]) => {
@@ -249,16 +263,18 @@ const statusConfig: Record<
             </span>
 
             <!-- Quick Actions Dropdown (for status transition) -->
-            <div class="relative group">
+            <div class="relative" ref="dropdownRef">
               <BaseButton
                 variant="ghost"
                 size="sm"
                 class="bg-white/5 hover:bg-white/10 border-none h-8 w-8 p-0 rounded-full"
+                @click="isActionsOpen = !isActionsOpen"
               >
                 <MoreVertical class="w-4 h-4 text-white" />
               </BaseButton>
               <div
-                class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 hidden group-hover:block z-50 overflow-hidden"
+                v-if="isActionsOpen"
+                class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-50 overflow-hidden"
               >
                 <p
                   class="px-4 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1"

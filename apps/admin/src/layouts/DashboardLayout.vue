@@ -19,6 +19,7 @@ import {
   History,
   ArrowRightLeft,
   FileText,
+  Box,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -30,6 +31,7 @@ const isSignOutOpen = ref(false);
 
 const navItems = [
   { label: "Dashboard", routeName: "dashboard", icon: LayoutDashboard },
+  { label: "Loan Products", routeName: "products", icon: Box },
   { label: "Loan Applications", routeName: "loan-applications", icon: ClipboardList },
   { label: "Loan Operations", routeName: "loan-operations", icon: Banknote },
   { label: "Transactions", routeName: "transactions", icon: ArrowRightLeft },

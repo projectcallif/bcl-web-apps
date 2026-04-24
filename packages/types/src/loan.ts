@@ -20,6 +20,9 @@ export interface LoanProductTenor {
   id: string;
   tenorValue: number;
   interestRate: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoanProduct {
@@ -40,6 +43,22 @@ export interface LoanProduct {
   tenors: LoanProductTenor[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AdminLoanProductListItem {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  minAmount: number;
+  maxAmount: number;
+  minTenor: number;
+  maxTenor: number;
+  tenorUnit: string;
+  interestRate: number;
+  interestType: string;
+  activeTenorCount: number;
+  createdAt: string;
 }
 
 export interface LoanDisbursementAccount {
