@@ -44,6 +44,9 @@ import { BaseSkeleton } from "@bcl/ui";
             <td class="px-6 py-4 text-center">
               <BaseSkeleton width="80px" height="1rem" className="mx-auto" />
             </td>
+            <td class="px-6 py-4 text-right">
+              <BaseSkeleton width="60px" height="1.5rem" className="ml-auto" />
+            </td>
           </tr>
         </tbody>
       </table>

@@ -145,6 +145,7 @@ const paymentStatusConfig = {
   SUCCESS: { label: 'Successful', classes: 'bg-green-100 text-green-700', icon: CheckCircle2 },
   PENDING: { label: 'Pending', classes: 'bg-amber-100 text-amber-700', icon: Clock },
   FAILED: { label: 'Failed', classes: 'bg-red-100 text-red-700', icon: XCircle },
+  REVERSED: { label: 'Reversed', classes: 'bg-slate-100 text-slate-700', icon: XCircle },
 }
 </script>
 

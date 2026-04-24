@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import dayjs from "dayjs";
 import {
@@ -8,6 +8,7 @@ import {
   AppSelect,
   AppConfirmDialog,
   AppDialog,
+  BaseSkeleton,
 } from "@bcl/ui";
 import {
   ChevronLeft,
@@ -17,14 +18,19 @@ import {
   Building2,
   ChevronRight,
   ShieldAlert,
-  ArrowRightLeft,
   Calendar,
   Mail,
   Phone,
+  Eye,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
 } from "lucide-vue-next";
-import type { UserStatus } from "@bcl/types";
+import type { UserStatus, Transaction } from "@bcl/types";
 import { useCustomersStore } from "./store";
 import { useToastStore } from "@/stores/toast";
+import { getTransactionsAcrossPlatform } from "../transactions/api";
 
 // Store & Route
 const router = useRouter();
@@ -56,6 +62,10 @@ const activeInfoSubTab = ref<"personal" | "employment" | "address" | "bank">(
 // Pagination State
 const loansPage = ref(1);
 const transactionsPage = ref(1);
+const totalTransactions = ref(0);
+const transactionsTotalPages = ref(1);
+const transactionsLoading = ref(false);
+const customerTransactions = ref<Transaction[]>([]);
 
 const tabs = [
   { id: "info", label: "Customer Info" },
@@ -87,29 +97,32 @@ const loans = [
   },
 ];
 
-const transactions = [
-  {
-    id: "T-88221",
-    type: "REPAYMENT",
-    amount: 45000,
-    method: "AUTO-DEBIT",
-    date: "Apr 12, 2026 14:00",
-  },
-  {
-    id: "T-88104",
-    type: "DISBURSEMENT",
-    amount: 250000,
-    method: "BANK-TRANSFER",
-    date: "Apr 10, 2026 09:30",
-  },
-  {
-    id: "T-87992",
-    type: "REPAYMENT",
-    amount: 45000,
-    method: "AUTO-DEBIT",
-    date: "Mar 12, 2026 14:00",
-  },
-];
+// --- Transactions Logic ---
+async function fetchCustomerTransactions() {
+  if (!customerId) return;
+  transactionsLoading.value = true;
+  try {
+    const res = await getTransactionsAcrossPlatform({
+      page: transactionsPage.value,
+      limit: 10,
+      userId: customerId,
+    });
+    customerTransactions.value = res.data.items;
+    totalTransactions.value = res.data.total;
+    transactionsTotalPages.value = res.data.totalPages;
+  } catch (err) {
+    console.error("Failed to fetch customer transactions:", err);
+    toast.error("Failed to load transactions");
+  } finally {
+    transactionsLoading.value = false;
+  }
+}
+
+watch([activeTab, transactionsPage], ([newTab]) => {
+  if (newTab === "transactions") {
+    fetchCustomerTransactions();
+  }
+});
 
 // --- Status Logic (Synced with CustomersView) ---
 
@@ -172,9 +185,9 @@ function formatCurrency(n: number) {
   }).format(n);
 }
 
-function formatDate(date: string | null | undefined) {
+function formatDate(date: string | null | undefined, includeTime = false) {
   if (!date) return "N/A";
-  return dayjs(date).format("MMM D, YYYY");
+  return dayjs(date).format(includeTime ? "MMM D, YYYY HH:mm" : "MMM D, YYYY");
 }
 
 function formatStep(step: string | null | undefined) {
@@ -196,22 +209,26 @@ function getStatusStyle(status: string) {
     case "ACTIVE":
     case "COMPLETE":
     case "VERIFIED":
-      return "bg-emerald-100 text-emerald-700 font-bold";
+    case "SUCCESS":
+      return "bg-emerald-50 text-emerald-700 ring-emerald-200";
     case "INACTIVE":
     case "DEACTIVATED":
-      return "bg-slate-100 text-slate-700";
+      return "bg-slate-50 text-slate-700 ring-slate-200";
     case "SUSPENDED":
-      return "bg-rose-100 text-rose-700 font-bold";
+    case "FAILED":
+      return "bg-rose-50 text-rose-700 ring-rose-200";
     case "PENDING":
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-50 text-amber-700 ring-amber-200";
     case "COMPLETED":
-      return "bg-blue-100 text-blue-700";
+      return "bg-blue-50 text-blue-700 ring-blue-200";
+    case "REVERSED":
+      return "bg-slate-100 text-slate-700 ring-slate-300";
     case "REPAYMENT":
-      return "bg-emerald-50 text-emerald-600";
+      return "bg-emerald-50 text-emerald-600 ring-emerald-200";
     case "DISBURSEMENT":
-      return "bg-indigo-50 text-indigo-600";
+      return "bg-indigo-50 text-indigo-600 ring-indigo-200";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-slate-50 text-slate-700 ring-slate-200";
   }
 }
 </script>
@@ -647,62 +664,109 @@ function getStatusStyle(status: string) {
 
           <!-- Transactions Tab -->
           <div v-if="activeTab === 'transactions'" class="space-y-4">
-            <div class="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+            <div class="flex justify-end mb-2">
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                class="text-primary font-semibold"
+                @click="
+                  router.push({
+                    name: 'transactions',
+                    query: { userId: customerId },
+                  })
+                "
+              >
+                View Detailed Transaction Log
+              </BaseButton>
+            </div>
+
+            <div class="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 relative">
               <table
                 class="w-full text-left text-sm text-slate-600 border-collapse min-w-200"
               >
                 <thead class="bg-slate-50/50 text-slate-500 font-medium">
                   <tr>
                     <th scope="col" class="px-4 py-3 font-medium rounded-l-xl">
-                      Trans ID
+                      Reference
                     </th>
                     <th scope="col" class="px-4 py-3 font-medium">Type</th>
                     <th scope="col" class="px-4 py-3 font-medium">Amount</th>
-                    <th scope="col" class="px-4 py-3 font-medium">Method</th>
-                    <th scope="col" class="px-4 py-3 font-medium rounded-r-xl">
-                      Date
+                    <th scope="col" class="px-4 py-3 font-medium">Status</th>
+                    <th scope="col" class="px-4 py-3 font-medium">Date</th>
+                    <th scope="col" class="px-4 py-3 font-medium rounded-r-xl text-right">
+                      Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
+                  <tr v-if="transactionsLoading && customerTransactions.length === 0">
+                    <td colspan="6" class="px-4 py-8">
+                      <div class="space-y-3">
+                        <BaseSkeleton v-for="i in 5" :key="i" height="40px" />
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-else-if="customerTransactions.length === 0" class="text-center">
+                    <td colspan="6" class="px-4 py-16 text-slate-400">
+                       <p class="font-medium">No transactions found for this customer</p>
+                    </td>
+                  </tr>
                   <tr
-                    v-for="tx in transactions"
+                    v-for="tx in customerTransactions"
                     :key="tx.id"
                     class="hover:bg-slate-50/50 transition-colors"
+                    :class="{ 'opacity-50 grayscale': transactionsLoading }"
                   >
                     <td class="px-4 py-4 font-mono text-xs text-slate-500">
-                      {{ tx.id }}
+                      {{ tx.reference }}
                     </td>
                     <td class="px-4 py-4">
                       <span
-                        :class="[
-                          'px-2 py-0.5 rounded text-[10px] font-bold uppercase ring-1',
-                          getStatusStyle(tx.type),
-                        ]"
+                        class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset"
+                        :class="getStatusStyle(tx.type)"
                       >
-                        {{ tx.type }}
+                        {{ tx.type.replace('_', ' ') }}
                       </span>
                     </td>
                     <td class="px-4 py-4 font-semibold text-slate-800">
-                      {{ formatCurrency(tx.amount) }}
+                      {{ formatCurrency(Number(tx.amount)) }}
                     </td>
-                    <td
-                      class="px-4 py-4 flex items-center gap-2 text-slate-600"
-                    >
-                      <ArrowRightLeft class="w-3.5 h-3.5" />
-                      {{ tx.method }}
+                    <td class="px-4 py-4">
+                      <span
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset"
+                        :class="getStatusStyle(tx.status)"
+                      >
+                        <component
+                          :is="tx.status === 'SUCCESS' ? CheckCircle2 : tx.status === 'PENDING' ? Clock : tx.status === 'REVERSED' ? RotateCcw : XCircle"
+                          class="w-3 h-3"
+                        />
+                        {{ tx.status }}
+                      </span>
                     </td>
-                    <td class="px-4 py-4 text-slate-500">{{ tx.date }}</td>
+                    <td class="px-4 py-4 text-slate-500 text-xs">
+                      {{ formatDate(tx.createdAt, true) }}
+                    </td>
+                    <td class="px-4 py-4 text-right">
+                      <BaseButton
+                        variant="ghost"
+                        size="sm"
+                        class="text-primary p-1"
+                        @click="router.push({ name: 'transaction-detail', params: { id: tx.id } })"
+                      >
+                        <Eye class="w-4 h-4" />
+                      </BaseButton>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <div class="p-2 flex justify-end">
+
+            <div v-if="transactionsTotalPages > 1" class="p-2 flex justify-end">
               <AppPagination
                 v-model:current-page="transactionsPage"
                 :page-size="10"
-                :total-items="transactions.length"
-                :total-pages="1"
+                :total-items="totalTransactions"
+                :total-pages="transactionsTotalPages"
               />
             </div>
           </div>

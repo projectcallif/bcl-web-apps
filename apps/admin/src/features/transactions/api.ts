@@ -5,12 +5,17 @@ import type {
   PaginatedResponse,
   Transaction,
   TransactionType,
+  PaymentStatus,
+  TransactionDetail,
 } from "@bcl/types";
 
 export function getTransactionsAcrossPlatform(params: {
   page: number;
   limit: number;
   type?: TransactionType | null;
+  status?: PaymentStatus | null;
+  userId?: string | null;
+  loanId?: string | null;
   dateFrom?: string | null;
   dateTo?: string | null;
   search?: string | null;
@@ -18,7 +23,7 @@ export function getTransactionsAcrossPlatform(params: {
   ApiResponse<
     PaginatedResponse<
       Transaction & {
-        user?: { firstName: string; lastName: string; email: string };
+        userName?: string;
       }
     >
   >
@@ -26,8 +31,14 @@ export function getTransactionsAcrossPlatform(params: {
   return api.get<
     PaginatedResponse<
       Transaction & {
-        user?: { firstName: string; lastName: string; email: string };
+        userName?: string;
       }
     >
-  >("/v1/transactions", ApiHelper.cleanParams(params));
+  >("/v1/admin/transactions", ApiHelper.cleanParams(params));
+}
+
+export function getTransactionDetail(
+  id: string,
+): Promise<ApiResponse<TransactionDetail>> {
+  return api.get<TransactionDetail>(`/v1/admin/transactions/${id}`);
 }

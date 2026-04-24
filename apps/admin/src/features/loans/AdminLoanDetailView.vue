@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import {
   ArrowLeft,
   CreditCard,
@@ -9,13 +9,64 @@ import {
   Home,
   Briefcase,
   FileText,
+  History,
+  Eye,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
 } from "lucide-vue-next";
-import { AppProgressBar } from "@bcl/ui";
-import type { LoanStatus, LoanType, RepaymentScheduleItem } from "@bcl/types";
+import {
+  BaseButton,
+  AppProgressBar,
+  BaseSkeleton,
+  AppPagination,
+} from "@bcl/ui";
+import type {
+  LoanStatus,
+  LoanType,
+  RepaymentScheduleItem,
+  Transaction,
+} from "@bcl/types";
+import { getTransactionsAcrossPlatform } from "../transactions/api";
 
 const router = useRouter();
+const route = useRoute();
 
-const activeTab = ref<"schedule" | "kyc">("schedule");
+const loanId = route.params.id as string;
+const activeTab = ref<"schedule" | "kyc" | "transactions">("schedule");
+
+// Transactions State
+const transactions = ref<Transaction[]>([]);
+const transactionsLoading = ref(false);
+const transactionsPage = ref(1);
+const totalTransactions = ref(0);
+const transactionsTotalPages = ref(1);
+
+async function fetchLoanTransactions() {
+  if (!loanId) return;
+  transactionsLoading.value = true;
+  try {
+    const res = await getTransactionsAcrossPlatform({
+      page: transactionsPage.value,
+      limit: 10,
+      loanId: loanId,
+    });
+    transactions.value = res.data.items;
+    totalTransactions.value = res.data.total;
+    transactionsTotalPages.value = res.data.totalPages;
+  } catch (err) {
+    console.error("Failed to fetch loan transactions:", err);
+  } finally {
+    transactionsLoading.value = false;
+  }
+}
+
+watch([activeTab, transactionsPage], ([newTab]) => {
+  if (newTab === "transactions") {
+    fetchLoanTransactions();
+  }
+});
 
 const mockLoan = ref({
   id: "loan_1",
@@ -146,9 +197,9 @@ const statusConfig: Record<
     <ArrowLeft class="w-4 h-4" /> Back to Operations
   </button>
 
-  <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+  <div class="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start">
     <!-- MAIN AREA -->
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 w-full">
       <!-- Loan header card -->
       <div
         class="relative bg-slate-900 rounded-2xl p-6 overflow-hidden text-white"
@@ -246,7 +297,7 @@ const statusConfig: Record<
       <div
         class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50"
       >
-        <div class="flex border-b border-slate-100">
+        <div class="flex flex-wrap border-b border-slate-100">
           <button
             class="flex items-center gap-2 px-6 py-4 text-sm font-semibold transition-colors border-b-2 -mb-px"
             :class="
@@ -269,12 +320,23 @@ const statusConfig: Record<
           >
             <FileText class="w-4 h-4" /> KYC Analysis
           </button>
+          <button
+            class="flex items-center gap-2 px-6 py-4 text-sm font-semibold transition-colors border-b-2 -mb-px"
+            :class="
+              activeTab === 'transactions'
+                ? 'border-primary-600 text-primary-700'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            "
+            @click="activeTab = 'transactions'"
+          >
+            <History class="w-4 h-4" /> Transactions
+          </button>
         </div>
 
         <div class="p-6">
           <!-- Schedule Tab -->
           <div v-if="activeTab === 'schedule'">
-            <div class="overflow-x-auto">
+            <div class="grid grid-cols-1 w-full overflow-x-auto">
               <table class="w-full text-left text-sm text-slate-600 min-w-200">
                 <thead class="bg-slate-50 text-slate-500 font-medium">
                   <tr>
@@ -322,7 +384,7 @@ const statusConfig: Record<
             >
               Customer Documents
             </h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid md:grid-cols-2 gap-4">
               <div
                 class="border border-slate-200 rounded-xl p-4 hover:border-primary-200 transition-colors cursor-pointer group bg-slate-50 hover:bg-primary-50/20"
               >
@@ -347,13 +409,141 @@ const statusConfig: Record<
               </div>
             </div>
           </div>
+
+          <!-- Transactions Tab -->
+          <div v-if="activeTab === 'transactions'" class="space-y-4">
+            <div class="flex justify-end mb-2">
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                class="text-primary font-semibold"
+                @click="
+                  router.push({
+                    name: 'transactions',
+                    query: { loanId: loanId },
+                  })
+                "
+              >
+                View Detailed Transaction Log
+              </BaseButton>
+            </div>
+
+            <div class="grid grid-cols-1 overflow-x-auto relative">
+              <table class="w-full text-left text-sm text-slate-600 min-w-200">
+                <thead class="bg-slate-50 text-slate-500 font-medium">
+                  <tr>
+                    <th class="px-4 py-3 rounded-l-lg">Reference</th>
+                    <th class="px-4 py-3">Type</th>
+                    <th class="px-4 py-3">Amount</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-if="transactionsLoading && transactions.length === 0">
+                    <td colspan="5" class="px-4 py-8">
+                      <BaseSkeleton
+                        v-for="i in 3"
+                        :key="i"
+                        height="40px"
+                        class="mb-2"
+                      />
+                    </td>
+                  </tr>
+                  <tr v-else-if="transactions.length === 0" class="text-center">
+                    <td
+                      colspan="5"
+                      class="px-4 py-16 text-slate-400 font-medium"
+                    >
+                      No transactions recorded for this loan yet.
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="tx in transactions"
+                    :key="tx.id"
+                    :class="{ 'opacity-50': transactionsLoading }"
+                  >
+                    <td class="px-4 py-4 font-mono text-xs">
+                      {{ tx.reference }}
+                    </td>
+                    <td class="px-4 py-4">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ring-1 ring-inset bg-slate-50 text-slate-600 ring-slate-200"
+                      >
+                        {{ tx.type.replace("_", " ") }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-4 font-bold text-slate-900">
+                      {{ formatCurrency(Number(tx.amount)) }}
+                    </td>
+                    <td class="px-4 py-4">
+                      <span
+                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ring-1 ring-inset"
+                        :class="{
+                          'bg-emerald-50 text-emerald-700 ring-emerald-200':
+                            tx.status === 'SUCCESS',
+                          'bg-amber-50 text-amber-700 ring-amber-200':
+                            tx.status === 'PENDING',
+                          'bg-rose-50 text-rose-700 ring-rose-200':
+                            tx.status === 'FAILED',
+                          'bg-slate-100 text-slate-700 ring-slate-300':
+                            tx.status === 'REVERSED',
+                        }"
+                      >
+                        <component
+                          :is="
+                            tx.status === 'SUCCESS'
+                              ? CheckCircle2
+                              : tx.status === 'PENDING'
+                                ? Clock
+                                : tx.status === 'REVERSED'
+                                  ? RotateCcw
+                                  : XCircle
+                          "
+                          class="w-3 h-3"
+                        />
+                        {{ tx.status }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-4 text-right">
+                      <BaseButton
+                        variant="ghost"
+                        size="sm"
+                        class="text-primary"
+                        @click="
+                          router.push({
+                            name: 'transaction-detail',
+                            params: { id: tx.id },
+                          })
+                        "
+                      >
+                        <Eye class="w-4 h-4" />
+                      </BaseButton>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              v-if="transactionsTotalPages > 1"
+              class="flex justify-end pt-4"
+            >
+              <AppPagination
+                v-model:current-page="transactionsPage"
+                :total-pages="transactionsTotalPages"
+                :total-items="totalTransactions"
+                :page-size="10"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- SIDEBAR -->
     <div
-      class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-6 md:sticky top-6"
+      class="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50 p-6 xl:sticky top-6"
     >
       <h3
         class="text-sm font-bold text-slate-800 mb-5 uppercase tracking-wider"

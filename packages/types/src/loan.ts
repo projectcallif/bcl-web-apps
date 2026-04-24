@@ -8,15 +8,15 @@ export type LoanStatus =
   | "CLOSED"
   | "WRITTEN_OFF";
 
-  export type LoanApplicationStatus =
-    | "UNDER_REVIEW"
-    | "APPROVED"
-    | "REJECTED"
-    | "DISBURSED"
+export type LoanApplicationStatus =
+  | "UNDER_REVIEW"
+  | "APPROVED"
+  | "REJECTED"
+  | "DISBURSED";
 
 export type LoanType = "PERSONAL" | "BUSINESS" | "EMERGENCY" | "SALARY_ADVANCE";
 
-export type PaymentStatus = "SUCCESS" | "PENDING" | "FAILED";
+export type PaymentStatus = "SUCCESS" | "PENDING" | "FAILED" | "REVERSED";
 
 export type InstallmentStatus = "PAID" | "UPCOMING" | "OVERDUE";
 
@@ -231,7 +231,7 @@ export interface Transaction {
   id: string;
   reference: string;
   userId: string;
-  loanId: string;
+  loanId: string | null;
   loanNumber?: string;
   loanType?: LoanType;
   purpose?: string;
@@ -244,6 +244,19 @@ export interface Transaction {
   narration: string;
   metadata?: Record<string, any> | null;
   createdAt: string;
+}
+
+export interface TransactionDetail extends Transaction {
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  loan?: {
+    id: string;
+    referenceId: string;
+    status: LoanStatus;
+  };
 }
 
 export interface CollectionLog {
