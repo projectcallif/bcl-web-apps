@@ -84,6 +84,7 @@ export interface Loan {
   finalDueDate: string | null;
   loanProduct: LoanProduct;
   disbursementAccount: LoanDisbursementAccount;
+  schedule?: LoanSchedule;
   createdAt: string;
 }
 
@@ -258,7 +259,7 @@ export interface LoanApplicationResult {
   disbursementAccountId: string;
   rejectionReason: string | null;
   createdAt: string;
-  mandateSetup: LoanMandate;
+  mandateSetup?: LoanMandate;
 }
 
 export type TransactionType =

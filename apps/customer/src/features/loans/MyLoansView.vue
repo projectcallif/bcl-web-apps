@@ -2,21 +2,25 @@
 import { ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Wallet, TrendingDown, CreditCard, AlertCircle, Loader2 } from 'lucide-vue-next'
-import type { Loan, LoanStatus, LoanDashboardStats } from '@bcl/types'
+import type { Loan, LoanStatus, LoanDashboardStats, LoanApplicationResult } from '@bcl/types'
 import LoanCard from './components/LoanCard.vue'
 import LoanCardSkeleton from './components/LoanCardSkeleton.vue'
 import StatsCardSkeleton from './components/StatsCardSkeleton.vue'
-import { getMyLoans, getLoanDashboard } from './api'
+import { getMyLoans, getLoanDashboard, getLoanApplications } from './api'
+import LoanApplicationCard from './components/LoanApplicationCard.vue'
 
 const router = useRouter()
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
 const loans = ref<Loan[]>([])
+const applications = ref<LoanApplicationResult[]>([])
 const stats = ref<LoanDashboardStats | null>(null)
 const isLoading = ref(true)
+const isLoadingApplications = ref(true)
 const isLoadingStats = ref(true)
 const statusFilter = ref<LoanStatus | null>(null)
+const activeTab = ref<'loans' | 'applications'>('loans')
 
 const statusFilters: { label: string; value: LoanStatus | null }[] = [
   { label: 'All', value: null },
@@ -49,11 +53,24 @@ async function fetchLoans() {
   }
 }
 
+async function fetchApplications() {
+  isLoadingApplications.value = true
+  try {
+    const res = await getLoanApplications()
+    applications.value = res.data || []
+  } catch (err) {
+    console.error('Failed to fetch applications:', err)
+  } finally {
+    isLoadingApplications.value = false
+  }
+}
+
 function applyFilter(value: LoanStatus | null) {
   statusFilter.value = value
 }
 
 watch(statusFilter, fetchLoans, { immediate: true })
+fetchApplications()
 
 getLoanDashboard()
   .then((res) => {
@@ -148,44 +165,104 @@ function formatCurrency(n: number): string {
       </div>
     </div>
 
-    <!-- Filter row -->
-    <div class="flex flex-wrap items-center gap-2">
-      <span
-        class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 w-full sm:w-auto"
-        >Filter:</span
-      >
+    <!-- Tabs -->
+    <div class="flex border-b border-slate-100 mb-6">
       <button
-        v-for="f in statusFilters"
-        :key="String(f.value)"
-        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all"
-        :class="filterBadgeClass(f.value)"
-        @click="applyFilter(f.value)"
+        class="px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-px"
+        :class="
+          activeTab === 'loans'
+            ? 'border-primary text-primary'
+            : 'border-transparent text-slate-400 hover:text-slate-600'
+        "
+        @click="activeTab = 'loans'"
       >
-        {{ f.label }}
+        Disbursed Loans
+      </button>
+      <button
+        class="px-6 py-3 text-sm font-bold transition-all border-b-2 -mb-px flex items-center gap-2"
+        :class="
+          activeTab === 'applications'
+            ? 'border-primary text-primary'
+            : 'border-transparent text-slate-400 hover:text-slate-600'
+        "
+        @click="activeTab = 'applications'"
+      >
+        Applications
+        <span
+          v-if="applications.length > 0"
+          class="flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[10px] font-bold text-slate-500"
+        >
+          {{ applications.length }}
+        </span>
       </button>
     </div>
 
-    <!-- Loan list -->
-    <div v-if="isLoading" class="flex flex-col gap-4">
-      <LoanCardSkeleton v-for="i in 3" :key="i" />
-    </div>
-
-    <div
-      v-else-if="loans.length === 0"
-      class="bg-white rounded-2xl border border-slate-100 p-12 text-center"
-    >
-      <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
-        <CreditCard class="w-6 h-6 text-slate-400" />
+    <!-- Loan List Section -->
+    <template v-if="activeTab === 'loans'">
+      <!-- Filter row -->
+      <div class="flex flex-wrap items-center gap-2">
+        <span
+          class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 w-full sm:w-auto"
+          >Filter:</span
+        >
+        <button
+          v-for="f in statusFilters"
+          :key="String(f.value)"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all"
+          :class="filterBadgeClass(f.value)"
+          @click="applyFilter(f.value)"
+        >
+          {{ f.label }}
+        </button>
       </div>
-      <p class="text-sm font-semibold text-slate-700">No loans found</p>
-      <p class="text-xs text-slate-400 mt-1">
-        {{ statusFilter ? 'Try a different filter' : 'Apply for your first loan to get started' }}
-      </p>
-    </div>
 
-    <div v-else class="flex flex-col gap-4">
-      <LoanCard v-for="loan in loans" :key="loan.id" :loan="loan" />
-    </div>
+      <div v-if="isLoading" class="flex flex-col gap-4">
+        <LoanCardSkeleton v-for="i in 3" :key="i" />
+      </div>
+
+      <div
+        v-else-if="loans.length === 0"
+        class="bg-white rounded-2xl border border-slate-100 p-12 text-center"
+      >
+        <div
+          class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3"
+        >
+          <CreditCard class="w-6 h-6 text-slate-400" />
+        </div>
+        <p class="text-sm font-semibold text-slate-700">No loans found</p>
+        <p class="text-xs text-slate-400 mt-1">
+          {{ statusFilter ? 'Try a different filter' : 'Apply for your first loan to get started' }}
+        </p>
+      </div>
+
+      <div v-else class="flex flex-col gap-4">
+        <LoanCard v-for="loan in loans" :key="loan.id" :loan="loan" />
+      </div>
+    </template>
+
+    <!-- Applications Section -->
+    <template v-else>
+      <div v-if="isLoadingApplications" class="flex flex-col gap-4">
+        <LoanCardSkeleton v-for="i in 2" :key="i" />
+      </div>
+
+      <div
+        v-else-if="applications.length === 0"
+        class="bg-white rounded-2xl border border-slate-100 p-12 text-center"
+      >
+        <div
+          class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3"
+        >
+          <Clock class="w-6 h-6 text-slate-400" />
+        </div>
+        <p class="text-sm font-semibold text-slate-700">No recent applications</p>
+        <p class="text-xs text-slate-400 mt-1">Your loan application history will appear here.</p>
+      </div>
+
+      <div v-else class="flex flex-col gap-4">
+        <LoanApplicationCard v-for="app in applications" :key="app.id" :application="app" />
+      </div>
+    </template>
 
     <!-- Apply CTA banner -->
     <div

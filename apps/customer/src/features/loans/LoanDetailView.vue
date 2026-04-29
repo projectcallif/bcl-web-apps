@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, CreditCard, Banknote } from 'lucide-vue-next'
-import type { Loan, LoanStatus, LoanSchedule } from '@bcl/types'
+import type { Loan, LoanStatus } from '@bcl/types'
 import RepaymentScheduleTable from './components/RepaymentScheduleTable.vue'
 import LoanDetailSkeleton from './components/LoanDetailSkeleton.vue'
 import { getLoanDetail, getLoanTerms } from './api'
@@ -11,24 +11,44 @@ const route = useRoute()
 const router = useRouter()
 
 const loan = ref<Loan | null>(null)
-const schedule = ref<LoanSchedule | null>(null)
 const agreementHtml = ref('')
 const isLoading = ref(true)
+const isLoadingAgreement = ref(false)
 const activeTab = ref<'schedule' | 'agreement'>('schedule')
 
 onMounted(async () => {
   const id = route.params.id as string
   try {
-    const [detailRes, termsRes] = await Promise.all([getLoanDetail(id), getLoanTerms()])
-    loan.value = detailRes.data
-    schedule.value = detailRes.data.schedule
-    agreementHtml.value = termsRes.data.content
+    const res = await getLoanDetail(id)
+    loan.value = res.data
   } catch (err) {
     console.error('Failed to load loan details:', err)
   } finally {
     isLoading.value = false
   }
 })
+
+async function fetchAgreement() {
+  if (agreementHtml.value || isLoadingAgreement.value) return
+  
+  isLoadingAgreement.value = true
+  try {
+    const res = await getLoanTerms()
+    agreementHtml.value = res.data.content
+  } catch (err) {
+    console.error('Failed to load agreement:', err)
+  } finally {
+    isLoadingAgreement.value = false
+  }
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'agreement') {
+    fetchAgreement()
+  }
+})
+
+const schedule = computed(() => loan.value?.schedule || null)
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('en-NG', {
@@ -210,9 +230,14 @@ const statusConfig: Record<LoanStatus, { label: string; dot: string; badge: stri
         <!-- Agreement tab -->
         <div
           v-else
-          class="prose prose-slate prose-sm max-w-none border border-slate-100 rounded-xl overflow-hidden"
+          class="prose prose-slate prose-sm max-w-none border border-slate-100 rounded-xl overflow-hidden relative"
         >
+          <div v-if="isLoadingAgreement" class="min-h-75 flex flex-col items-center justify-center bg-slate-50">
+            <Loader2 class="w-8 h-8 text-primary animate-spin mb-3" />
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Agreement...</p>
+          </div>
           <iframe
+            v-else
             :srcdoc="agreementHtml"
             class="w-full min-h-125 border-0"
             title="Loan Agreement"

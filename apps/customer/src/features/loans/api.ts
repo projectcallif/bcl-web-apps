@@ -41,8 +41,8 @@ export function getMyLoans(params: { status?: LoanStatus | null }): Promise<ApiR
   return api.get<Loan[]>('/v1/loans/my-loans', ApiHelper.cleanParams(params))
 }
 
-export function getLoanDetail(id: string): Promise<ApiResponse<Loan & { schedule: LoanSchedule }>> {
-  return api.get<Loan & { schedule: LoanSchedule }>(`/v1/loans/my-loans/${id}`)
+export function getLoanDetail(id: string): Promise<ApiResponse<Loan>> {
+  return api.get<Loan>(`/v1/loans/my-loans/${id}`)
 }
 
 export function getActiveLoans(): Promise<ApiResponse<Loan[]>> {
@@ -104,6 +104,10 @@ export function getLoanContract(): Promise<ApiResponse<LoanLegalDocument>> {
 
 export function getLoanTerms(): Promise<ApiResponse<LoanLegalDocument>> {
   return api.get<LoanLegalDocument>('/v1/loans/terms')
+}
+
+export function getLoanApplications(): Promise<ApiResponse<LoanApplicationResult[]>> {
+  return api.get<LoanApplicationResult[]>('/v1/loans/applications')
 }
 
 // ── Transactions ─────────────────────────────────────────────────────────────

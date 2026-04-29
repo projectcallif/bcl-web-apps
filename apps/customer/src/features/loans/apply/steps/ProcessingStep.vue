@@ -13,7 +13,7 @@ const isPolling = ref(false)
 const pollError = ref('')
 
 async function pollMandate() {
-  if (!store.applicationResult?.id || store.applicationResult.mandateSetup.status === 'APPROVED')
+  if (!store.applicationResult?.id || store?.applicationResult?.mandateSetup?.status === 'APPROVED')
     return
 
   isPolling.value = true
