@@ -20,6 +20,7 @@ const error = ref('')
 const genderOptions = [
   { label: 'Male', value: 'MALE' },
   { label: 'Female', value: 'FEMALE' },
+  { label: 'Other', value: 'OTHER' },
 ]
 
 const maritalStatusOptions = [
@@ -34,18 +35,6 @@ const countryOptions = [{ label: 'Nigeria', value: 'Nigeria' }]
 const stateOptions = [
   { label: 'Lagos', value: 'Lagos' },
   { label: 'Ogun', value: 'Ogun' },
-]
-
-const cityOptions = [
-  { label: 'Lagos Island', value: 'Lagos Island' },
-  { label: 'Victoria Island', value: 'Victoria Island' },
-  { label: 'Ikeja', value: 'Ikeja' },
-]
-
-const lgaOptions = [
-  { label: 'Lagos Island', value: 'Lagos Island' },
-  { label: 'Eti-Osa', value: 'Eti-Osa' },
-  { label: 'Ikeja', value: 'Ikeja' },
 ]
 
 async function handleSubmit() {
@@ -220,21 +209,19 @@ function _debugPrefill() {
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <AppSelect
+          <AppTextInput
             id="city"
             v-model="formData.city"
             label="City"
-            :options="cityOptions"
-            placeholder="Select"
+            placeholder="E.g. Ikeja"
             required
             :disabled="loading"
           />
-          <AppSelect
+          <AppTextInput
             id="lga"
             v-model="formData.lga"
             label="LGA"
-            :options="lgaOptions"
-            placeholder="Select"
+            placeholder="E.g. Ikeja"
             required
             :disabled="loading"
           />
