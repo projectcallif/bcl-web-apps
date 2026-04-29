@@ -1,103 +1,196 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseButton } from '@bcl/ui'
+import { Loader2, CheckCircle2, AlertCircle, ExternalLink, ShieldCheck } from 'lucide-vue-next'
 import { useLoanApplicationStore } from '../store'
+import { getMandateStatus } from '../../api'
+import type { ApiClientError } from '@bcl/types'
 
 const store = useLoanApplicationStore()
 const router = useRouter()
+const isPolling = ref(false)
+const pollError = ref('')
+
+async function pollMandate() {
+  if (!store.applicationResult?.id || store.applicationResult.mandateSetup.status === 'APPROVED')
+    return
+
+  isPolling.value = true
+  try {
+    const res = await getMandateStatus(store.applicationResult.id)
+    store.applicationResult.mandateSetup = res.data
+
+    if (res.data.status === 'APPROVED') {
+      isPolling.value = false
+    } else {
+      setTimeout(pollMandate, 4000)
+    }
+  } catch (err) {
+    const error = err as ApiClientError
+    console.error('Mandate poll failed:', error)
+    pollError.value = error.message || 'We encountered an error while verifying your authorization.'
+    isPolling.value = false
+  }
+}
+
+onMounted(() => {
+  if (store.applicationResult?.mandateSetup?.status !== 'APPROVED') {
+    pollMandate()
+  }
+})
+
+function authorizeMandate() {
+  if (store.applicationResult?.mandateSetup?.monoUrl) {
+    window.open(store.applicationResult.mandateSetup.monoUrl, '_blank')
+  }
+}
 
 function formatCurrency(n: number): string {
-  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+  }).format(n)
 }
 
-function goToDashboard() {
-  store.reset()
-  router.push({ name: 'dashboard' })
-}
-
-function viewLoans() {
+function finish() {
   store.reset()
   router.push({ name: 'loans' })
 }
+
+onUnmounted(() => {
+  isPolling.value = false
+})
 </script>
 
 <template>
-  <div class="flex flex-col items-center text-center py-6 max-w-lg mx-auto">
+  <div class="space-y-8 py-4">
+    <!-- Success / Approved State -->
+    <div
+      v-if="store.applicationResult?.mandateSetup?.status === 'APPROVED'"
+      class="flex flex-col items-center text-center animate-in zoom-in duration-500"
+    >
+      <div class="relative mb-8">
+        <div
+          class="w-32 h-32 rounded-full border-8 border-emerald-50 flex items-center justify-center"
+        >
+          <div
+            class="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/30"
+          >
+            <CheckCircle2 class="w-10 h-10 text-white" />
+          </div>
+        </div>
+        <div
+          class="absolute inset-0 rounded-full border-4 border-emerald-200 animate-ping opacity-20"
+        />
+      </div>
 
-    <!-- Animated success ring -->
-    <div class="relative mb-8">
-      <div class="w-28 h-28 rounded-full border-4 border-green-100 flex items-center justify-center">
-        <div class="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
-          <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
+      <h2 class="text-2xl font-black text-slate-800 mb-2">Disbursement Initialized!</h2>
+      <p class="text-slate-500 text-sm max-w-sm mb-10 leading-relaxed font-medium">
+        Congratulations! Your loan has been approved and the funds are on their way to your verified
+        bank account.
+      </p>
+
+      <div class="w-full bg-slate-50 rounded-3xl p-8 border border-slate-100 mb-10">
+        <div class="grid grid-cols-2 gap-8 mb-8">
+          <div class="text-left">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+              Loan Amount
+            </p>
+            <p class="text-xl font-black text-slate-800">
+              {{ formatCurrency(store.selectedAmount) }}
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+              Arrival Time
+            </p>
+            <p class="text-lg font-bold text-emerald-600">~ 2-4 Hours</p>
+          </div>
+        </div>
+
+        <div class="pt-6 border-t border-slate-200 flex items-center gap-4">
+          <div
+            class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary font-black shadow-sm"
+          >
+            {{ store.bankName?.substring(0, 2).toUpperCase() || 'BK' }}
+          </div>
+          <div class="text-left">
+            <p class="text-sm font-bold text-slate-800">{{ store.bankName }}</p>
+            <p class="text-xs text-slate-400 font-medium">
+              {{ store.accountNumber }} • {{ store.accountName }}
+            </p>
+          </div>
         </div>
       </div>
-      <!-- Decorative ring -->
-      <div class="absolute inset-0 rounded-full border-4 border-green-200/50 animate-ping" style="animation-duration: 2.5s" />
-    </div>
 
-    <h2 class="text-2xl font-bold text-slate-800 mb-2">Application Submitted!</h2>
-    <p class="text-slate-500 text-sm mb-6 leading-relaxed">
-      Your loan application has been received and is being processed. You'll be notified via SMS and email once your loan is disbursed.
-    </p>
-
-    <!-- Reference -->
-    <div class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 w-full mb-6">
-      <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Application Reference</p>
-      <p class="text-lg font-bold text-slate-800 font-mono">{{ store.applicationReference }}</p>
-    </div>
-
-    <!-- Loan summary -->
-    <div class="bg-primary/5 border border-primary/15 rounded-2xl px-5 py-4 w-full mb-6">
-      <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Loan Summary</p>
-      <div class="grid grid-cols-3 gap-3 text-sm">
-        <div>
-          <p class="text-xs text-slate-400 mb-0.5">Amount</p>
-          <p class="font-bold text-slate-800">{{ formatCurrency(store.selectedAmount) }}</p>
-        </div>
-        <div class="border-x border-primary/15">
-          <p class="text-xs text-slate-400 mb-0.5">Tenor</p>
-          <p class="font-bold text-slate-800">{{ store.selectedTenor }} months</p>
-        </div>
-        <div>
-          <p class="text-xs text-slate-400 mb-0.5">Monthly</p>
-          <p class="font-bold text-primary">{{ formatCurrency(store.monthlyPayment) }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Disbursement info -->
-    <div class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-8">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center">
-          <svg class="w-4 h-4 text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10"/><line x1="2" x2="22" y1="15"/></svg>
-        </div>
-        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Disbursement Target</p>
-      </div>
-      <div class="flex justify-between items-center px-1">
-        <div>
-          <p class="text-sm font-bold text-slate-800">{{ store.bankName }}</p>
-          <p class="text-xs text-slate-400">Acc: {{ store.accountNumber }}</p>
-        </div>
-        <div class="text-right">
-          <p class="text-[10px] font-bold text-tertiary uppercase tracking-widest mb-0.5">Estimated Arrival</p>
-          <p class="text-xs font-semibold text-slate-600">2-4 Business Hours</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="flex gap-3 w-full">
-      <button
-        class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-        @click="viewLoans"
+      <BaseButton
+        variant="primary"
+        size="lg"
+        @click="finish"
+        class="w-full sm:w-auto px-16 shadow-xl shadow-primary/20"
       >
         View My Loans
-      </button>
-      <BaseButton variant="primary" size="lg" class="flex-1" @click="goToDashboard">
-        Back to Dashboard
       </BaseButton>
+    </div>
+
+    <!-- Pending / Authorization State -->
+    <div v-else class="flex flex-col items-center text-center">
+      <div class="relative mb-10">
+        <div
+          class="w-32 h-32 rounded-full border-8 border-indigo-50 flex items-center justify-center"
+        >
+          <Loader2 class="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-black text-slate-800 mb-3">Authorization Required</h2>
+      <p class="text-slate-500 text-sm max-w-sm mb-10 leading-relaxed font-medium">
+        To complete your disbursement, please authorize the direct-debit mandate via Mono. This
+        ensures smooth automated repayments.
+      </p>
+
+      <div class="w-full bg-slate-50 rounded-3xl p-8 border border-slate-100 mb-10 space-y-6">
+        <div
+          class="flex items-center gap-4 text-left p-5 bg-white rounded-2xl border border-slate-100 shadow-sm"
+        >
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+            <ShieldCheck class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-800">Secure Authorization</p>
+            <p class="text-[10px] text-slate-400 font-medium">
+              You will be redirected to Mono's secure portal.
+            </p>
+          </div>
+        </div>
+
+        <BaseButton
+          variant="primary"
+          size="lg"
+          class="w-full shadow-lg shadow-primary/20"
+          @click="authorizeMandate"
+        >
+          <ExternalLink class="w-4 h-4 mr-2" />
+          Open Mono Portal
+        </BaseButton>
+      </div>
+
+      <div
+        v-if="pollError"
+        class="mb-6 flex items-start gap-3 bg-rose-50 border border-rose-100 p-4 rounded-xl text-left"
+      >
+        <AlertCircle class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+        <p class="text-xs text-rose-700 font-medium">{{ pollError }}</p>
+      </div>
+
+      <div class="flex items-center gap-2 text-slate-400">
+        <Loader2 class="w-3 h-3 animate-spin" />
+        <p class="text-[10px] font-bold uppercase tracking-widest">
+          Waiting for mandate approval...
+        </p>
+      </div>
     </div>
   </div>
 </template>

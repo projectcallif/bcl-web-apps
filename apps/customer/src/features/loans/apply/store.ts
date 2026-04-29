@@ -1,43 +1,55 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { LoanEligibility, LoanSchedule, LoanPreview } from '@bcl/types'
+import type { 
+  LoanEligibility, 
+  LoanSchedule, 
+  LoanPreview, 
+  LoanProduct, 
+  LoanApplicationResult, 
+  LoanMandate 
+} from '@bcl/types'
 
 export const useLoanApplicationStore = defineStore('loanApplication', () => {
   const currentStep = ref(0)
 
-  // Step 1 — Terms
+  // Step 1 — Products & Terms
+  const products = ref<LoanProduct[]>([])
+  const selectedProduct = ref<LoanProduct | null>(null)
   const termsAccepted = ref(false)
 
-  // Step 2 — Bank Link
+  // Prerequisite — Bank Link (handled before or during flow if needed)
   const bankLinked = ref(false)
   const linkedBankName = ref('')
 
-  // Step 3 — Eligibility
+  // Step 2 — Eligibility
   const eligibility = ref<LoanEligibility | null>(null)
 
-  // Step 4 — Loan Amount Selection
+  // Step 3 — Loan Amount Selection
   const selectedAmount = ref(0)
   const selectedTenor = ref(0)
 
-  // Step 5 — Schedule (Preview Result)
+  // Step 4 — Schedule (Preview Result)
   const previewSchedule = ref<LoanSchedule | null>(null)
   
-  // Step 7 — Final Preview/Bank Details
+  // Step 6 — Final Preview/Bank Details
   const previewData = ref<LoanPreview | null>(null)
 
-  // Step 6 — Sign Terms
+  // Step 5 — Sign Terms
   const signatureName = ref('')
   const agreementSigned = ref(false)
 
-  // Step 7/8 — Bank Details
+  // Step 6 — Bank Details (for disbursement)
   const bankName = ref('')
   const accountNumber = ref('')
   const accountName = ref('')
 
-  // Step 9 — Result
+  // Step 7 — Result & Mandate
+  const applicationResult = ref<LoanApplicationResult | null>(null)
+  const mandate = ref<LoanMandate | null>(null)
   const applicationReference = ref('')
+  const purpose = ref('PERSONAL')
 
-  // Computed properties from eligibility result or preview result
+  // Computed properties
   const monthlyPayment = computed(() => 
     previewData.value?.monthlyPayment ?? 
     eligibility.value?.monthlyPaymentInNaira ?? 
@@ -65,6 +77,8 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
 
   function reset(): void {
     currentStep.value = 0
+    products.value = []
+    selectedProduct.value = null
     termsAccepted.value = false
     bankLinked.value = false
     linkedBankName.value = ''
@@ -78,11 +92,16 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
     bankName.value = ''
     accountNumber.value = ''
     accountName.value = ''
+    applicationResult.value = null
+    mandate.value = null
     applicationReference.value = ''
+    purpose.value = 'PERSONAL'
   }
 
   return {
     currentStep,
+    products,
+    selectedProduct,
     termsAccepted,
     bankLinked,
     linkedBankName,
@@ -96,7 +115,10 @@ export const useLoanApplicationStore = defineStore('loanApplication', () => {
     bankName,
     accountNumber,
     accountName,
+    applicationResult,
+    mandate,
     applicationReference,
+    purpose,
     monthlyPayment,
     totalRepayment,
     totalInterest,

@@ -13,6 +13,8 @@ import type {
   LoanProduct,
   LoanLegalDocument,
   LoanPreview,
+  LoanMandate,
+  LoanApplicationResult,
 } from '@bcl/types'
 
 // ── Dashboard & Stats ────────────────────────────────────────────────────────
@@ -55,8 +57,12 @@ export function getLoanSchedule(loanId: string): Promise<ApiResponse<LoanSchedul
   return api.get<LoanSchedule>(`/v1/loans/schedule`, { loanId })
 }
 
-export function getProjectedSchedule(eligibilityId: string): Promise<ApiResponse<LoanSchedule>> {
-  return api.get<LoanSchedule>(`/v1/loans/schedule`, { eligibilityId })
+export function getProjectedSchedule(params: {
+  eligibilityId: string
+  principal?: number
+  tenor?: number
+}): Promise<ApiResponse<LoanSchedule>> {
+  return api.get<LoanSchedule>(`/v1/loans/schedule`, ApiHelper.cleanParams(params))
 }
 
 // ── Application Flow ─────────────────────────────────────────────────────────
@@ -75,6 +81,7 @@ export function getEligibilityResult(): Promise<ApiResponse<LoanEligibility>> {
 export function previewLoan(payload: {
   requestedAmount: number
   requestedTenor: number
+  disbursementAccountId?: string
 }): Promise<ApiResponse<LoanPreview>> {
   return api.post<LoanPreview>('/v1/loans/apply/preview', payload)
 }
@@ -83,9 +90,12 @@ export function applyLoan(payload: {
   requestedAmount: number
   requestedTenor: number
   purpose?: string
-  productId?: string
-}): Promise<ApiResponse<{ referenceId: string; status: LoanStatus }>> {
-  return api.post('/v1/loans/apply', payload)
+}): Promise<ApiResponse<LoanApplicationResult>> {
+  return api.post<LoanApplicationResult>('/v1/loans/apply', payload)
+}
+
+export function getMandateStatus(loanId: string): Promise<ApiResponse<LoanMandate>> {
+  return api.get<LoanMandate>(`/v1/loans/${loanId}/mandate`)
 }
 
 export function getLoanContract(): Promise<ApiResponse<LoanLegalDocument>> {

@@ -234,6 +234,33 @@ export interface LoanApplication {
   };
 }
 
+export interface LoanMandate {
+  id: string;
+  mandateId: string;
+  status: 'PENDING' | 'CREATED' | 'APPROVED' | 'READY' | 'REJECTED' | 'EXPIRED' | 'CANCELLED';
+  mandateType: string;
+  monoUrl: string;
+  amount: number | string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoanApplicationResult {
+  id: string;
+  trackerId: string;
+  status: LoanApplicationStatus;
+  requestedAmount: number;
+  requestedTenor: number;
+  purpose: string | null;
+  loanProductId: string;
+  disbursementAccountId: string;
+  rejectionReason: string | null;
+  createdAt: string;
+  mandateSetup: LoanMandate;
+}
+
 export type TransactionType =
   | "DISBURSEMENT"
   | "REPAYMENT"
